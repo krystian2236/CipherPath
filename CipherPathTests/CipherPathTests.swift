@@ -16,12 +16,13 @@ struct StarterCurriculumTests {
     )
   }
 
-  @Test("Each path opens two lessons and previews three updates")
+  @Test("Pro exposes the current eighteen-mission catalog")
   func keepsReleaseAvailabilityPerPath() {
     for path in LearningPath.allCases {
       let lessons = StarterCurriculum.lessons(in: path)
-      #expect(lessons.filter { $0.availability == .available }.count == 2)
-      #expect(lessons.filter { $0.availability == .comingSoon }.count == 3)
+      let releasedCount = path == .webSecurity ? 3 : (path == .mobileSecurity ? 3 : 4)
+      #expect(lessons.filter { $0.availability == .available }.count == releasedCount)
+      #expect(lessons.filter { $0.availability == .comingSoon }.count == 5 - releasedCount)
       #expect(lessons.map(\.order) == [1, 2, 3, 4, 5])
     }
   }
@@ -32,7 +33,7 @@ struct StarterCurriculumTests {
       $0.availability == .available
     }
 
-    #expect(availableLessons.count == 10)
+    #expect(availableLessons.count == 18)
     #expect(
       availableLessons.allSatisfy {
         $0.stages == [.learn, .check, .findFlag, .explanation]
@@ -58,6 +59,30 @@ struct StarterCurriculumTests {
 
 @Suite("Content access")
 struct ContentAccessTests {
+  @Test("Adventure selector is available only in the developer build")
+  func adventureVisibilityFollowsDistribution() {
+    #expect(AppDistributionMode.developer.showsAdventureMode)
+    #expect(!AppDistributionMode.appStore.showsAdventureMode)
+  }
+
+  @Test("Path cards derive progress from the selected access tier")
+  func pathCardsUseActualAccessCounts() {
+    let pro = ContentAccessPolicy(tier: .pro)
+    let demo = ContentAccessPolicy(tier: .testFlightDemo)
+
+    #expect(PathCardSummary.make(for: .blueTeam, policy: pro).includedCount == 4)
+    #expect(PathCardSummary.make(for: .blueTeam, policy: pro).remainingCount == 1)
+    #expect(PathCardSummary.make(for: .webSecurity, policy: pro).includedCount == 3)
+    #expect(PathCardSummary.make(for: .fundamentals, policy: pro).includedCount == 4)
+    #expect(PathCardSummary.make(for: .redTeam, policy: pro).includedCount == 4)
+    #expect(PathCardSummary.make(for: .mobileSecurity, policy: pro).includedCount == 3)
+
+    for path in LearningPath.allCases {
+      #expect(PathCardSummary.make(for: path, policy: demo).includedCount == 2)
+      #expect(PathCardSummary.make(for: path, policy: demo).remainingCount == 3)
+    }
+  }
+
   @Test("Points opens while the future store stays inactive")
   func pointsOpenAndStoreStaysInactive() {
     #expect(FutureFeatureCatalog.previews.map(\.id) == ["points", "store"])
@@ -98,13 +123,14 @@ struct ContentAccessTests {
     #expect(ContentAccessPolicy.forDistribution(.appStore).tier == .free)
   }
 
-  @Test("TestFlight demo opens all ten playable missions")
+  @Test("TestFlight demo keeps ten missions while new lessons require Pro")
   func testFlightDemoOpensCurrentCatalog() {
     let policy = ContentAccessPolicy(tier: .testFlightDemo)
-    let playable = StarterCurriculum.lessons.filter { $0.availability == .available }
+    let included = StarterCurriculum.lessons.filter { policy.access(for: $0) == .included }
 
-    #expect(playable.count == 10)
-    #expect(playable.allSatisfy { policy.access(for: $0) == .included })
+    #expect(included.count == 10)
+    #expect(policy.access(for: StarterCurriculum.lessons(in: .blueTeam)[2]) == .requiresPro)
+    #expect(policy.access(for: StarterCurriculum.lessons(in: .webSecurity)[2]) == .requiresPro)
   }
 
   @Test("Free tier opens one mission in every path")
@@ -115,7 +141,7 @@ struct ContentAccessTests {
       let lessons = StarterCurriculum.lessons(in: path)
       #expect(policy.access(for: lessons[0]) == .included)
       #expect(policy.access(for: lessons[1]) == .requiresPro)
-      #expect(policy.access(for: lessons[2]) == .comingSoon)
+      #expect(policy.access(for: lessons[2]) == .requiresPro)
     }
   }
 

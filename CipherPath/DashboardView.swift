@@ -27,6 +27,22 @@ enum FutureFeatureCatalog {
   ]
 }
 
+struct PathCardSummary: Equatable, Sendable {
+  let includedCount: Int
+  let remainingCount: Int
+  let remainingLabel: String
+
+  static func make(for path: LearningPath, policy: ContentAccessPolicy) -> Self {
+    let lessons = StarterCurriculum.lessons(in: path)
+    let includedCount = lessons.filter { policy.access(for: $0) == .included }.count
+    return PathCardSummary(
+      includedCount: includedCount,
+      remainingCount: lessons.count - includedCount,
+      remainingLabel: policy.tier == .pro ? "zapowiedziane" : "zapowiedziane lub Pro"
+    )
+  }
+}
+
 struct DashboardView: View {
   @Binding var selectedTab: AppTab
   @ObservedObject var progressStore: LearningProgressStore
@@ -136,6 +152,7 @@ struct DashboardView: View {
       ScrollView(.horizontal, showsIndicators: false) {
         HStack(spacing: 10) {
           ForEach(StarterCurriculum.paths, id: \.self) { path in
+            let summary = PathCardSummary.make(for: path, policy: .current)
             NavigationLink {
               LearningPathDetailView(
                 path: path,
@@ -148,12 +165,16 @@ struct DashboardView: View {
                 Text(path.shortTitle).font(.subheadline.bold())
                 HStack(spacing: 4) {
                   ForEach(1...5, id: \.self) { number in
-                    Image(systemName: number <= 2 ? "circle.fill" : "lock.fill")
+                    Image(systemName: number <= summary.includedCount ? "circle.fill" : "lock.fill")
                       .font(.caption2)
-                      .foregroundStyle(number <= 2 ? path.tint : .secondary)
+                      .foregroundStyle(number <= summary.includedCount ? path.tint : .secondary)
                   }
                 }
-                Text("2 dostępne\n3 zapowiedziane").font(.caption2).foregroundStyle(.secondary)
+                Text(
+                  "\(summary.includedCount) dostępne\n\(summary.remainingCount) \(summary.remainingLabel)"
+                )
+                .font(.caption2)
+                .foregroundStyle(.secondary)
               }
               .frame(width: 112, alignment: .leading)
               .padding(13)

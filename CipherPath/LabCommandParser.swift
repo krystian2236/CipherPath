@@ -12,6 +12,7 @@ enum LabCommand: Equatable, Sendable {
   case ls(path: String?)
   case cd(path: String)
   case cat(path: String)
+  case sha256sum(path: String)
   case find(arguments: [String])
   case id
   case whoami
@@ -65,6 +66,8 @@ enum LabCommandParser {
       return .command(.cd(path: arguments[0]))
     case "cat" where arguments.count == 1:
       return .command(.cat(path: arguments[0]))
+    case "sha256sum" where arguments.count == 1:
+      return .command(.sha256sum(path: arguments[0]))
     case "find" where !arguments.isEmpty:
       return .command(.find(arguments: arguments))
     case "id" where arguments.isEmpty:

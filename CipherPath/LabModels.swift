@@ -223,6 +223,7 @@ extension LabCommand {
     case .ls: "ls"
     case .cd: "cd"
     case .cat: "cat"
+    case .sha256sum: "sha256sum"
     case .find: "find"
     case .id: "id"
     case .whoami: "whoami"
@@ -243,7 +244,7 @@ extension LabCommand {
     case .smbclient(let arguments):
       guard let share = arguments.first(where: { $0.hasPrefix("//") }) else { return nil }
       return share.dropFirst(2).split(separator: "/").first.map(String.init)
-    case .help, .clear, .ls, .cd, .cat, .find, .id, .whoami, .sudoList:
+    case .help, .clear, .ls, .cd, .cat, .sha256sum, .find, .id, .whoami, .sudoList:
       return nil
     }
   }

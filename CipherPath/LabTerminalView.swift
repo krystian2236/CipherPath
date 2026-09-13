@@ -48,25 +48,16 @@ struct LabTerminalView: View {
         .foregroundStyle(.secondary)
       }
 
-      Section("Tryb") {
-        Picker("Sposób gry", selection: $mode) {
-          Text("Prowadzony").tag(LabMode.guided)
-          Text("Przygodowy").tag(LabMode.adventure)
-            .disabled(!progressStore.canStartLab(lessonID: lesson.id, mode: .adventure))
-        }
-        .pickerStyle(.segmented)
-        .onChange(of: mode) { _, newMode in
-          if !progressStore.canStartLab(lessonID: lesson.id, mode: newMode) {
-            mode = .guided
+      if distribution.showsAdventureMode {
+        Section("Tryb") {
+          Picker("Sposób gry", selection: $mode) {
+            Text("Prowadzony").tag(LabMode.guided)
+            Text("Przygodowy").tag(LabMode.adventure)
           }
-          resetSession()
-        }
-
-        if distribution == .appStore,
-           !progressStore.canStartLab(lessonID: lesson.id, mode: .adventure) {
-          Label("Tryb przygodowy odblokuje się po ukończeniu trybu prowadzonego.", systemImage: "lock.fill")
-            .font(.caption)
-            .foregroundStyle(.secondary)
+          .pickerStyle(.segmented)
+          .onChange(of: mode) { _, _ in
+            resetSession()
+          }
         }
       }
 

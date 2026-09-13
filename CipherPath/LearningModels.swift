@@ -11,6 +11,10 @@ enum AppDistributionMode: CaseIterable, Equatable, Sendable {
       .appStore
     #endif
   }
+
+  var showsAdventureMode: Bool {
+    self == .developer
+  }
 }
 
 enum LearningPath: String, CaseIterable, Codable, Hashable, Sendable {
@@ -73,7 +77,9 @@ struct ContentAccessPolicy: Equatable, Sendable {
     switch tier {
     case .free:
       return lesson.order == 1 ? .included : .requiresPro
-    case .testFlightDemo, .pro:
+    case .testFlightDemo:
+      return lesson.order <= 2 ? .included : .requiresPro
+    case .pro:
       return .included
     }
   }
@@ -280,7 +286,18 @@ enum StarterCurriculum {
     summary: String,
     environment: LearningEnvironment = .offlineSimulation
   ) -> LearningLesson {
-    let availability: LessonAvailability = order <= 2 ? .available : .comingSoon
+    let proLessonIDs = [
+      "fundamentals-network-addresses",
+      "fundamentals-terminal-basics",
+      "blue-team-file-integrity",
+      "blue-team-network-baseline",
+      "red-team-owned-lab-recon",
+      "red-team-risk-chain",
+      "web-session-basics",
+      "mobile-transport-security",
+    ]
+    let availability: LessonAvailability =
+      order <= 2 || proLessonIDs.contains(id) ? .available : .comingSoon
     return LearningLesson(
       id: id,
       path: path,

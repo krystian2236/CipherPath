@@ -20,6 +20,7 @@ struct LabCommandParserTests {
         == .command(.curl(url: "http://10.10.0.12/robots.txt"))
     )
     #expect(LabCommandParser.parse("cat user.txt") == .command(.cat(path: "user.txt")))
+    #expect(!LabCommandParser.parse("sha256sum /evidence/app.bin").isRejected)
   }
 
   @Test("Normalizes harmless whitespace")
