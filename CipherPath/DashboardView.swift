@@ -15,7 +15,7 @@ enum FutureFeatureCatalog {
       title: "Punkty",
       subtitle: "Zdobywaj w misjach i wykorzystuj na podpowiedzi",
       icon: "sparkles",
-      isEnabled: false
+      isEnabled: true
     ),
     FutureFeaturePreview(
       id: "store",
@@ -185,34 +185,53 @@ struct DashboardView: View {
 
   private var futureFeaturesSection: some View {
     VStack(alignment: .leading, spacing: 12) {
-      Text("Wkrótce").font(.title3.bold())
+      Text("CipherPath Pro").font(.title3.bold())
       HStack(spacing: 10) {
         ForEach(FutureFeatureCatalog.previews) { feature in
-          VStack(alignment: .leading, spacing: 9) {
-            HStack {
-              Image(systemName: feature.icon)
-                .font(.title2)
-                .foregroundStyle(.secondary)
-              Spacer()
-              Label("Wkrótce", systemImage: "lock.fill")
-                .font(.caption2.bold())
-                .foregroundStyle(.secondary)
+          if feature.id == "points" {
+            NavigationLink {
+              PointsView(progressStore: progressStore)
+            } label: {
+              futureFeatureCard(feature)
             }
-            Text(feature.title).font(.headline)
-            Text(feature.subtitle)
-              .font(.caption)
-              .foregroundStyle(.secondary)
-              .fixedSize(horizontal: false, vertical: true)
+            .buttonStyle(.plain)
+          } else {
+            futureFeatureCard(feature)
           }
-          .frame(maxWidth: .infinity, minHeight: 112, alignment: .topLeading)
-          .padding(14)
-          .background(.white.opacity(0.035), in: RoundedRectangle(cornerRadius: 16))
-          .overlay(RoundedRectangle(cornerRadius: 16).stroke(.white.opacity(0.08)))
-          .accessibilityElement(children: .combine)
-          .accessibilityHint("Funkcja jeszcze niedostępna")
         }
       }
     }
+  }
+
+  private func futureFeatureCard(_ feature: FutureFeaturePreview) -> some View {
+    VStack(alignment: .leading, spacing: 9) {
+      HStack {
+        Image(systemName: feature.icon)
+          .font(.title2)
+          .foregroundStyle(feature.isEnabled ? .cyan : .secondary)
+        Spacer()
+        if feature.isEnabled {
+          Text(AppDistributionMode.currentBuild == .developer ? "∞" : "\(progressStore.pointsBalance)")
+            .font(.caption.bold())
+            .foregroundStyle(.cyan)
+        } else {
+          Label("Wkrótce", systemImage: "lock.fill")
+            .font(.caption2.bold())
+            .foregroundStyle(.secondary)
+        }
+      }
+      Text(feature.title).font(.headline)
+      Text(feature.subtitle)
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+    .frame(maxWidth: .infinity, minHeight: 112, alignment: .topLeading)
+    .padding(14)
+    .background(.white.opacity(0.035), in: RoundedRectangle(cornerRadius: 16))
+    .overlay(RoundedRectangle(cornerRadius: 16).stroke(.white.opacity(0.08)))
+    .accessibilityElement(children: .combine)
+    .accessibilityHint(feature.isEnabled ? "Otwiera historię punktów" : "Funkcja jeszcze niedostępna")
   }
 
   private func achievementCard(

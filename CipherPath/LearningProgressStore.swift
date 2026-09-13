@@ -3,10 +3,12 @@ import Foundation
 struct LearningProgress: Codable, Equatable, Sendable {
   var completedStages: [String: [LessonStage]] = [:]
   var labMissions: [String: LabMissionProgress] = [:]
+  var pointsWallet: PointsWallet = .initial
 
   private enum CodingKeys: String, CodingKey {
     case completedStages
     case labMissions
+    case pointsWallet
   }
 
   init() {}
@@ -19,6 +21,9 @@ struct LearningProgress: Codable, Equatable, Sendable {
     labMissions = try container.decodeIfPresent(
       [String: LabMissionProgress].self, forKey: .labMissions
     ) ?? [:]
+    pointsWallet = try container.decodeIfPresent(
+      PointsWallet.self, forKey: .pointsWallet
+    ) ?? .initial
   }
 }
 
@@ -61,6 +66,10 @@ final class LearningProgressStore: ObservableObject {
 
   func labProgress(for lessonID: String) -> LabMissionProgress {
     progress.labMissions[lessonID, default: LabMissionProgress()]
+  }
+
+  var pointsBalance: Int {
+    progress.pointsWallet.balance
   }
 
   func canStartLab(
@@ -116,6 +125,34 @@ final class LearningProgressStore: ObservableObject {
   }
 
   @discardableResult
+  func purchaseAssistance(
+    lessonID: String,
+    mode: LabMode,
+    purchase: PointsPurchase,
+    distribution: AppDistributionMode = .currentBuild
+  ) -> PointsPurchaseResult {
+    guard canStartLab(lessonID: lessonID, mode: mode, distribution: distribution) else {
+      return .insufficient(missing: purchase.cost)
+    }
+    guard distribution == .appStore else { return .purchased }
+
+    var wallet = progress.pointsWallet
+    let result = wallet.purchase(purchase, lessonID: lessonID, mode: mode)
+    guard result == .purchased else { return result }
+
+    progress.pointsWallet = wallet
+    let assistance: LabAssistanceLevel = purchase == .hint ? .hint : .solution
+    let current = progress.labMissions[lessonID, default: LabMissionProgress()]
+      .assistanceByMode[mode] ?? .none
+    if assistance > current {
+      progress.labMissions[lessonID, default: LabMissionProgress()].assistanceByMode[mode] = assistance
+    }
+    progress.labMissions[lessonID, default: LabMissionProgress()].hintUsedModes.insert(mode)
+    save()
+    return result
+  }
+
+  @discardableResult
   func saveCheckpoint(
     lessonID: String,
     mode: LabMode,
@@ -153,9 +190,13 @@ final class LearningProgressStore: ObservableObject {
   }
 
   @discardableResult
-  func completeLab(lessonID: String, mode: LabMode) -> Bool {
+  func completeLab(
+    lessonID: String,
+    mode: LabMode,
+    distribution: AppDistributionMode = .currentBuild
+  ) -> Bool {
     guard let lesson = lesson(withID: lessonID),
-          canStartLab(lessonID: lessonID, mode: mode) else { return false }
+          canStartLab(lessonID: lessonID, mode: mode, distribution: distribution) else { return false }
     let inserted = progress.labMissions[lessonID, default: LabMissionProgress()]
       .completedModes.insert(mode).inserted
     guard inserted else { return false }
@@ -169,6 +210,9 @@ final class LearningProgressStore: ObservableObject {
     )
     if mode == .guided {
       progress.completedStages[lessonID] = lesson.stages
+    }
+    if distribution == .appStore {
+      _ = progress.pointsWallet.rewardMission(lessonID: lessonID)
     }
     save()
     return true
@@ -188,6 +232,16 @@ final class LearningProgressStore: ObservableObject {
   func reset() {
     progress = LearningProgress()
     defaults.removeObject(forKey: storageKey)
+  }
+
+  func resetPointsForDevelopment() {
+    progress.pointsWallet = .initial
+    save()
+  }
+
+  func addPointsForDevelopment(_ amount: Int) {
+    progress.pointsWallet.addDevelopmentPoints(amount)
+    save()
   }
 
   private func lesson(withID id: String) -> LearningLesson? {

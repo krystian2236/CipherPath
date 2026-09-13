@@ -63,4 +63,14 @@ struct PointsWalletTests {
     #expect(wallet.balance == 200)
     #expect(wallet.transactions.filter { $0.kind == .missionReward }.count == 1)
   }
+
+  @Test("Developer adjustment adds test points")
+  func addsDeveloperTestPoints() {
+    var wallet = PointsWallet.initial
+
+    wallet.addDevelopmentPoints(100, date: Date(timeIntervalSince1970: 30))
+
+    #expect(wallet.balance == 200)
+    #expect(wallet.transactions.last?.kind == .developerAdjustment)
+  }
 }

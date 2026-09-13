@@ -58,10 +58,38 @@ struct StarterCurriculumTests {
 
 @Suite("Content access")
 struct ContentAccessTests {
-  @Test("Future economy previews stay visible but inactive")
-  func futureEconomyPreviewsAreInactive() {
+  @Test("Points opens while the future store stays inactive")
+  func pointsOpenAndStoreStaysInactive() {
     #expect(FutureFeatureCatalog.previews.map(\.id) == ["points", "store"])
-    #expect(FutureFeatureCatalog.previews.allSatisfy { !$0.isEnabled })
+    #expect(FutureFeatureCatalog.previews[0].isEnabled)
+    #expect(!FutureFeatureCatalog.previews[1].isEnabled)
+  }
+
+  @Test("Points history is newest first with readable signed amounts")
+  func pointsHistoryIsReadable() {
+    let transactions = [
+      PointsTransaction(
+        id: "older",
+        kind: .missionReward,
+        amount: 100,
+        date: Date(timeIntervalSince1970: 10),
+        lessonID: "fundamentals-digital-safety",
+        mode: nil
+      ),
+      PointsTransaction(
+        id: "newer",
+        kind: .hint,
+        amount: -20,
+        date: Date(timeIntervalSince1970: 20),
+        lessonID: "web-http-anatomy",
+        mode: .guided
+      ),
+    ]
+
+    let rows = PointsHistoryRowModel.rows(for: transactions)
+
+    #expect(rows.map(\.id) == ["newer", "older"])
+    #expect(rows.map(\.amountText) == ["−20 pkt", "+100 pkt"])
   }
 
   @Test("Developer build has no paid lesson gate while App Store starts free")

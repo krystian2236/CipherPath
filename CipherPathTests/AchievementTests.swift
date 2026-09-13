@@ -9,6 +9,62 @@ struct AchievementTests {
     UserDefaults(suiteName: "CipherPathTests.Achievements.\(UUID().uuidString)")!
   }
 
+  @Test("Older progress receives the initial points balance")
+  func migratesProgressWithoutWallet() throws {
+    let legacyData = Data(#"{"completedStages":{},"labMissions":{}}"#.utf8)
+
+    let progress = try JSONDecoder().decode(LearningProgress.self, from: legacyData)
+
+    #expect(progress.pointsWallet.balance == 100)
+  }
+
+  @Test("Purchased assistance persists with its updated balance")
+  @MainActor
+  func persistsPurchasedAssistance() {
+    let defaults = isolatedDefaults()
+    let lessonID = "web-http-anatomy"
+    let store = LearningProgressStore(defaults: defaults)
+
+    let result = store.purchaseAssistance(
+      lessonID: lessonID,
+      mode: .guided,
+      purchase: .hint,
+      distribution: .appStore
+    )
+    let restored = LearningProgressStore(defaults: defaults)
+
+    #expect(result == .purchased)
+    #expect(restored.pointsBalance == 80)
+    #expect(restored.labProgress(for: lessonID).assistanceByMode[.guided] == .hint)
+  }
+
+  @Test("Mission points are awarded once across Guided and Adventure")
+  @MainActor
+  func awardsMissionPointsOnceAcrossModes() {
+    let lessonID = "fundamentals-digital-safety"
+    let store = LearningProgressStore(defaults: isolatedDefaults())
+
+    #expect(store.completeLab(lessonID: lessonID, mode: .guided, distribution: .appStore))
+    #expect(store.pointsBalance == 200)
+    #expect(store.completeLab(lessonID: lessonID, mode: .adventure, distribution: .appStore))
+    #expect(store.pointsBalance == 200)
+    #expect(store.labProgress(for: lessonID).xp == 250)
+  }
+
+  @Test("Developer points reset preserves completed missions")
+  @MainActor
+  func resetsOnlyDeveloperWallet() {
+    let lessonID = "fundamentals-digital-safety"
+    let store = LearningProgressStore(defaults: isolatedDefaults())
+    #expect(store.completeLab(lessonID: lessonID, mode: .guided, distribution: .appStore))
+    store.addPointsForDevelopment(100)
+
+    store.resetPointsForDevelopment()
+
+    #expect(store.pointsBalance == 100)
+    #expect(store.labProgress(for: lessonID).completedModes == [.guided])
+  }
+
   @Test("Adventure unlocks after Guided and XP is awarded only once")
   @MainActor
   func unlocksAdventureAndAwardsDeterministicXP() {

@@ -49,6 +49,35 @@ struct LabReward: Codable, Equatable, Sendable {
   }
 }
 
+struct AssistancePurchaseMessage: Equatable, Sendable {
+  let result: PointsPurchaseResult
+  let purchase: PointsPurchase
+
+  var text: String {
+    switch result {
+    case .purchased:
+      purchase == .hint
+        ? "Podpowiedź odblokowana za 20 pkt."
+        : "Rozwiązanie odblokowane za 50 pkt."
+    case .alreadyUnlocked:
+      "Ta pomoc jest już odblokowana."
+    case .insufficient(let missing):
+      "Brakuje \(missing) pkt, aby odblokować tę pomoc."
+    }
+  }
+}
+
+struct MissionPointsSummary: Equatable, Sendable {
+  let reward: Int
+  let spent: Int
+
+  var net: Int { reward - spent }
+
+  var text: String {
+    "\(reward) − \(spent) = \(net) pkt"
+  }
+}
+
 struct LabMissionProgress: Codable, Equatable, Sendable {
   var completedModes: Set<LabMode> = []
   var hintUsedModes: Set<LabMode> = []

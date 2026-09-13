@@ -106,4 +106,18 @@ struct PointsWallet: Codable, Equatable, Sendable {
     )
     return true
   }
+
+  mutating func addDevelopmentPoints(_ amount: Int, date: Date = Date()) {
+    guard amount > 0 else { return }
+    transactions.append(
+      PointsTransaction(
+        id: "developer:\(UUID().uuidString)",
+        kind: .developerAdjustment,
+        amount: amount,
+        date: date,
+        lessonID: nil,
+        mode: nil
+      )
+    )
+  }
 }

@@ -15,6 +15,8 @@ struct LabTerminalView: View {
   @State private var revealCommands = false
   @State private var startedAt = Date()
   @State private var completionSummary: LabCompletionSummary?
+  @State private var pendingPurchase: PointsPurchase?
+  @State private var purchaseMessage: String?
 
   private let distribution = AppDistributionMode.currentBuild
 
@@ -149,26 +151,22 @@ struct LabTerminalView: View {
 
           HStack {
             Button("Podpowiedź") {
-              revealTextHint = true
-              _ = progressStore.recordAssistance(
-                lessonID: lesson.id,
-                mode: mode,
-                level: .hint
-              )
+              pendingPurchase = .hint
             }
             .disabled(revealTextHint)
 
             Button("Pokaż polecenia") {
-              revealCommands = true
-              _ = progressStore.recordAssistance(
-                lessonID: lesson.id,
-                mode: mode,
-                level: .solution
-              )
+              pendingPurchase = .solution
             }
             .disabled(revealCommands)
           }
           .buttonStyle(.bordered)
+
+          if let purchaseMessage {
+            Text(purchaseMessage)
+              .font(.footnote)
+              .foregroundStyle(.secondary)
+          }
         }
       }
 
@@ -220,8 +218,26 @@ struct LabTerminalView: View {
           Text(completionSummary.assistanceText)
             .font(.footnote)
             .foregroundStyle(.secondary)
+          if distribution == .appStore {
+            Label(completionSummary.points.text, systemImage: "sparkles")
+          }
         }
       }
+    }
+    .onAppear(perform: restoreAssistanceVisibility)
+    .confirmationDialog(
+      purchaseDialogTitle,
+      isPresented: purchaseConfirmationPresented,
+      titleVisibility: .visible
+    ) {
+      if let pendingPurchase {
+        Button("Odblokuj za \(pendingPurchase.cost) pkt") {
+          unlock(pendingPurchase)
+        }
+      }
+      Button("Anuluj", role: .cancel) {}
+    } message: {
+      Text("Po potwierdzeniu punkty zostaną odjęte od Twojego salda.")
     }
   }
 
@@ -249,6 +265,18 @@ struct LabTerminalView: View {
 
   private var statusIcon: String {
     session.isRunning ? "bolt.horizontal.circle.fill" : "stop.circle"
+  }
+
+  private var purchaseDialogTitle: String {
+    guard let pendingPurchase else { return "Odblokować pomoc?" }
+    return pendingPurchase == .hint ? "Odblokować podpowiedź?" : "Odblokować rozwiązanie?"
+  }
+
+  private var purchaseConfirmationPresented: Binding<Bool> {
+    Binding(
+      get: { pendingPurchase != nil },
+      set: { if !$0 { pendingPurchase = nil } }
+    )
   }
 
   private var allFlagsCaptured: Bool {
@@ -305,11 +333,16 @@ struct LabTerminalView: View {
   private func finishMission() {
     let reward = progressStore.reward(lessonID: lesson.id, mode: mode)
     let assistance = progressStore.labProgress(for: lesson.id).assistanceByMode[mode] ?? .none
-    if progressStore.completeLab(lessonID: lesson.id, mode: mode) {
+    let spent = pointsSpentForCurrentMission
+    if progressStore.completeLab(lessonID: lesson.id, mode: mode, distribution: distribution) {
       completionSummary = LabCompletionSummary(
         reward: reward,
         assistance: assistance,
-        elapsedSeconds: max(0, Date().timeIntervalSince(startedAt))
+        elapsedSeconds: max(0, Date().timeIntervalSince(startedAt)),
+        points: MissionPointsSummary(
+          reward: distribution == .appStore ? 100 : 0,
+          spent: spent
+        )
       )
       answerMessage = "Misja ukończona. Zdobywasz \(reward.xp) XP i medal: \(reward.grade.rawValue)."
     }
@@ -327,8 +360,43 @@ struct LabTerminalView: View {
     answerMessage = nil
     revealTextHint = false
     revealCommands = distribution == .developer
+    purchaseMessage = nil
+    pendingPurchase = nil
     startedAt = Date()
     completionSummary = nil
+    restoreAssistanceVisibility()
+  }
+
+  private var pointsSpentForCurrentMission: Int {
+    -progressStore.progress.pointsWallet.transactions
+      .filter { transaction in
+        transaction.lessonID == lesson.id
+          && transaction.mode == mode
+          && (transaction.kind == .hint || transaction.kind == .solution)
+      }
+      .reduce(0) { $0 + $1.amount }
+  }
+
+  private func unlock(_ purchase: PointsPurchase) {
+    let result = progressStore.purchaseAssistance(
+      lessonID: lesson.id,
+      mode: mode,
+      purchase: purchase,
+      distribution: distribution
+    )
+    purchaseMessage = AssistancePurchaseMessage(result: result, purchase: purchase).text
+    guard result == .purchased || result == .alreadyUnlocked else { return }
+    if purchase == .hint {
+      revealTextHint = true
+    } else {
+      revealCommands = true
+    }
+  }
+
+  private func restoreAssistanceVisibility() {
+    let assistance = progressStore.labProgress(for: lesson.id).assistanceByMode[mode] ?? .none
+    revealTextHint = distribution == .appStore && assistance >= .hint
+    revealCommands = distribution == .developer || assistance >= .solution
   }
 }
 
@@ -336,6 +404,7 @@ private struct LabCompletionSummary {
   let reward: LabReward
   let assistance: LabAssistanceLevel
   let elapsedSeconds: TimeInterval
+  let points: MissionPointsSummary
 
   var elapsedText: String {
     let seconds = Int(elapsedSeconds.rounded())

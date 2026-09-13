@@ -187,4 +187,28 @@ struct LabEngineTests {
     #expect(clear.status == .success)
     #expect(session.history.isEmpty)
   }
+
+  @Test("Assistance purchase messages explain charges and missing points")
+  func assistancePurchaseMessagesAreReadable() {
+    #expect(
+      AssistancePurchaseMessage(result: .purchased, purchase: .hint).text
+        == "Podpowiedź odblokowana za 20 pkt."
+    )
+    #expect(
+      AssistancePurchaseMessage(result: .alreadyUnlocked, purchase: .solution).text
+        == "Ta pomoc jest już odblokowana."
+    )
+    #expect(
+      AssistancePurchaseMessage(result: .insufficient(missing: 10), purchase: .hint).text
+        == "Brakuje 10 pkt, aby odblokować tę pomoc."
+    )
+  }
+
+  @Test("Mission points summary shows reward spending and net change")
+  func missionPointsSummaryShowsNetChange() {
+    let summary = MissionPointsSummary(reward: 100, spent: 20)
+
+    #expect(summary.net == 80)
+    #expect(summary.text == "100 − 20 = 80 pkt")
+  }
 }
