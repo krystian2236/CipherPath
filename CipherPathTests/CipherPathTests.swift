@@ -56,6 +56,127 @@ struct StarterCurriculumTests {
   }
 }
 
+@Suite("Learning progress")
+struct LearningProgressTests {
+  private func isolatedDefaults() -> UserDefaults {
+    let suiteName = "CipherPathTests.LearningProgress.\(UUID().uuidString)"
+    return UserDefaults(suiteName: suiteName)!
+  }
+
+  @Test("A lesson advances through stages in the required order")
+  @MainActor
+  func advancesInRequiredOrder() {
+    let lesson = StarterCurriculum.lessons.first { $0.availability == .available }!
+    let store = LearningProgressStore(defaults: isolatedDefaults())
+
+    #expect(store.currentStage(for: lesson) == .learn)
+    #expect(store.complete(stage: .learn, lessonID: lesson.id))
+    #expect(store.currentStage(for: lesson) == .check)
+    #expect(store.complete(stage: .check, lessonID: lesson.id))
+    #expect(store.currentStage(for: lesson) == .findFlag)
+    #expect(store.complete(stage: .findFlag, lessonID: lesson.id))
+    #expect(store.currentStage(for: lesson) == .explanation)
+    #expect(store.complete(stage: .explanation, lessonID: lesson.id))
+    #expect(store.currentStage(for: lesson) == nil)
+    #expect(store.isCompleted(lessonID: lesson.id))
+  }
+
+  @Test("A learner cannot skip the current stage")
+  @MainActor
+  func rejectsSkippedStage() {
+    let lesson = StarterCurriculum.lessons.first { $0.availability == .available }!
+    let store = LearningProgressStore(defaults: isolatedDefaults())
+
+    #expect(!store.complete(stage: .findFlag, lessonID: lesson.id))
+    #expect(store.currentStage(for: lesson) == .learn)
+  }
+
+  @Test("Completing the same stage twice is idempotent")
+  @MainActor
+  func completingStageTwiceIsIdempotent() {
+    let lesson = StarterCurriculum.lessons.first { $0.availability == .available }!
+    let store = LearningProgressStore(defaults: isolatedDefaults())
+
+    #expect(store.complete(stage: .learn, lessonID: lesson.id))
+    #expect(!store.complete(stage: .learn, lessonID: lesson.id))
+    #expect(store.progress.completedStages[lesson.id] == [.learn])
+  }
+
+  @Test("Progress survives recreation of the store")
+  @MainActor
+  func persistsAndRestoresProgress() {
+    let lesson = StarterCurriculum.lessons.first { $0.availability == .available }!
+    let defaults = isolatedDefaults()
+    let firstStore = LearningProgressStore(defaults: defaults)
+
+    #expect(firstStore.complete(stage: .learn, lessonID: lesson.id))
+    let restoredStore = LearningProgressStore(defaults: defaults)
+
+    #expect(restoredStore.currentStage(for: lesson) == .check)
+    #expect(restoredStore.progress.completedStages[lesson.id] == [.learn])
+  }
+
+  @Test("Coming soon lessons cannot be started")
+  @MainActor
+  func rejectsComingSoonLesson() {
+    let lesson = StarterCurriculum.lessons.first { $0.availability == .comingSoon }!
+    let store = LearningProgressStore(defaults: isolatedDefaults())
+
+    #expect(!store.canStart(lesson))
+    #expect(!store.complete(stage: .learn, lessonID: lesson.id))
+    #expect(store.progress.completedStages[lesson.id] == nil)
+  }
+
+  @Test("Reset removes all saved learning progress")
+  @MainActor
+  func resetClearsStoredProgress() {
+    let lesson = StarterCurriculum.lessons.first { $0.availability == .available }!
+    let defaults = isolatedDefaults()
+    let store = LearningProgressStore(defaults: defaults)
+    #expect(store.complete(stage: .learn, lessonID: lesson.id))
+
+    store.reset()
+    let restoredStore = LearningProgressStore(defaults: defaults)
+
+    #expect(restoredStore.progress.completedStages.isEmpty)
+    #expect(restoredStore.currentStage(for: lesson) == .learn)
+  }
+}
+
+@Suite("Lesson mission content")
+struct LessonMissionContentTests {
+  @Test("Every available lesson has complete offline mission material")
+  func availableLessonsHaveCompleteMaterial() {
+    let lessons = StarterCurriculum.lessons.filter { $0.availability == .available }
+
+    for lesson in lessons {
+      let content = LessonMissionContent.content(for: lesson)
+      #expect(!content.legalNotice.isEmpty)
+      #expect(!content.learnText.isEmpty)
+      #expect(!content.checkPrompt.isEmpty)
+      #expect(!content.offlineEvidence.isEmpty)
+      #expect(content.expectedFlag.hasPrefix("CIPHER{"))
+      #expect(!content.explanation.isEmpty)
+    }
+  }
+
+  @Test("Flag validation ignores spaces and letter case")
+  func flagValidationNormalizesInput() {
+    let lesson = StarterCurriculum.lessons.first { $0.id == "blue-team-find-log-event" }!
+    let content = LessonMissionContent.content(for: lesson)
+
+    #expect(content.accepts(flag: "  cipher{login_alert}  "))
+    #expect(!content.accepts(flag: "CIPHER{WRONG}"))
+  }
+
+  @Test("Coming soon lessons do not expose mission material")
+  func comingSoonLessonsHaveNoMaterial() {
+    let lesson = StarterCurriculum.lessons.first { $0.availability == .comingSoon }!
+
+    #expect(LessonMissionContent.availableContent(for: lesson) == nil)
+  }
+}
+
 @Suite("Session restoration")
 struct SessionRestorationTests {
   @Test("Unknown tab falls back to Start")

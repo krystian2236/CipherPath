@@ -37,6 +37,17 @@
 		E00000000000000000000027 /* LearningPathDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000023 /* LearningPathDetailView.swift */; };
 		E00000000000000000000028 /* MissionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000024 /* MissionsView.swift */; };
 		E00000000000000000000029 /* AchievementsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000025 /* AchievementsView.swift */; };
+		E00000000000000000000030 /* LearningProgressStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000026 /* LearningProgressStore.swift */; };
+		E00000000000000000000031 /* LessonFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000027 /* LessonFlowView.swift */; };
+		E00000000000000000000032 /* LabEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000028 /* LabEngineTests.swift */; };
+		E00000000000000000000033 /* LabCommandParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000029 /* LabCommandParser.swift */; };
+		E00000000000000000000034 /* LabModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000030 /* LabModels.swift */; };
+		E00000000000000000000035 /* LabEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000031 /* LabEngine.swift */; };
+		E00000000000000000000036 /* StarterLabsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000032 /* StarterLabsTests.swift */; };
+		E00000000000000000000037 /* StarterLabs.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000033 /* StarterLabs.swift */; };
+		E00000000000000000000038 /* LabTerminalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000034 /* LabTerminalView.swift */; };
+		E00000000000000000000039 /* AchievementTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000035 /* AchievementTests.swift */; };
+		E00000000000000000000040 /* AchievementModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000036 /* AchievementModels.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -83,6 +94,17 @@
 		F00000000000000000000023 /* LearningPathDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningPathDetailView.swift; sourceTree = "<group>"; };
 		F00000000000000000000024 /* MissionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionsView.swift; sourceTree = "<group>"; };
 		F00000000000000000000025 /* AchievementsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AchievementsView.swift; sourceTree = "<group>"; };
+		F00000000000000000000026 /* LearningProgressStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningProgressStore.swift; sourceTree = "<group>"; };
+		F00000000000000000000027 /* LessonFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LessonFlowView.swift; sourceTree = "<group>"; };
+		F00000000000000000000028 /* LabEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabEngineTests.swift; sourceTree = "<group>"; };
+		F00000000000000000000029 /* LabCommandParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabCommandParser.swift; sourceTree = "<group>"; };
+		F00000000000000000000030 /* LabModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabModels.swift; sourceTree = "<group>"; };
+		F00000000000000000000031 /* LabEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabEngine.swift; sourceTree = "<group>"; };
+		F00000000000000000000032 /* StarterLabsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StarterLabsTests.swift; sourceTree = "<group>"; };
+		F00000000000000000000033 /* StarterLabs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StarterLabs.swift; sourceTree = "<group>"; };
+		F00000000000000000000034 /* LabTerminalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabTerminalView.swift; sourceTree = "<group>"; };
+		F00000000000000000000035 /* AchievementTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AchievementTests.swift; sourceTree = "<group>"; };
+		F00000000000000000000036 /* AchievementModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AchievementModels.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -139,6 +161,14 @@
 				F00000000000000000000023 /* LearningPathDetailView.swift */,
 				F00000000000000000000024 /* MissionsView.swift */,
 				F00000000000000000000025 /* AchievementsView.swift */,
+				F00000000000000000000026 /* LearningProgressStore.swift */,
+				F00000000000000000000027 /* LessonFlowView.swift */,
+				F00000000000000000000029 /* LabCommandParser.swift */,
+				F00000000000000000000030 /* LabModels.swift */,
+				F00000000000000000000031 /* LabEngine.swift */,
+				F00000000000000000000033 /* StarterLabs.swift */,
+				F00000000000000000000034 /* LabTerminalView.swift */,
+				F00000000000000000000036 /* AchievementModels.swift */,
 				F0000000000000000000001B /* ScanDetailsView.swift */,
 				F00000000000000000000007 /* ScannerView.swift */,
 				F00000000000000000000008 /* SupportingViews.swift */,
@@ -153,6 +183,9 @@
 			isa = PBXGroup;
 			children = (
 				F0000000000000000000000A /* CipherPathTests.swift */,
+				F00000000000000000000028 /* LabEngineTests.swift */,
+				F00000000000000000000032 /* StarterLabsTests.swift */,
+				F00000000000000000000035 /* AchievementTests.swift */,
 			);
 			path = CipherPathTests;
 			sourceTree = "<group>";
@@ -289,6 +322,14 @@
 				E00000000000000000000027 /* LearningPathDetailView.swift in Sources */,
 				E00000000000000000000028 /* MissionsView.swift in Sources */,
 				E00000000000000000000029 /* AchievementsView.swift in Sources */,
+				E00000000000000000000030 /* LearningProgressStore.swift in Sources */,
+				E00000000000000000000031 /* LessonFlowView.swift in Sources */,
+				E00000000000000000000033 /* LabCommandParser.swift in Sources */,
+				E00000000000000000000034 /* LabModels.swift in Sources */,
+				E00000000000000000000035 /* LabEngine.swift in Sources */,
+				E00000000000000000000037 /* StarterLabs.swift in Sources */,
+				E00000000000000000000038 /* LabTerminalView.swift in Sources */,
+				E00000000000000000000040 /* AchievementModels.swift in Sources */,
 				E00000000000000000000018 /* ScanDetailsView.swift in Sources */,
 				E00000000000000000000007 /* ScannerView.swift in Sources */,
 				E00000000000000000000008 /* SupportingViews.swift in Sources */,
@@ -301,6 +342,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				E00000000000000000000009 /* CipherPathTests.swift in Sources */,
+				E00000000000000000000032 /* LabEngineTests.swift in Sources */,
+				E00000000000000000000036 /* StarterLabsTests.swift in Sources */,
+				E00000000000000000000039 /* AchievementTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

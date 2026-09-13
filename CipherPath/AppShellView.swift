@@ -49,6 +49,7 @@ struct AppShellView: View {
   @StateObject private var knownDeviceStore: KnownDeviceStore
   @StateObject private var scanner: NetworkScanner
   @StateObject private var tools = NetworkToolsModel()
+  @StateObject private var learningProgressStore: LearningProgressStore
   @SceneStorage("CipherPath.selectedTab") private var selectedTabRaw = AppTab.start.rawValue
   @SceneStorage("CipherPath.ishWorkspaceRoute") private var ishWorkspaceRouteRaw = ""
 
@@ -56,15 +57,16 @@ struct AppShellView: View {
     let store = KnownDeviceStore()
     _knownDeviceStore = StateObject(wrappedValue: store)
     _scanner = StateObject(wrappedValue: NetworkScanner(knownDeviceStore: store))
+    _learningProgressStore = StateObject(wrappedValue: LearningProgressStore())
   }
 
   var body: some View {
     TabView(selection: selectedTab) {
-      DashboardView(selectedTab: selectedTab)
+      DashboardView(selectedTab: selectedTab, progressStore: learningProgressStore)
         .tabItem { Label("Start", systemImage: "house.fill") }.tag(AppTab.start)
-      LearningPathListView()
+      LearningPathListView(progressStore: learningProgressStore)
         .tabItem { Label("Ścieżki", systemImage: "safari.fill") }.tag(AppTab.paths)
-      MissionsView()
+      MissionsView(progressStore: learningProgressStore)
         .tabItem { Label("Misje", systemImage: "target") }.tag(AppTab.missions)
       PracticeHubView(
         scanner: scanner,
@@ -74,7 +76,7 @@ struct AppShellView: View {
         ishWorkspaceRouteRaw: $ishWorkspaceRouteRaw
       )
         .tabItem { Label("Praktyka", systemImage: "chart.bar.fill") }.tag(AppTab.practice)
-      AchievementsView()
+      AchievementsView(progressStore: learningProgressStore)
         .tabItem { Label("Osiągnięcia", systemImage: "medal.fill") }.tag(AppTab.achievements)
     }
     .tint(.cyan)

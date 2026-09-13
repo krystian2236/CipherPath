@@ -1,11 +1,13 @@
 import SwiftUI
 
 struct LearningPathListView: View {
+  @ObservedObject var progressStore: LearningProgressStore
+
   var body: some View {
     NavigationStack {
       List(StarterCurriculum.paths, id: \.self) { path in
         NavigationLink {
-          LearningPathDetailView(path: path)
+          LearningPathDetailView(path: path, progressStore: progressStore)
         } label: {
           VStack(alignment: .leading, spacing: 6) {
             Label(path.title, systemImage: path.iconName).font(.headline)

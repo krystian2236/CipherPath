@@ -61,12 +61,12 @@ enum StarterCurriculum {
   static let lessons: [LearningLesson] = [
     lesson(
       id: "fundamentals-digital-safety", path: .fundamentals, order: 1,
-      title: "Zasady legalnego laboratorium",
-      summary: "Rozpoznaj zgodę, zakres testu i bezpieczne granice ćwiczenia."),
+      title: "Port Detective",
+      summary: "Sprawdź host, który nie odpowiada na ping, i rozpoznaj jego usługi."),
     lesson(
       id: "fundamentals-read-port-scan", path: .fundamentals, order: 2,
-      title: "Jak czytać skan portów",
-      summary: "Odczytaj usługi z przygotowanego, fikcyjnego wyniku skanowania."),
+      title: "Network Scout",
+      summary: "Uruchom wirtualny cel, rozpoznaj usługi i odnajdź flagę."),
     lesson(
       id: "fundamentals-network-addresses", path: .fundamentals, order: 3,
       title: "Adresy i sieci prywatne",
@@ -82,12 +82,12 @@ enum StarterCurriculum {
 
     lesson(
       id: "blue-team-find-log-event", path: .blueTeam, order: 1,
-      title: "Znajdź zdarzenie w logu",
-      summary: "Odszukaj flagę w bezpiecznym, wbudowanym zapisie zdarzeń."),
+      title: "Log Hunter",
+      summary: "Przeszukaj przygotowane logi i znajdź podejrzane zdarzenie."),
     lesson(
       id: "blue-team-suspicious-login", path: .blueTeam, order: 2,
-      title: "Podejrzane logowanie",
-      summary: "Oceń serię fikcyjnych logowań i wskaż anomalię."),
+      title: "Incident Lockdown",
+      summary: "Odtwórz incydent i wybierz bezpieczną kolejność reakcji."),
     lesson(
       id: "blue-team-file-integrity", path: .blueTeam, order: 3,
       title: "Integralność plików",
@@ -103,12 +103,12 @@ enum StarterCurriculum {
 
     lesson(
       id: "red-team-scope-first", path: .redTeam, order: 1,
-      title: "Najpierw zakres i zgoda",
-      summary: "Wybierz dozwolone działania w kontrolowanym scenariuszu."),
+      title: "Forgotten FTP",
+      summary: "Rozpoznaj anonimowy udział i odszukaj pozostawioną notatkę."),
     lesson(
       id: "red-team-threat-thinking", path: .redTeam, order: 2,
-      title: "Myślenie jak tester",
-      summary: "Znajdź słaby punkt fikcyjnego systemu i zaproponuj obronę."),
+      title: "Permission Trail",
+      summary: "Zdobądź flagę użytkownika i przeanalizuj niebezpieczną regułę sudo."),
     lesson(
       id: "red-team-owned-lab-recon", path: .redTeam, order: 3,
       title: "Rozpoznanie własnego labu",
@@ -124,12 +124,12 @@ enum StarterCurriculum {
 
     lesson(
       id: "web-http-anatomy", path: .webSecurity, order: 1,
-      title: "Anatomia żądania HTTP",
-      summary: "Połącz metodę, nagłówki i kod odpowiedzi z ich znaczeniem."),
+      title: "Hidden Web",
+      summary: "Zbadaj fikcyjny serwer WWW i odkryj ujawnioną kopię."),
     lesson(
       id: "web-spot-input-risk", path: .webSecurity, order: 2,
-      title: "Ryzykowne dane wejściowe",
-      summary: "Wskaż brak walidacji w bezpiecznym fragmencie aplikacji demo."),
+      title: "Unsafe API",
+      summary: "Przeanalizuj fikcyjne odpowiedzi API i ujawniony tryb debugowania."),
     lesson(
       id: "web-session-basics", path: .webSecurity, order: 3,
       title: "Sesja i ciasteczka",
@@ -145,12 +145,12 @@ enum StarterCurriculum {
 
     lesson(
       id: "mobile-review-permissions", path: .mobileSecurity, order: 1,
-      title: "Przegląd uprawnień aplikacji",
-      summary: "Wskaż zbędne uprawnienia w przygotowanym manifeście."),
+      title: "iPhone Vault",
+      summary: "Przejrzyj fikcyjny kontener aplikacji i znajdź źle zapisany sekret."),
     lesson(
       id: "mobile-protect-local-data", path: .mobileSecurity, order: 2,
-      title: "Ochrona danych lokalnych",
-      summary: "Wybierz bezpieczne miejsce dla danych przykładowej aplikacji."),
+      title: "Mobile Traffic Inspector",
+      summary: "Zbadaj kontrolowane żądanie mobilne i wykryj brak TLS."),
     lesson(
       id: "mobile-transport-security", path: .mobileSecurity, order: 3,
       title: "Bezpieczna transmisja",

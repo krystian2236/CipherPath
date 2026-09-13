@@ -112,19 +112,19 @@
 - Consumes: `LearningLesson.id`, `LearningLesson.stages`.
 - Produces: `LearningProgress`, `LearningProgressStore.complete(stage:lessonID:)`, `LearningProgressStore.reset()`, przepływ Ścieżka → Lekcja → Misja → Wynik.
 
-- [ ] **Step 1: Write failing progress tests**
+- [x] **Step 1: Write failing progress tests**
 
   Sprawdzić kolejność etapów, brak pomijania etapów, idempotentne ukończenie, zapis i odtworzenie postępu oraz brak możliwości rozpoczęcia `comingSoon`.
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
   Uruchomić tylko nową suitę `LearningProgressTests`; oczekiwany błąd: brak `LearningProgressStore`.
 
-- [ ] **Step 3: Implement minimal local progress**
+- [x] **Step 3: Implement minimal local progress**
 
   Kodować stan jako `Codable`, zapisywać do osobnego klucza UserDefaults, wstrzykiwać `UserDefaults` w testach i nigdy nie przechowywać celów sieciowych, danych logowania ani kluczy.
 
-- [ ] **Step 4: Implement the four-stage lesson UI**
+- [x] **Step 4: Implement the four-stage lesson UI**
 
   Każdy ekran pokazuje jeden etap, jawny kontekst prawny, przygotowane dane offline, pole flagi tylko dla wbudowanej odpowiedzi oraz defensywne wyjaśnienie po zaliczeniu.
 

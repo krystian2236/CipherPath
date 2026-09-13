@@ -1,33 +1,50 @@
 import SwiftUI
 
 struct AchievementsView: View {
-  private let achievements = [
-    ("Pierwsza flaga", "Łatwe", "star.fill", Color.orange, "Ukończ pierwszą misję"),
-    ("Bez podpowiedzi", "Średnie", "leaf.fill", Color.gray, "Ukończ misję bez pomocy"),
-    ("Obrońca systemów", "Trudne", "lock.fill", Color.yellow, "Ukończ 10 misji Blue Team"),
-  ]
+  @ObservedObject var progressStore: LearningProgressStore
+
+  private var achievements: [AchievementProgress] {
+    AchievementCatalog.evaluateAll(progressStore.progress)
+  }
 
   var body: some View {
     NavigationStack {
       List {
-        ForEach(Array(achievements.enumerated()), id: \.offset) { _, item in
+        ForEach(achievements, id: \.id) { achievement in
           HStack(spacing: 15) {
-            Image(systemName: item.2)
+            Image(systemName: achievement.isUnlocked ? "medal.fill" : "lock.fill")
               .font(.title)
-              .foregroundStyle(item.3)
+              .foregroundStyle(achievement.isUnlocked ? color(achievement.rarity) : .secondary)
               .frame(width: 52, height: 52)
-              .background(item.3.opacity(0.14), in: Circle())
+              .background(color(achievement.rarity).opacity(0.14), in: Circle())
             VStack(alignment: .leading, spacing: 4) {
-              Text(item.0).font(.headline)
-              Text(item.1).font(.caption.bold()).foregroundStyle(item.3)
-              Text(item.4).font(.caption).foregroundStyle(.secondary)
-              ProgressView(value: 0, total: 1).tint(item.3)
+              Text(achievement.title).font(.headline)
+              Text(achievement.rarity.rawValue)
+                .font(.caption.bold())
+                .foregroundStyle(color(achievement.rarity))
+              Text(achievement.requirement).font(.caption).foregroundStyle(.secondary)
+              ProgressView(
+                value: Double(achievement.current),
+                total: Double(achievement.target)
+              )
+              .tint(color(achievement.rarity))
+              Text("\(achievement.current)/\(achievement.target)")
+                .font(.caption2.monospacedDigit())
+                .foregroundStyle(.secondary)
             }
           }
           .padding(.vertical, 7)
         }
       }
       .navigationTitle("Osiągnięcia")
+    }
+  }
+
+  private func color(_ rarity: AchievementRarity) -> Color {
+    switch rarity {
+    case .bronze: .orange
+    case .silver: .gray
+    case .gold: .yellow
     }
   }
 }

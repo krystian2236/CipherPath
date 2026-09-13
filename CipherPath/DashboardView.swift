@@ -2,6 +2,7 @@ import SwiftUI
 
 struct DashboardView: View {
   @Binding var selectedTab: AppTab
+  @ObservedObject var progressStore: LearningProgressStore
 
   private let featuredLesson = StarterCurriculum.lessons.first {
     $0.id == "blue-team-suspicious-login"
@@ -133,22 +134,40 @@ struct DashboardView: View {
     VStack(alignment: .leading, spacing: 12) {
       sectionHeader("Osiągnięcia", destination: .achievements)
       HStack(spacing: 10) {
-        achievementCard("Pierwsza flaga", icon: "star.fill", color: .orange)
-        achievementCard("Bez podpowiedzi", icon: "leaf.fill", color: .gray)
-        achievementCard("Obrońca", icon: "lock.fill", color: .yellow)
+        ForEach(AchievementCatalog.evaluateAll(progressStore.progress), id: \.id) { achievement in
+          achievementCard(
+            achievement.title,
+            icon: achievement.isUnlocked ? "medal.fill" : "lock.fill",
+            color: achievementColor(achievement.rarity),
+            unlocked: achievement.isUnlocked
+          )
+        }
       }
     }
   }
 
-  private func achievementCard(_ title: String, icon: String, color: Color) -> some View {
+  private func achievementCard(
+    _ title: String,
+    icon: String,
+    color: Color,
+    unlocked: Bool
+  ) -> some View {
     VStack(spacing: 8) {
-      Image(systemName: icon).font(.title2).foregroundStyle(color)
+      Image(systemName: icon).font(.title2).foregroundStyle(unlocked ? color : .secondary)
       Text(title).font(.caption2.bold()).multilineTextAlignment(.center)
     }
     .frame(maxWidth: .infinity, minHeight: 84)
     .padding(8)
     .background(.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 14))
     .overlay(RoundedRectangle(cornerRadius: 14).stroke(.white.opacity(0.1)))
+  }
+
+  private func achievementColor(_ rarity: AchievementRarity) -> Color {
+    switch rarity {
+    case .bronze: .orange
+    case .silver: .gray
+    case .gold: .yellow
+    }
   }
 
   private func sectionHeader(_ title: String, destination: AppTab) -> some View {
