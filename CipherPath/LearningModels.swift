@@ -289,12 +289,19 @@ enum StarterCurriculum {
     let proLessonIDs = [
       "fundamentals-network-addresses",
       "fundamentals-terminal-basics",
+      "fundamentals-security-evidence",
       "blue-team-file-integrity",
       "blue-team-network-baseline",
+      "blue-team-incident-notes",
       "red-team-owned-lab-recon",
       "red-team-risk-chain",
+      "red-team-defensive-report",
       "web-session-basics",
+      "web-access-control",
+      "web-security-headers",
       "mobile-transport-security",
+      "mobile-app-privacy",
+      "mobile-release-review",
     ]
     let availability: LessonAvailability =
       order <= 2 || proLessonIDs.contains(id) ? .available : .comingSoon

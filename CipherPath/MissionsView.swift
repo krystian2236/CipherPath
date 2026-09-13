@@ -1,32 +1,33 @@
 import SwiftUI
 
+enum MissionsTabPresentation: Equatable, Sendable {
+  case comingSoon
+
+  static let current: Self = .comingSoon
+
+  var showsLessonLinks: Bool { false }
+  var title: String { "Nowe wyzwania wkrótce" }
+  var message: String {
+    "Tutaj pojawią się niezależne wyzwania i dodatkowe próby sprawdzające umiejętności zdobyte w Ścieżkach."
+  }
+}
+
 struct MissionsView: View {
   @ObservedObject var progressStore: LearningProgressStore
   let accessPolicy: ContentAccessPolicy
-
-  private var availableLessons: [LearningLesson] {
-    StarterCurriculum.lessons.filter { accessPolicy.access(for: $0) == .included }
-  }
 
   var body: some View {
     NavigationStack {
       List {
         Section {
-          Label("Ćwiczenia działają na wbudowanych danych i w legalnych labach.", systemImage: "lock.shield")
-            .font(.footnote)
-            .foregroundStyle(.secondary)
+          DevLocationLabel(location: .missions)
         }
-        Section("Gotowe do rozpoczęcia") {
-          ForEach(availableLessons) { lesson in
-            NavigationLink {
-              MissionBriefingView(lesson: lesson, progressStore: progressStore)
-            } label: {
-              VStack(alignment: .leading, spacing: 4) {
-                Text(lesson.title).font(.headline)
-                Text(lesson.path.title).font(.caption).foregroundStyle(.secondary)
-              }
-            }
-          }
+        Section {
+          ContentUnavailableView(
+            MissionsTabPresentation.current.title,
+            systemImage: "sparkles.rectangle.stack",
+            description: Text(MissionsTabPresentation.current.message)
+          )
         }
       }
       .navigationTitle("Misje")

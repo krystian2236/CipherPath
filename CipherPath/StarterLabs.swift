@@ -15,20 +15,27 @@ enum StarterLabs {
     networkScout,
     privateAddresses,
     terminalBasics,
+    securityEvidence,
     logHunter,
     incidentLockdown,
     fileIntegrity,
     networkBaseline,
+    incidentNotes,
     forgottenFTP,
     permissionTrail,
     ownedLabRecon,
     riskChain,
+    defensiveReport,
     hiddenWeb,
     unsafeAPI,
     sessionBasics,
+    accessControl,
+    securityHeaders,
     iPhoneVault,
     mobileTrafficInspector,
     secureTransport,
+    appPrivacy,
+    releaseReview,
   ]
 
   static func definition(for lesson: LearningLesson) -> LabDefinition? {
@@ -41,20 +48,27 @@ enum StarterLabs {
     case "fundamentals-read-port-scan": networkScout
     case "fundamentals-network-addresses": privateAddresses
     case "fundamentals-terminal-basics": terminalBasics
+    case "fundamentals-security-evidence": securityEvidence
     case "blue-team-find-log-event": logHunter
     case "blue-team-suspicious-login": incidentLockdown
     case "blue-team-file-integrity": fileIntegrity
     case "blue-team-network-baseline": networkBaseline
+    case "blue-team-incident-notes": incidentNotes
     case "red-team-scope-first": forgottenFTP
     case "red-team-threat-thinking": permissionTrail
     case "red-team-owned-lab-recon": ownedLabRecon
     case "red-team-risk-chain": riskChain
+    case "red-team-defensive-report": defensiveReport
     case "web-http-anatomy": hiddenWeb
     case "web-spot-input-risk": unsafeAPI
     case "web-session-basics": sessionBasics
+    case "web-access-control": accessControl
+    case "web-security-headers": securityHeaders
     case "mobile-review-permissions": iPhoneVault
     case "mobile-protect-local-data": mobileTrafficInspector
     case "mobile-transport-security": secureTransport
+    case "mobile-app-privacy": appPrivacy
+    case "mobile-release-review": releaseReview
     default: nil
     }
   }
@@ -222,6 +236,51 @@ enum StarterLabs {
     defenseSummary: "Przed wykonaniem polecenia sprawdź katalog i pliki. Rozpoczynaj od operacji tylko do odczytu i unikaj pracy na sekretach."
   )
 
+  private static let securityEvidence = LabDefinition(
+    id: "security-evidence",
+    title: "Dowody i notatki",
+    targetAddress: "192.0.2.14",
+    allowedPrograms: ["find", "cat", "sha256sum"],
+    rules: [
+      LabRule(
+        command: .find(arguments: ["/case", "-type", "f"]),
+        output: "/case/source/auth.log\n/case/notes/template.txt",
+        discovery: "Odnaleziono oryginalny log i pusty szablon notatki",
+        objectiveID: "inventory"
+      ),
+      LabRule(
+        command: .sha256sum(path: "/case/source/auth.log"),
+        output: "7dfb4cf67742f5d225ae876c95c98a83  /case/source/auth.log",
+        discovery: "Zapisano sumę kontrolną materiału źródłowego",
+        objectiveID: "integrity"
+      ),
+      LabRule(
+        command: .cat(path: "/case/notes/template.txt"),
+        output: "time=11:42\nsource=auth.log\nobservation=failed login burst\nsecrets=do not copy\nCIPHER{NOTE_FACTS_NOT_SECRETS}",
+        discovery: "Notatka zawiera fakty i odwołanie do dowodu, ale nie sekrety",
+        objectiveID: "notes"
+      ),
+    ],
+    objectives: [
+      LabObjective(id: "inventory", title: "Znajdź materiał źródłowy i szablon"),
+      LabObjective(id: "integrity", title: "Ustal sumę kontrolną dowodu"),
+      LabObjective(id: "notes", title: "Odczytaj bezpieczny format notatki"),
+    ],
+    flags: [
+      LabFlag(
+        id: "evidence", value: "CIPHER{NOTE_FACTS_NOT_SECRETS}",
+        answer: "Notuj fakty i odwołania, ale nie sekrety",
+        requiredObjectiveIDs: ["inventory", "integrity", "notes"]
+      )
+    ],
+    suggestedCommands: [
+      "find /case -type f",
+      "sha256sum /case/source/auth.log",
+      "cat /case/notes/template.txt",
+    ],
+    defenseSummary: "Zachowuj oryginał dowodu, zapisuj jego sumę kontrolną i dokumentuj fakty. Nie kopiuj haseł, tokenów ani kluczy do notatek."
+  )
+
   private static let logHunter = LabDefinition(
     id: "log-hunter",
     title: "Log Hunter",
@@ -378,6 +437,51 @@ enum StarterLabs {
       "cat /traffic/change-log.txt",
     ],
     defenseSummary: "Utrzymuj zatwierdzony profil usług i wyjaśniaj każdą różnicę. Sama anomalia jest sygnałem do analizy, a nie automatycznym dowodem ataku."
+  )
+
+  private static let incidentNotes = LabDefinition(
+    id: "incident-notes",
+    title: "Pierwsza reakcja na incydent",
+    targetAddress: "192.0.2.24",
+    allowedPrograms: ["find", "cat", "id"],
+    rules: [
+      LabRule(
+        command: .find(arguments: ["/incident", "-type", "f"]),
+        output: "/incident/alert.txt\n/incident/playbook.txt\n/incident/evidence/session.log",
+        discovery: "Dostępne są alert, playbook i zapis podejrzanej sesji",
+        objectiveID: "collect"
+      ),
+      LabRule(
+        command: .cat(path: "/incident/playbook.txt"),
+        output: "1 preserve evidence\n2 validate scope\n3 isolate after preserve\n4 recover and review",
+        discovery: "Playbook wymaga zabezpieczenia śladów przed izolacją",
+        objectiveID: "sequence"
+      ),
+      LabRule(
+        command: .id,
+        output: "responder uid=1002 groups=evidence-readonly\nCIPHER{PRESERVE_VALIDATE_CONTAIN}",
+        discovery: "Rola respondera ma wyłącznie dostęp do odczytu materiału",
+        objectiveID: "role"
+      ),
+    ],
+    objectives: [
+      LabObjective(id: "collect", title: "Zidentyfikuj dostępny materiał"),
+      LabObjective(id: "sequence", title: "Ustal kolejność pierwszej reakcji"),
+      LabObjective(id: "role", title: "Potwierdź bezpieczne uprawnienia analityka"),
+    ],
+    flags: [
+      LabFlag(
+        id: "response", value: "CIPHER{PRESERVE_VALIDATE_CONTAIN}",
+        answer: "Zachowaj ślady, potwierdź zakres, potem izoluj",
+        requiredObjectiveIDs: ["collect", "sequence", "role"]
+      )
+    ],
+    suggestedCommands: [
+      "find /incident -type f",
+      "cat /incident/playbook.txt",
+      "id",
+    ],
+    defenseSummary: "Pierwsza reakcja powinna zachować dowody, potwierdzić zakres i dopiero potem ograniczyć zagrożenie. Każdy krok zapisuj z czasem."
   )
 
   private static let forgottenFTP = LabDefinition(
@@ -580,6 +684,51 @@ enum StarterLabs {
     defenseSummary: "Oceniaj łączny wpływ drobnych błędów. Ogranicz panel administracyjny, wyłącz diagnostykę i nie publikuj notatek wdrożeniowych."
   )
 
+  private static let defensiveReport = LabDefinition(
+    id: "defensive-report",
+    title: "Raport z rekomendacją",
+    targetAddress: "192.0.2.34",
+    allowedPrograms: ["nmap", "curl", "cat"],
+    rules: [
+      LabRule(
+        command: .nmap(options: ["-sV"], target: "192.0.2.34"),
+        output: "8080/tcp open http TrainingConsole 1.1",
+        discovery: "Konsola szkoleniowa jest wystawiona na porcie 8080",
+        objectiveID: "evidence"
+      ),
+      LabRule(
+        command: .curl(url: "http://192.0.2.34:8080/status"),
+        output: "HTTP/1.1 200 OK\nauth=disabled\ndata=deployment-status",
+        discovery: "Status wdrożenia jest dostępny bez uwierzytelnienia",
+        objectiveID: "impact"
+      ),
+      LabRule(
+        command: .cat(path: "/report/remediation.txt"),
+        output: "evidence=8080 open\nimpact=deployment data exposed\nfix=require authentication and restrict network\nCIPHER{EVIDENCE_IMPACT_FIX}",
+        discovery: "Raport łączy dowód, wpływ i możliwą do wdrożenia naprawę",
+        objectiveID: "recommendation"
+      ),
+    ],
+    objectives: [
+      LabObjective(id: "evidence", title: "Zbierz powtarzalny dowód"),
+      LabObjective(id: "impact", title: "Opisz rzeczywisty wpływ"),
+      LabObjective(id: "recommendation", title: "Dobierz konkretną naprawę"),
+    ],
+    flags: [
+      LabFlag(
+        id: "report", value: "CIPHER{EVIDENCE_IMPACT_FIX}",
+        answer: "Raport łączy dowód, wpływ i naprawę",
+        requiredObjectiveIDs: ["evidence", "impact", "recommendation"]
+      )
+    ],
+    suggestedCommands: [
+      "nmap -sV 192.0.2.34",
+      "curl http://192.0.2.34:8080/status",
+      "cat /report/remediation.txt",
+    ],
+    defenseSummary: "Dobry raport oddziela dowód od oceny wpływu i zawiera możliwą do sprawdzenia naprawę: uwierzytelnienie oraz ograniczenie dostępu sieciowego."
+  )
+
   private static let hiddenWeb = LabDefinition(
     id: "hidden-web",
     title: "Hidden Web",
@@ -709,6 +858,96 @@ enum StarterLabs {
     defenseSummary: "Ciasteczka sesyjne ustawiaj z Secure, HttpOnly i właściwym SameSite, a logowanie udostępniaj wyłącznie przez HTTPS."
   )
 
+  private static let accessControl = LabDefinition(
+    id: "access-control",
+    title: "Kontrola dostępu",
+    targetAddress: "192.0.2.43",
+    allowedPrograms: ["curl"],
+    rules: [
+      LabRule(
+        command: .curl(url: "http://192.0.2.43/access-matrix"),
+        output: "resource=/records/admin\nadmin=allow\nviewer=deny",
+        discovery: "Macierz wymaga odrzucenia roli viewer dla danych administratora",
+        objectiveID: "policy"
+      ),
+      LabRule(
+        command: .curl(url: "http://192.0.2.43/as-viewer/records/admin"),
+        output: "HTTP/1.1 200 OK\nviewer=200 admin-record",
+        discovery: "Serwer błędnie udostępnia rekord administratora roli viewer",
+        objectiveID: "verify"
+      ),
+      LabRule(
+        command: .curl(url: "http://192.0.2.43/security-review"),
+        output: "expected=403 Forbidden\ncontrol=authorize every object request\nCIPHER{DENY_VIEWER_ADMIN_OBJECT}",
+        discovery: "Kontrola powinna zwracać 403 i sprawdzać każdy obiekt",
+        objectiveID: "remediation"
+      ),
+    ],
+    objectives: [
+      LabObjective(id: "policy", title: "Odczytaj oczekiwaną macierz dostępu"),
+      LabObjective(id: "verify", title: "Sprawdź odpowiedź dla roli viewer"),
+      LabObjective(id: "remediation", title: "Ustal właściwą kontrolę serwera"),
+    ],
+    flags: [
+      LabFlag(
+        id: "access", value: "CIPHER{DENY_VIEWER_ADMIN_OBJECT}",
+        answer: "Rola viewer nie może odczytać obiektu administratora",
+        requiredObjectiveIDs: ["policy", "verify", "remediation"]
+      )
+    ],
+    suggestedCommands: [
+      "curl http://192.0.2.43/access-matrix",
+      "curl http://192.0.2.43/as-viewer/records/admin",
+      "curl http://192.0.2.43/security-review",
+    ],
+    defenseSummary: "Autoryzację sprawdzaj po stronie serwera dla każdego żądania i obiektu. Ukrycie przycisku w interfejsie nie zastępuje kontroli dostępu."
+  )
+
+  private static let securityHeaders = LabDefinition(
+    id: "security-headers",
+    title: "Nagłówki ochronne",
+    targetAddress: "192.0.2.44",
+    allowedPrograms: ["curl"],
+    rules: [
+      LabRule(
+        command: .curl(url: "http://192.0.2.44"),
+        output: "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Security-Policy: missing\nStrict-Transport-Security: missing\nX-Content-Type-Options: missing",
+        discovery: "Odpowiedź nie zawiera trzech oczekiwanych nagłówków ochronnych",
+        objectiveID: "inspect"
+      ),
+      LabRule(
+        command: .curl(url: "http://192.0.2.44/security-policy"),
+        output: "require_https=true\ncsp=default-src 'self'\nx_content_type_options=nosniff",
+        discovery: "Polityka opisuje wymagane zabezpieczenia odpowiedzi",
+        objectiveID: "policy"
+      ),
+      LabRule(
+        command: .curl(url: "http://192.0.2.44/security-review"),
+        output: "fix=HTTPS,HSTS,CSP,nosniff\nCIPHER{HEADERS_REDUCE_BROWSER_RISK}",
+        discovery: "Przegląd łączy wymuszenie HTTPS z ochroną przeglądarki",
+        objectiveID: "remediation"
+      ),
+    ],
+    objectives: [
+      LabObjective(id: "inspect", title: "Sprawdź nagłówki odpowiedzi"),
+      LabObjective(id: "policy", title: "Porównaj je z polityką aplikacji"),
+      LabObjective(id: "remediation", title: "Dobierz brakujące zabezpieczenia"),
+    ],
+    flags: [
+      LabFlag(
+        id: "headers", value: "CIPHER{HEADERS_REDUCE_BROWSER_RISK}",
+        answer: "Nagłówki ochronne ograniczają ryzyko w przeglądarce",
+        requiredObjectiveIDs: ["inspect", "policy", "remediation"]
+      )
+    ],
+    suggestedCommands: [
+      "curl http://192.0.2.44",
+      "curl http://192.0.2.44/security-policy",
+      "curl http://192.0.2.44/security-review",
+    ],
+    defenseSummary: "Wymuszaj HTTPS, dodaj HSTS, restrykcyjne CSP i nosniff. Nagłówki wspierają ochronę, ale nie zastępują walidacji i autoryzacji serwera."
+  )
+
   private static let iPhoneVault = LabDefinition(
     id: "iphone-vault",
     title: "iPhone Vault",
@@ -834,5 +1073,95 @@ enum StarterLabs {
       "cat /app/security-review.txt",
     ],
     defenseSummary: "Usuń szeroki wyjątek ATS, używaj HTTPS i poprawnie weryfikuj certyfikat serwera. Wyjątki ograniczaj do udokumentowanego minimum."
+  )
+
+  private static let appPrivacy = LabDefinition(
+    id: "app-privacy",
+    title: "Prywatność aplikacji",
+    targetAddress: "192.0.2.53",
+    allowedPrograms: ["find", "cat"],
+    rules: [
+      LabRule(
+        command: .find(arguments: ["/privacy", "-type", "f"]),
+        output: "/privacy/data-usage.txt\n/privacy/PrivacyInfo.xcprivacy",
+        discovery: "Odnaleziono opis użycia danych oraz manifest prywatności",
+        objectiveID: "inventory"
+      ),
+      LabRule(
+        command: .cat(path: "/privacy/data-usage.txt"),
+        output: "device_id=local diagnostics\nlocation=unused\ncontacts=unused\ntracking=false",
+        discovery: "Aplikacja używa wyłącznie lokalnego identyfikatora diagnostycznego",
+        objectiveID: "usage"
+      ),
+      LabRule(
+        command: .cat(path: "/privacy/PrivacyInfo.xcprivacy"),
+        output: "collected_data=device_id\npurpose=app_functionality\nlinked=false\ntracking=false\nCIPHER{DECLARE_ONLY_USED_DATA}",
+        discovery: "Manifest odpowiada faktycznemu użyciu danych",
+        objectiveID: "declaration"
+      ),
+    ],
+    objectives: [
+      LabObjective(id: "inventory", title: "Znajdź opis danych i manifest prywatności"),
+      LabObjective(id: "usage", title: "Ustal faktyczne użycie danych"),
+      LabObjective(id: "declaration", title: "Porównaj użycie z deklaracją"),
+    ],
+    flags: [
+      LabFlag(
+        id: "privacy", value: "CIPHER{DECLARE_ONLY_USED_DATA}",
+        answer: "Deklaruj wyłącznie faktycznie używane dane",
+        requiredObjectiveIDs: ["inventory", "usage", "declaration"]
+      )
+    ],
+    suggestedCommands: [
+      "find /privacy -type f",
+      "cat /privacy/data-usage.txt",
+      "cat /privacy/PrivacyInfo.xcprivacy",
+    ],
+    defenseSummary: "Inwentaryzuj dane przed wydaniem, usuwaj zbędne zbieranie i utrzymuj manifest prywatności zgodny z rzeczywistym działaniem aplikacji."
+  )
+
+  private static let releaseReview = LabDefinition(
+    id: "release-review",
+    title: "Kontrola przed wydaniem",
+    targetAddress: "192.0.2.54",
+    allowedPrograms: ["find", "cat", "sha256sum"],
+    rules: [
+      LabRule(
+        command: .find(arguments: ["/release", "-type", "f"]),
+        output: "/release/CipherPath.ipa\n/release/checklist.txt\n/release/expected.sha256",
+        discovery: "Pakiet, lista kontrolna i zaufana suma są gotowe do przeglądu",
+        objectiveID: "inventory"
+      ),
+      LabRule(
+        command: .sha256sum(path: "/release/CipherPath.ipa"),
+        output: "6f1ed002ab5595859014ebf0951522d9  /release/CipherPath.ipa",
+        discovery: "Suma pakietu odpowiada wartości przygotowanej do wydania",
+        objectiveID: "integrity"
+      ),
+      LabRule(
+        command: .cat(path: "/release/checklist.txt"),
+        output: "privacy_manifest=pass\npermissions=minimum\ntracking=none\nsecrets=none\nbundle_integrity=pass\nCIPHER{RELEASE_CHECKS_COMPLETE}",
+        discovery: "Lista kontroli potwierdza prywatność, minimalne uprawnienia i brak sekretów",
+        objectiveID: "checklist"
+      ),
+    ],
+    objectives: [
+      LabObjective(id: "inventory", title: "Znajdź komplet artefaktów wydania"),
+      LabObjective(id: "integrity", title: "Sprawdź integralność paczki"),
+      LabObjective(id: "checklist", title: "Zweryfikuj listę kontroli wydania"),
+    ],
+    flags: [
+      LabFlag(
+        id: "release", value: "CIPHER{RELEASE_CHECKS_COMPLETE}",
+        answer: "Wydanie spełnia kompletną listę kontroli",
+        requiredObjectiveIDs: ["inventory", "integrity", "checklist"]
+      )
+    ],
+    suggestedCommands: [
+      "find /release -type f",
+      "sha256sum /release/CipherPath.ipa",
+      "cat /release/checklist.txt",
+    ],
+    defenseSummary: "Przed wydaniem sprawdź prywatność, uprawnienia, sekrety, podpis i integralność paczki. Wynik zapisuj jako powtarzalną listę kontrolną."
   )
 }

@@ -6,26 +6,31 @@ struct LearningPathDetailView: View {
   let accessPolicy: ContentAccessPolicy
 
   var body: some View {
-    List(StarterCurriculum.lessons(in: path)) { lesson in
-      if accessPolicy.access(for: lesson) == .included {
-        NavigationLink {
-          MissionBriefingView(lesson: lesson, progressStore: progressStore)
-        } label: {
+    List {
+      Section {
+        DevLocationLabel(location: .paths)
+      }
+      ForEach(StarterCurriculum.lessons(in: path)) { lesson in
+        if accessPolicy.access(for: lesson) == .included {
+          NavigationLink {
+            MissionBriefingView(lesson: lesson, progressStore: progressStore)
+          } label: {
+            LessonRow(
+              lesson: lesson,
+              path: path,
+              access: .included,
+              isCompleted: progressStore.isCompleted(lessonID: lesson.id)
+            )
+          }
+        } else {
           LessonRow(
             lesson: lesson,
             path: path,
-            access: .included,
-            isCompleted: progressStore.isCompleted(lessonID: lesson.id)
+            access: accessPolicy.access(for: lesson),
+            isCompleted: false
           )
+            .opacity(0.48)
         }
-      } else {
-        LessonRow(
-          lesson: lesson,
-          path: path,
-          access: accessPolicy.access(for: lesson),
-          isCompleted: false
-        )
-          .opacity(0.48)
       }
     }
     .navigationTitle(path.title)
@@ -43,6 +48,7 @@ private struct LessonRow: View {
       Image(systemName: iconName)
         .foregroundStyle(lesson.availability == .available ? path.tint : .secondary)
       VStack(alignment: .leading, spacing: 4) {
+        DevLocationLabel(location: .missionCard)
         Text("Lekcja \(lesson.order)").font(.caption).foregroundStyle(.secondary)
         Text(lesson.title).font(.headline)
         Text(lesson.summary).font(.caption).foregroundStyle(.secondary)

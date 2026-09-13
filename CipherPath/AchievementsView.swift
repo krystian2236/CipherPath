@@ -10,6 +10,9 @@ struct AchievementsView: View {
   var body: some View {
     NavigationStack {
       List {
+        Section {
+          DevLocationLabel(location: .achievements)
+        }
         ForEach(achievements, id: \.id) { achievement in
           HStack(spacing: 15) {
             Image(systemName: achievement.isUnlocked ? "medal.fill" : "lock.fill")

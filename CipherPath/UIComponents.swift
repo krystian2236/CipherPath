@@ -1,4 +1,72 @@
 import SwiftUI
+import UIKit
+
+enum DevLocation: String, CaseIterable, Sendable {
+  case dashboard = "START"
+  case dashboardMission = "START / DZISIEJSZA MISJA"
+  case dashboardPaths = "START / ŚCIEŻKI"
+  case paths = "ŚCIEŻKI"
+  case pathCard = "KARTA ŚCIEŻKI"
+  case missions = "MISJE"
+  case missionCard = "MISJE / KARTA MISJI"
+  case briefing = "ODPRAWA"
+  case labMode = "LAB / TRYB"
+  case labMachine = "LAB / MASZYNA"
+  case labObjectives = "LAB / CELE"
+  case labTerminal = "LAB / TERMINAL"
+  case labAnswer = "LAB / ODPOWIEDŹ"
+  case labDefense = "LAB / OBRONA"
+  case practice = "PRAKTYKA"
+  case achievements = "OSIĄGNIĘCIA"
+  case points = "PUNKTY"
+
+  var label: String { "[DEV: \(rawValue)]" }
+  var copyValue: String { "DEV: \(rawValue)" }
+
+  static func isVisible(in distribution: AppDistributionMode) -> Bool {
+    distribution == .developer
+  }
+}
+
+struct DevLocationLabel: View {
+  let location: DevLocation
+  var distribution: AppDistributionMode = .currentBuild
+  @State private var copied = false
+
+  var body: some View {
+    if DevLocation.isVisible(in: distribution) {
+      HStack(spacing: 4) {
+        Text(location.label)
+        if copied {
+          Image(systemName: "checkmark")
+        }
+      }
+        .font(.caption2.monospaced().weight(.semibold))
+        .foregroundStyle(.secondary)
+        .lineLimit(1)
+        .minimumScaleFactor(0.55)
+        .contentShape(Rectangle())
+        .onTapGesture(perform: copyLocation)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(location.label)
+        .accessibilityHint("Kopiuje nazwę części aplikacji")
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction { copyLocation() }
+    }
+  }
+
+  private func copyLocation() {
+    UIPasteboard.general.string = location.copyValue
+    copied = true
+    UIAccessibility.post(
+      notification: .announcement,
+      argument: "Skopiowano \(location.copyValue)"
+    )
+    DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+      copied = false
+    }
+  }
+}
 
 struct ToolCard<Content: View>: View {
   let icon: String

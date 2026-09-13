@@ -16,11 +16,11 @@ struct StarterCurriculumTests {
     )
   }
 
-  @Test("Pro exposes the current eighteen-mission catalog")
+  @Test("Pro exposes the complete twenty-five-mission catalog")
   func keepsReleaseAvailabilityPerPath() {
     for path in LearningPath.allCases {
       let lessons = StarterCurriculum.lessons(in: path)
-      let releasedCount = path == .webSecurity ? 3 : (path == .mobileSecurity ? 3 : 4)
+      let releasedCount = 5
       #expect(lessons.filter { $0.availability == .available }.count == releasedCount)
       #expect(lessons.filter { $0.availability == .comingSoon }.count == 5 - releasedCount)
       #expect(lessons.map(\.order) == [1, 2, 3, 4, 5])
@@ -33,7 +33,7 @@ struct StarterCurriculumTests {
       $0.availability == .available
     }
 
-    #expect(availableLessons.count == 18)
+    #expect(availableLessons.count == 25)
     #expect(
       availableLessons.allSatisfy {
         $0.stages == [.learn, .check, .findFlag, .explanation]
@@ -59,6 +59,23 @@ struct StarterCurriculumTests {
 
 @Suite("Content access")
 struct ContentAccessTests {
+  @Test("Missions tab stays non-interactive until independent challenges arrive")
+  func missionsTabIsComingSoon() {
+    #expect(MissionsTabPresentation.current == .comingSoon)
+    #expect(!MissionsTabPresentation.current.showsLessonLinks)
+  }
+
+  @Test("Developer location labels are stable and hidden from store builds")
+  func developerLocationLabelsIdentifyAppParts() {
+    #expect(DevLocation.dashboardMission.label == "[DEV: START / DZISIEJSZA MISJA]")
+    #expect(DevLocation.pathCard.label == "[DEV: KARTA ŚCIEŻKI]")
+    #expect(DevLocation.labTerminal.label == "[DEV: LAB / TERMINAL]")
+    #expect(DevLocation.labTerminal.copyValue == "DEV: LAB / TERMINAL")
+    #expect(DevLocation.achievements.label == "[DEV: OSIĄGNIĘCIA]")
+    #expect(DevLocation.isVisible(in: .developer))
+    #expect(!DevLocation.isVisible(in: .appStore))
+  }
+
   @Test("Adventure selector is available only in the developer build")
   func adventureVisibilityFollowsDistribution() {
     #expect(AppDistributionMode.developer.showsAdventureMode)
@@ -70,12 +87,12 @@ struct ContentAccessTests {
     let pro = ContentAccessPolicy(tier: .pro)
     let demo = ContentAccessPolicy(tier: .testFlightDemo)
 
-    #expect(PathCardSummary.make(for: .blueTeam, policy: pro).includedCount == 4)
-    #expect(PathCardSummary.make(for: .blueTeam, policy: pro).remainingCount == 1)
-    #expect(PathCardSummary.make(for: .webSecurity, policy: pro).includedCount == 3)
-    #expect(PathCardSummary.make(for: .fundamentals, policy: pro).includedCount == 4)
-    #expect(PathCardSummary.make(for: .redTeam, policy: pro).includedCount == 4)
-    #expect(PathCardSummary.make(for: .mobileSecurity, policy: pro).includedCount == 3)
+    #expect(PathCardSummary.make(for: .blueTeam, policy: pro).includedCount == 5)
+    #expect(PathCardSummary.make(for: .blueTeam, policy: pro).remainingCount == 0)
+    #expect(PathCardSummary.make(for: .webSecurity, policy: pro).includedCount == 5)
+    #expect(PathCardSummary.make(for: .fundamentals, policy: pro).includedCount == 5)
+    #expect(PathCardSummary.make(for: .redTeam, policy: pro).includedCount == 5)
+    #expect(PathCardSummary.make(for: .mobileSecurity, policy: pro).includedCount == 5)
 
     for path in LearningPath.allCases {
       #expect(PathCardSummary.make(for: path, policy: demo).includedCount == 2)

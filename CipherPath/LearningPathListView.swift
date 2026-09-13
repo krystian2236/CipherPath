@@ -6,26 +6,32 @@ struct LearningPathListView: View {
 
   var body: some View {
     NavigationStack {
-      List(StarterCurriculum.paths, id: \.self) { path in
-        NavigationLink {
-          LearningPathDetailView(
-            path: path,
-            progressStore: progressStore,
-            accessPolicy: accessPolicy
-          )
-        } label: {
-          VStack(alignment: .leading, spacing: 6) {
-            Label(path.title, systemImage: path.iconName).font(.headline)
-            Text(accessSummary(for: path))
-              .font(.caption)
-              .foregroundStyle(.secondary)
-            ProgressView(
-              value: Double(accessPolicy.includedLessons(in: path)),
-              total: 5
+      List {
+        Section {
+          DevLocationLabel(location: .paths)
+        }
+        ForEach(StarterCurriculum.paths, id: \.self) { path in
+          NavigationLink {
+            LearningPathDetailView(
+              path: path,
+              progressStore: progressStore,
+              accessPolicy: accessPolicy
             )
-            .tint(path.tint)
+          } label: {
+            VStack(alignment: .leading, spacing: 6) {
+              DevLocationLabel(location: .pathCard)
+              Label(path.title, systemImage: path.iconName).font(.headline)
+              Text(accessSummary(for: path))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+              ProgressView(
+                value: Double(accessPolicy.includedLessons(in: path)),
+                total: 5
+              )
+              .tint(path.tint)
+            }
+            .padding(.vertical, 6)
           }
-          .padding(.vertical, 6)
         }
       }
       .navigationTitle("Ścieżki")

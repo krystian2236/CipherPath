@@ -113,6 +113,9 @@ private struct PracticeHubView: View {
     NavigationStack {
       List {
         Section {
+          DevLocationLabel(location: .practice)
+        }
+        Section {
           InfoBanner(
             icon: "lock.shield.fill",
             title: "Tylko własne środowisko",

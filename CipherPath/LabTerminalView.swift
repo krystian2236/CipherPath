@@ -50,6 +50,7 @@ struct LabTerminalView: View {
 
       if distribution.showsAdventureMode {
         Section("Tryb") {
+          DevLocationLabel(location: .labMode)
           Picker("Sposób gry", selection: $mode) {
             Text("Prowadzony").tag(LabMode.guided)
             Text("Przygodowy").tag(LabMode.adventure)
@@ -62,6 +63,7 @@ struct LabTerminalView: View {
       }
 
       Section("Wirtualna maszyna") {
+        DevLocationLabel(location: .labMachine)
         HStack {
           VStack(alignment: .leading, spacing: 3) {
             Text(definition.title).font(.headline)
@@ -85,17 +87,19 @@ struct LabTerminalView: View {
 
       if mode == .guided {
         Section("Cele") {
-        ForEach(definition.objectives, id: \.id) { objective in
-          Label(
-            objective.title,
-            systemImage: session.completedObjectiveIDs.contains(objective.id) ? "checkmark.circle.fill" : "circle"
-          )
-          .foregroundStyle(session.completedObjectiveIDs.contains(objective.id) ? .green : .primary)
+          DevLocationLabel(location: .labObjectives)
+          ForEach(definition.objectives, id: \.id) { objective in
+            Label(
+              objective.title,
+              systemImage: session.completedObjectiveIDs.contains(objective.id) ? "checkmark.circle.fill" : "circle"
+            )
+            .foregroundStyle(session.completedObjectiveIDs.contains(objective.id) ? .green : .primary)
+          }
         }
-      }
       }
 
       Section("Terminal") {
+        DevLocationLabel(location: .labTerminal)
         terminalOutput
 
         HStack(alignment: .bottom) {
@@ -170,6 +174,7 @@ struct LabTerminalView: View {
       }
 
       Section("Odpowiedź") {
+        DevLocationLabel(location: .labAnswer)
         TextField("Odnaleziona odpowiedź", text: $answerInput)
           .textInputAutocapitalization(.sentences)
           .autocorrectionDisabled()
@@ -195,6 +200,7 @@ struct LabTerminalView: View {
 
       if allFlagsCaptured {
         Section("Jak się bronić") {
+          DevLocationLabel(location: .labDefense)
           Text(definition.defenseSummary)
           Button("Zakończ misję", action: finishMission)
             .buttonStyle(.borderedProminent)

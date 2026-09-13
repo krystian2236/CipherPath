@@ -56,6 +56,9 @@ struct PointsView: View {
   var body: some View {
     List {
       Section {
+        DevLocationLabel(location: .points, distribution: distribution)
+      }
+      Section {
         VStack(alignment: .leading, spacing: 8) {
           Label("Saldo", systemImage: "sparkles")
             .font(.headline)

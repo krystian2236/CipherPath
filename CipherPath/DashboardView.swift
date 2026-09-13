@@ -55,6 +55,7 @@ struct DashboardView: View {
     NavigationStack {
       ScrollView {
         LazyVStack(alignment: .leading, spacing: 22) {
+          DevLocationLabel(location: .dashboard)
           header
           missionCard
           missionStages
@@ -91,6 +92,7 @@ struct DashboardView: View {
 
   private var missionCard: some View {
     VStack(alignment: .leading, spacing: 14) {
+      DevLocationLabel(location: .dashboardMission)
       Text("Dzisiejsza misja").font(.largeTitle.bold())
       Text("Realna wiedza. Bezpieczniejszy świat.").foregroundStyle(.secondary)
       VStack(alignment: .leading, spacing: 12) {
@@ -148,6 +150,7 @@ struct DashboardView: View {
 
   private var pathSection: some View {
     VStack(alignment: .leading, spacing: 12) {
+      DevLocationLabel(location: .dashboardPaths)
       sectionHeader("Twoje ścieżki", destination: .paths)
       ScrollView(.horizontal, showsIndicators: false) {
         HStack(spacing: 10) {
@@ -161,6 +164,7 @@ struct DashboardView: View {
               )
             } label: {
               VStack(alignment: .leading, spacing: 9) {
+                DevLocationLabel(location: .pathCard)
                 Image(systemName: path.iconName).font(.title2).foregroundStyle(path.tint)
                 Text(path.shortTitle).font(.subheadline.bold())
                 HStack(spacing: 4) {

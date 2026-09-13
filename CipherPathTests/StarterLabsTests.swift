@@ -47,20 +47,14 @@ struct StarterLabsTests {
 
   @Test("Does not attach a lab to an unrelated lesson")
   func leavesClassicLessonsUnchanged() {
-    #expect(StarterLabs.definition(for: "blue-team-incident-notes") == nil)
+    #expect(StarterLabs.definition(for: "unknown-lesson") == nil)
   }
 
-  @Test("Routes mapped lessons to a lab and keeps other lessons classic")
+  @Test("Routes every released lesson to an interactive lab")
   func selectsTheCorrectLessonExperience() throws {
-    let labLesson = try #require(
-      StarterCurriculum.lessons.first { $0.id == networkLessonID }
-    )
-    let classicLesson = try #require(
-      StarterCurriculum.lessons.first { $0.id == "blue-team-incident-notes" }
-    )
-
-    #expect(LessonExperience.resolve(for: labLesson) == .interactiveLab)
-    #expect(LessonExperience.resolve(for: classicLesson) == .classic)
+    for lesson in StarterCurriculum.lessons {
+      #expect(LessonExperience.resolve(for: lesson) == .interactiveLab)
+    }
   }
 
   @Test("Provides two diverse labs for every learning path")
@@ -70,9 +64,9 @@ struct StarterLabsTests {
     }
     let definitions = availableLessons.compactMap(StarterLabs.definition(for:))
 
-    #expect(availableLessons.count == 18)
-    #expect(definitions.count == 18)
-    #expect(Set(definitions.map(\.id)).count == 18)
+    #expect(availableLessons.count == 25)
+    #expect(definitions.count == 25)
+    #expect(Set(definitions.map(\.id)).count == 25)
     #expect(Set(definitions.map(\.allowedPrograms)).count >= 5)
     #expect(definitions.contains { $0.flags.count == 2 })
 
@@ -80,9 +74,49 @@ struct StarterLabsTests {
       let pathDefinitions = StarterCurriculum.lessons(in: path)
         .filter { $0.availability == .available }
         .compactMap(StarterLabs.definition(for:))
-      let expectedCount = path == .webSecurity ? 3 : (path == .mobileSecurity ? 3 : 4)
-      #expect(pathDefinitions.count == expectedCount)
+      #expect(pathDefinitions.count == 5)
     }
+  }
+
+  @Test("Completes the catalog with headers, privacy, and release review labs")
+  func addsFinalThreeLabs() throws {
+    let headers = try #require(
+      StarterLabs.definition(for: "web-security-headers")
+    )
+    let privacy = try #require(
+      StarterLabs.definition(for: "mobile-app-privacy")
+    )
+    let release = try #require(
+      StarterLabs.definition(for: "mobile-release-review")
+    )
+
+    #expect(headers.allowedPrograms == ["curl"])
+    #expect(headers.rules.contains { $0.output.contains("Strict-Transport-Security: missing") })
+    #expect(privacy.rules.contains { $0.output.contains("PrivacyInfo.xcprivacy") })
+    #expect(release.allowedPrograms.contains("sha256sum"))
+    #expect(release.flags.first?.answer == "Wydanie spełnia kompletną listę kontroli")
+  }
+
+  @Test("Adds evidence, response, reporting, and access-control investigations")
+  func addsNextFourLessonPackage() throws {
+    let evidence = try #require(
+      StarterLabs.definition(for: "fundamentals-security-evidence")
+    )
+    let response = try #require(
+      StarterLabs.definition(for: "blue-team-incident-notes")
+    )
+    let report = try #require(
+      StarterLabs.definition(for: "red-team-defensive-report")
+    )
+    let access = try #require(
+      StarterLabs.definition(for: "web-access-control")
+    )
+
+    #expect(evidence.allowedPrograms.contains("sha256sum"))
+    #expect(response.rules.contains { $0.output.contains("isolate after preserve") })
+    #expect(report.flags.first?.answer == "Raport łączy dowód, wpływ i naprawę")
+    #expect(access.allowedPrograms == ["curl"])
+    #expect(access.rules.contains { $0.output.contains("viewer=200 admin-record") })
   }
 
   @Test("Adds four distinct guided investigations to the Pro catalog")
