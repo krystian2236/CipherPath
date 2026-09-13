@@ -16,6 +16,50 @@ enum AppTab: Int, Hashable {
   }
 }
 
+struct PracticeNetScopeCapability: Identifiable, Equatable, Sendable {
+  let id: String
+  let title: String
+  let description: String
+  let icon: String
+}
+
+enum PracticeNetScopeIntroduction {
+  static let title = "Praktyka z NetScope"
+  static let canOpenApplication = false
+  static let capabilities = [
+    PracticeNetScopeCapability(
+      id: "network",
+      title: "Skan prywatnej sieci",
+      description: "Rozpoznawanie własnej sieci lokalnej po świadomym uruchomieniu skanu.",
+      icon: "dot.radiowaves.left.and.right"
+    ),
+    PracticeNetScopeCapability(
+      id: "devices",
+      title: "Urządzenia i usługi",
+      description: "Czytelny przegląd wykrytych hostów, portów i usług Bonjour.",
+      icon: "desktopcomputer"
+    ),
+    PracticeNetScopeCapability(
+      id: "toolbox",
+      title: "Toolbox",
+      description: "Budowanie bezpiecznych poleceń dla Nmap, Nuclei i iSH.",
+      icon: "wrench.and.screwdriver.fill"
+    ),
+    PracticeNetScopeCapability(
+      id: "labs",
+      title: "Laboratoria",
+      description: "Kontrolowane ćwiczenia narzędziowe bez atakowania cudzych systemów.",
+      icon: "terminal.fill"
+    ),
+    PracticeNetScopeCapability(
+      id: "local",
+      title: "Dane na urządzeniu",
+      description: "Wyniki i historia pozostają lokalnie na iPhonie.",
+      icon: "iphone.gen3"
+    ),
+  ]
+}
+
 enum ISHWorkspaceRoute: RawRepresentable, Hashable {
   case library
   case shortcut(SSHShortcutID)
@@ -114,14 +158,35 @@ private struct PracticeHubView: View {
       List {
         Section {
           InfoBanner(
-            icon: "lock.shield.fill",
-            title: "Tylko własne środowisko",
-            message: "Narzędzia służą wyłącznie do Twojej sieci albo systemów objętych zgodą właściciela."
+            icon: "scope",
+            title: PracticeNetScopeIntroduction.title,
+            message: "NetScope rozwijamy jako osobną aplikację do legalnej analizy własnej sieci. Integrację między aplikacjami dodamy po ukończeniu i przetestowaniu obu projektów."
           )
           .listRowInsets(EdgeInsets())
           .listRowBackground(Color.clear)
         }
-        Section("Narzędzia CipherPath") {
+
+        Section("Co potrafi NetScope") {
+          ForEach(PracticeNetScopeIntroduction.capabilities) { capability in
+            HStack(alignment: .top, spacing: 12) {
+              Image(systemName: capability.icon)
+                .foregroundStyle(.cyan)
+                .frame(width: 32, height: 32)
+                .background(.cyan.opacity(0.1), in: RoundedRectangle(cornerRadius: 9))
+              VStack(alignment: .leading, spacing: 3) {
+                Text(capability.title).font(.subheadline.bold())
+                Text(capability.description).font(.caption).foregroundStyle(.secondary)
+              }
+            }
+            .padding(.vertical, 3)
+          }
+
+          Label("Połączenie aplikacji — wkrótce", systemImage: "link.badge.plus")
+            .font(.footnote.weight(.semibold))
+            .foregroundStyle(.secondary)
+        }
+
+        Section("Narzędzia wbudowane") {
           NavigationLink("Skan prywatnej sieci") {
             ScannerView(scanner: scanner, knownDeviceStore: knownDeviceStore, selectedTab: $selectedTab)
           }
@@ -141,7 +206,7 @@ private struct PracticeHubView: View {
           }
         }
       }
-      .navigationTitle("Praktyka")
+      .navigationTitle(PracticeNetScopeIntroduction.title)
     }
   }
 }

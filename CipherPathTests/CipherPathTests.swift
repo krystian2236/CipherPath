@@ -58,6 +58,13 @@ struct StarterCurriculumTests {
 
 @Suite("Content access")
 struct ContentAccessTests {
+  @Test("Practice introduces NetScope without an unavailable launch action")
+  func practiceStartsAsInformationOnly() {
+    #expect(PracticeNetScopeIntroduction.title == "Praktyka z NetScope")
+    #expect(PracticeNetScopeIntroduction.capabilities.count == 5)
+    #expect(!PracticeNetScopeIntroduction.canOpenApplication)
+  }
+
   @Test("Points opens while the future store stays inactive")
   func pointsOpenAndStoreStaysInactive() {
     #expect(FutureFeatureCatalog.previews.map(\.id) == ["points", "store"])
