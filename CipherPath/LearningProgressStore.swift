@@ -63,21 +63,56 @@ final class LearningProgressStore: ObservableObject {
     progress.labMissions[lessonID, default: LabMissionProgress()]
   }
 
-  func canStartLab(lessonID: String, mode: LabMode) -> Bool {
+  func canStartLab(
+    lessonID: String,
+    mode: LabMode,
+    distribution: AppDistributionMode = .currentBuild
+  ) -> Bool {
     guard let lesson = lesson(withID: lessonID),
           canStart(lesson),
           StarterLabs.definition(for: lesson) != nil else { return false }
-    if mode == .guided { return true }
+    if mode == .guided || distribution == .developer { return true }
     return labProgress(for: lessonID).completedModes.contains(.guided)
+  }
+
+  func reward(lessonID: String, mode: LabMode) -> LabReward {
+    let mission = labProgress(for: lessonID)
+    let assistance = mission.assistanceByMode[mode]
+      ?? (mission.hintUsedModes.contains(mode) ? .hint : .none)
+    return LabReward.evaluate(mode: mode, assistance: assistance)
+  }
+
+  @discardableResult
+  func recordAssistance(
+    lessonID: String,
+    mode: LabMode,
+    level: LabAssistanceLevel,
+    distribution: AppDistributionMode = .currentBuild
+  ) -> Bool {
+    guard distribution == .appStore,
+          level != .none,
+          canStartLab(lessonID: lessonID, mode: mode, distribution: distribution) else {
+      return false
+    }
+
+    let current = progress.labMissions[lessonID, default: LabMissionProgress()]
+      .assistanceByMode[mode] ?? .none
+    guard level > current else { return false }
+
+    progress.labMissions[lessonID, default: LabMissionProgress()].assistanceByMode[mode] = level
+    progress.labMissions[lessonID, default: LabMissionProgress()].hintUsedModes.insert(mode)
+    save()
+    return true
   }
 
   @discardableResult
   func recordHint(lessonID: String, mode: LabMode) -> Bool {
-    guard canStartLab(lessonID: lessonID, mode: mode) else { return false }
-    let inserted = progress.labMissions[lessonID, default: LabMissionProgress()]
-      .hintUsedModes.insert(mode).inserted
-    if inserted { save() }
-    return inserted
+    recordAssistance(
+      lessonID: lessonID,
+      mode: mode,
+      level: .hint,
+      distribution: .appStore
+    )
   }
 
   @discardableResult
@@ -125,7 +160,10 @@ final class LearningProgressStore: ObservableObject {
       .completedModes.insert(mode).inserted
     guard inserted else { return false }
 
-    progress.labMissions[lessonID, default: LabMissionProgress()].xp += mode.xpReward
+    progress.labMissions[lessonID, default: LabMissionProgress()].xp += reward(
+      lessonID: lessonID,
+      mode: mode
+    ).xp
     progress.labMissions[lessonID, default: LabMissionProgress()].checkpoints.removeValue(
       forKey: mode
     )

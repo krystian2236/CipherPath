@@ -57,7 +57,7 @@ struct LabEngineTests {
       ),
       LabRule(
         command: .nmap(options: ["-sC", "-sV"], target: "10.10.0.12"),
-        output: "22/tcp open ssh\n80/tcp open http",
+        output: "22/tcp open ssh\n80/tcp open http\nCIPHER{SCOUT_READY}",
         discovery: "Porty 22 i 80",
         objectiveID: "services"
       ),
@@ -70,6 +70,7 @@ struct LabEngineTests {
       LabFlag(
         id: "user",
         value: "CIPHER{SCOUT_READY}",
+        answer: "Scout gotowy",
         requiredObjectiveIDs: ["availability", "services"]
       )
     ],
@@ -108,7 +109,12 @@ struct LabEngineTests {
 
     #expect(firstPing == secondPing)
     #expect(firstPing.output == "3 packets transmitted, 3 received")
-    #expect(scan.output == "22/tcp open ssh\n80/tcp open http")
+    #expect(
+      scan.output
+        == "22/tcp open ssh\n80/tcp open http\n[✓] ❯ Odpowiedź: Scout gotowy"
+    )
+    #expect(scan.revealedAnswer == "Scout gotowy")
+    #expect(!scan.output.contains("CIPHER{"))
     #expect(firstSession.discoveries == ["Host odpowiada", "Porty 22 i 80"])
     #expect(firstSession.completedObjectiveIDs == ["availability", "services"])
     #expect(firstSession.history.count == 2)
@@ -131,37 +137,37 @@ struct LabEngineTests {
     #expect(session.history.isEmpty)
   }
 
-  @Test("Unlocks a configured flag only after its objectives")
-  func validatesFlagPrerequisites() {
+  @Test("Unlocks a readable answer only after its objectives")
+  func validatesAnswerPrerequisites() {
     var session = LabSession(definitionID: definition.id)
     LabEngine.start(session: &session)
 
     #expect(
       LabEngine.submit(
-        flag: "CIPHER{SCOUT_READY}", definition: definition, session: &session
+        answer: "Scout gotowy", definition: definition, session: &session
       ) == .locked(requiredObjectiveIDs: ["availability", "services"])
     )
     _ = LabEngine.execute("ping 10.10.0.12", definition: definition, session: &session)
     #expect(
       LabEngine.submit(
-        flag: "CIPHER{SCOUT_READY}", definition: definition, session: &session
+        answer: "Scout gotowy", definition: definition, session: &session
       ) == .locked(requiredObjectiveIDs: ["services"])
     )
     _ = LabEngine.execute(
       "nmap -sC -sV 10.10.0.12", definition: definition, session: &session
     )
     #expect(
-      LabEngine.submit(flag: "CIPHER{WRONG}", definition: definition, session: &session)
+      LabEngine.submit(answer: "Błędna odpowiedź", definition: definition, session: &session)
         == .incorrect
     )
     #expect(
       LabEngine.submit(
-        flag: "  cipher{scout_ready}  ", definition: definition, session: &session
+        answer: "  scout GOTOWY  ", definition: definition, session: &session
       ) == .accepted(flagID: "user")
     )
     #expect(
       LabEngine.submit(
-        flag: "CIPHER{SCOUT_READY}", definition: definition, session: &session
+        answer: "Scout gotowy", definition: definition, session: &session
       ) == .alreadyCaptured(flagID: "user")
     )
     #expect(session.capturedFlagIDs == ["user"])

@@ -1,5 +1,29 @@
 import Foundation
 
+enum PortScanAccessDecision: Equatable, Sendable {
+  case allowed(String)
+  case invalidHost
+  case authorizationRequired
+  case privateAddressRequired
+}
+
+struct PortScanAccessPolicy: Equatable, Sendable {
+  let mode: AppDistributionMode
+
+  var requiresAuthorization: Bool { mode == .appStore }
+
+  func validate(host input: String, authorizationConfirmed: Bool) -> PortScanAccessDecision {
+    guard let host = TargetValidator.normalizedHost(input) else { return .invalidHost }
+    guard mode == .developer || ISHTargetValidator.isPrivateHost(host) else {
+      return .privateAddressRequired
+    }
+    guard !requiresAuthorization || authorizationConfirmed else {
+      return .authorizationRequired
+    }
+    return .allowed(host)
+  }
+}
+
 @MainActor
 final class NetworkToolsModel: ObservableObject {
   enum PublicIPState: Equatable {
@@ -19,7 +43,16 @@ final class NetworkToolsModel: ObservableObject {
   @Published private(set) var portScanError: String?
   @Published private(set) var isScanningPorts = false
 
+  let portScanAccessPolicy: PortScanAccessPolicy
   private var portScanTask: Task<Void, Never>?
+
+  init(
+    portScanAccessPolicy: PortScanAccessPolicy = PortScanAccessPolicy(
+      mode: .currentBuild
+    )
+  ) {
+    self.portScanAccessPolicy = portScanAccessPolicy
+  }
 
   func refreshLocalContext() {
     localContext = LocalNetworkInfo.currentWiFiContext()
@@ -72,10 +105,24 @@ final class NetworkToolsModel: ObservableObject {
     host input: String,
     preset: PortScanPreset,
     customStart: String,
-    customEnd: String
+    customEnd: String,
+    authorizationConfirmed: Bool
   ) {
-    guard let host = TargetValidator.normalizedHost(input) else {
+    let host: String
+    switch portScanAccessPolicy.validate(
+      host: input,
+      authorizationConfirmed: authorizationConfirmed
+    ) {
+    case .allowed(let validatedHost):
+      host = validatedHost
+    case .invalidHost:
       portScanError = "Wpisz poprawny adres IP lub domenę."
+      return
+    case .authorizationRequired:
+      portScanError = "Potwierdź własność sieci lub zgodę właściciela."
+      return
+    case .privateAddressRequired:
+      portScanError = "Wydanie App Store skanuje tylko prywatne adresy IPv4."
       return
     }
 

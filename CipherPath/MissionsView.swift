@@ -2,9 +2,10 @@ import SwiftUI
 
 struct MissionsView: View {
   @ObservedObject var progressStore: LearningProgressStore
+  let accessPolicy: ContentAccessPolicy
 
   private var availableLessons: [LearningLesson] {
-    StarterCurriculum.lessons.filter { $0.availability == .available }
+    StarterCurriculum.lessons.filter { accessPolicy.access(for: $0) == .included }
   }
 
   var body: some View {
@@ -18,7 +19,7 @@ struct MissionsView: View {
         Section("Gotowe do rozpoczęcia") {
           ForEach(availableLessons) { lesson in
             NavigationLink {
-              LessonFlowView(lesson: lesson, progressStore: progressStore)
+              MissionBriefingView(lesson: lesson, progressStore: progressStore)
             } label: {
               VStack(alignment: .leading, spacing: 4) {
                 Text(lesson.title).font(.headline)

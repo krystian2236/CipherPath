@@ -1,5 +1,32 @@
 import SwiftUI
 
+struct FutureFeaturePreview: Identifiable, Equatable, Sendable {
+  let id: String
+  let title: String
+  let subtitle: String
+  let icon: String
+  let isEnabled: Bool
+}
+
+enum FutureFeatureCatalog {
+  static let previews = [
+    FutureFeaturePreview(
+      id: "points",
+      title: "Punkty",
+      subtitle: "Zdobywaj w misjach i wykorzystuj na podpowiedzi",
+      icon: "sparkles",
+      isEnabled: false
+    ),
+    FutureFeaturePreview(
+      id: "store",
+      title: "Sklep",
+      subtitle: "Pakiety punktów i subskrypcja",
+      icon: "cart.fill",
+      isEnabled: false
+    ),
+  ]
+}
+
 struct DashboardView: View {
   @Binding var selectedTab: AppTab
   @ObservedObject var progressStore: LearningProgressStore
@@ -17,6 +44,7 @@ struct DashboardView: View {
           missionStages
           pathSection
           achievementSection
+          futureFeaturesSection
           footer
         }
         .padding(.horizontal, 18)
@@ -58,12 +86,12 @@ struct DashboardView: View {
         Label("8 min", systemImage: "clock")
           .font(.subheadline.weight(.semibold))
           .foregroundStyle(.secondary)
-        Button {
-          selectedTab = .missions
+        NavigationLink {
+          MissionBriefingView(lesson: featuredLesson, progressStore: progressStore)
         } label: {
           HStack {
             Spacer()
-            Text("Rozpocznij misję").fontWeight(.semibold)
+            Text("Zobacz odprawę").fontWeight(.semibold)
             Image(systemName: "chevron.right")
             Spacer()
           }
@@ -108,22 +136,31 @@ struct DashboardView: View {
       ScrollView(.horizontal, showsIndicators: false) {
         HStack(spacing: 10) {
           ForEach(StarterCurriculum.paths, id: \.self) { path in
-            VStack(alignment: .leading, spacing: 9) {
-              Image(systemName: path.iconName).font(.title2).foregroundStyle(path.tint)
-              Text(path.shortTitle).font(.subheadline.bold())
-              HStack(spacing: 4) {
-                ForEach(1...5, id: \.self) { number in
-                  Image(systemName: number <= 2 ? "circle.fill" : "lock.fill")
-                    .font(.caption2)
-                    .foregroundStyle(number <= 2 ? path.tint : .secondary)
+            NavigationLink {
+              LearningPathDetailView(
+                path: path,
+                progressStore: progressStore,
+                accessPolicy: .current
+              )
+            } label: {
+              VStack(alignment: .leading, spacing: 9) {
+                Image(systemName: path.iconName).font(.title2).foregroundStyle(path.tint)
+                Text(path.shortTitle).font(.subheadline.bold())
+                HStack(spacing: 4) {
+                  ForEach(1...5, id: \.self) { number in
+                    Image(systemName: number <= 2 ? "circle.fill" : "lock.fill")
+                      .font(.caption2)
+                      .foregroundStyle(number <= 2 ? path.tint : .secondary)
+                  }
                 }
+                Text("2 dostępne\n3 zapowiedziane").font(.caption2).foregroundStyle(.secondary)
               }
-              Text("2 dostępne\n3 zablokowane").font(.caption2).foregroundStyle(.secondary)
+              .frame(width: 112, alignment: .leading)
+              .padding(13)
+              .background(path.tint.opacity(0.11), in: RoundedRectangle(cornerRadius: 16))
+              .overlay(RoundedRectangle(cornerRadius: 16).stroke(path.tint.opacity(0.35)))
             }
-            .frame(width: 112, alignment: .leading)
-            .padding(13)
-            .background(path.tint.opacity(0.11), in: RoundedRectangle(cornerRadius: 16))
-            .overlay(RoundedRectangle(cornerRadius: 16).stroke(path.tint.opacity(0.35)))
+            .buttonStyle(.plain)
           }
         }
       }
@@ -141,6 +178,38 @@ struct DashboardView: View {
             color: achievementColor(achievement.rarity),
             unlocked: achievement.isUnlocked
           )
+        }
+      }
+    }
+  }
+
+  private var futureFeaturesSection: some View {
+    VStack(alignment: .leading, spacing: 12) {
+      Text("Wkrótce").font(.title3.bold())
+      HStack(spacing: 10) {
+        ForEach(FutureFeatureCatalog.previews) { feature in
+          VStack(alignment: .leading, spacing: 9) {
+            HStack {
+              Image(systemName: feature.icon)
+                .font(.title2)
+                .foregroundStyle(.secondary)
+              Spacer()
+              Label("Wkrótce", systemImage: "lock.fill")
+                .font(.caption2.bold())
+                .foregroundStyle(.secondary)
+            }
+            Text(feature.title).font(.headline)
+            Text(feature.subtitle)
+              .font(.caption)
+              .foregroundStyle(.secondary)
+              .fixedSize(horizontal: false, vertical: true)
+          }
+          .frame(maxWidth: .infinity, minHeight: 112, alignment: .topLeading)
+          .padding(14)
+          .background(.white.opacity(0.035), in: RoundedRectangle(cornerRadius: 16))
+          .overlay(RoundedRectangle(cornerRadius: 16).stroke(.white.opacity(0.08)))
+          .accessibilityElement(children: .combine)
+          .accessibilityHint("Funkcja jeszcze niedostępna")
         }
       }
     }

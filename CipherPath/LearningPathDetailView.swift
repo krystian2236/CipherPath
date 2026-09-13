@@ -3,17 +3,28 @@ import SwiftUI
 struct LearningPathDetailView: View {
   let path: LearningPath
   @ObservedObject var progressStore: LearningProgressStore
+  let accessPolicy: ContentAccessPolicy
 
   var body: some View {
     List(StarterCurriculum.lessons(in: path)) { lesson in
-      if lesson.availability == .available {
+      if accessPolicy.access(for: lesson) == .included {
         NavigationLink {
-          LessonFlowView(lesson: lesson, progressStore: progressStore)
+          MissionBriefingView(lesson: lesson, progressStore: progressStore)
         } label: {
-          LessonRow(lesson: lesson, path: path, isCompleted: progressStore.isCompleted(lessonID: lesson.id))
+          LessonRow(
+            lesson: lesson,
+            path: path,
+            access: .included,
+            isCompleted: progressStore.isCompleted(lessonID: lesson.id)
+          )
         }
       } else {
-        LessonRow(lesson: lesson, path: path, isCompleted: false)
+        LessonRow(
+          lesson: lesson,
+          path: path,
+          access: accessPolicy.access(for: lesson),
+          isCompleted: false
+        )
           .opacity(0.48)
       }
     }
@@ -24,6 +35,7 @@ struct LearningPathDetailView: View {
 private struct LessonRow: View {
   let lesson: LearningLesson
   let path: LearningPath
+  let access: LessonAccess
   let isCompleted: Bool
 
   var body: some View {
@@ -36,8 +48,10 @@ private struct LessonRow: View {
         Text(lesson.summary).font(.caption).foregroundStyle(.secondary)
       }
       Spacer()
-      if lesson.availability == .comingSoon {
+      if access == .comingSoon {
         Text("Wkrótce").font(.caption2.bold()).foregroundStyle(.secondary)
+      } else if access == .requiresPro {
+        Text("PRO").font(.caption2.bold()).foregroundStyle(path.tint)
       }
     }
     .padding(.vertical, 5)
@@ -45,7 +59,7 @@ private struct LessonRow: View {
   }
 
   private var iconName: String {
-    if lesson.availability == .comingSoon { return "lock.fill" }
+    if access != .included { return "lock.fill" }
     return isCompleted ? "checkmark.circle.fill" : "play.circle.fill"
   }
 }

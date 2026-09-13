@@ -8,10 +8,15 @@ struct LabTerminalView: View {
   @State private var session: LabSession
   @State private var commandInput = ""
   @State private var feedback: String?
-  @State private var flagInput = ""
-  @State private var flagMessage: String?
+  @State private var answerInput = ""
+  @State private var answerMessage: String?
   @State private var mode: LabMode = .guided
-  @State private var revealAdventureHints = false
+  @State private var revealTextHint = false
+  @State private var revealCommands = false
+  @State private var startedAt = Date()
+  @State private var completionSummary: LabCompletionSummary?
+
+  private let distribution = AppDistributionMode.currentBuild
 
   init(
     definition: LabDefinition,
@@ -55,7 +60,8 @@ struct LabTerminalView: View {
           resetSession()
         }
 
-        if !progressStore.canStartLab(lessonID: lesson.id, mode: .adventure) {
+        if distribution == .appStore,
+           !progressStore.canStartLab(lessonID: lesson.id, mode: .adventure) {
           Label("Tryb przygodowy odblokuje się po ukończeniu trybu prowadzonego.", systemImage: "lock.fill")
             .font(.caption)
             .foregroundStyle(.secondary)
@@ -78,6 +84,7 @@ struct LabTerminalView: View {
         if !session.isRunning {
           Button("Uruchom maszynę") {
             LabEngine.start(session: &session)
+            startedAt = Date()
           }
           .buttonStyle(.borderedProminent)
         }
@@ -119,24 +126,49 @@ struct LabTerminalView: View {
             .foregroundStyle(.orange)
         }
 
-        if mode == .guided || revealAdventureHints {
+        if distribution == .developer || revealCommands {
           ScrollView(.horizontal, showsIndicators: false) {
             HStack {
               ForEach(definition.suggestedCommands, id: \.self) { command in
                 Button(command) {
                   commandInput = command
-                  _ = progressStore.recordHint(lessonID: lesson.id, mode: mode)
                 }
                   .buttonStyle(.bordered)
                   .font(.system(.caption, design: .monospaced))
               }
             }
           }
-        } else {
-          Button("Pokaż podpowiedzi") {
-            revealAdventureHints = true
-            _ = progressStore.recordHint(lessonID: lesson.id, mode: mode)
+        }
+
+        if distribution == .appStore {
+          if revealTextHint {
+            Label(textHint, systemImage: "lightbulb.fill")
+              .font(.footnote)
+              .foregroundStyle(.orange)
           }
+
+          HStack {
+            Button("Podpowiedź") {
+              revealTextHint = true
+              _ = progressStore.recordAssistance(
+                lessonID: lesson.id,
+                mode: mode,
+                level: .hint
+              )
+            }
+            .disabled(revealTextHint)
+
+            Button("Pokaż polecenia") {
+              revealCommands = true
+              _ = progressStore.recordAssistance(
+                lessonID: lesson.id,
+                mode: mode,
+                level: .solution
+              )
+            }
+            .disabled(revealCommands)
+          }
+          .buttonStyle(.bordered)
         }
       }
 
@@ -148,18 +180,25 @@ struct LabTerminalView: View {
         }
       }
 
-      Section("Flaga") {
-        TextField("CIPHER{...}", text: $flagInput)
-          .font(.system(.body, design: .monospaced))
-          .textInputAutocapitalization(.characters)
+      Section("Odpowiedź") {
+        TextField("Odnaleziona odpowiedź", text: $answerInput)
+          .textInputAutocapitalization(.sentences)
           .autocorrectionDisabled()
 
-        Button("Prześlij flagę", action: submitFlag)
+        Button("Zatwierdź odpowiedź", action: submitAnswer)
           .buttonStyle(.borderedProminent)
-          .disabled(!session.isRunning || flagInput.isEmpty)
+          .disabled(!session.isRunning || answerInput.isEmpty)
 
-        if let flagMessage {
-          Text(flagMessage)
+        if distribution == .developer {
+          Button("Wstaw rozwiązanie deweloperskie") {
+            answerInput = nextAnswer
+          }
+          .buttonStyle(.bordered)
+          .disabled(!session.isRunning || nextAnswer.isEmpty)
+        }
+
+        if let answerMessage {
+          Text(answerMessage)
             .font(.footnote)
             .foregroundStyle(allFlagsCaptured ? .green : .orange)
         }
@@ -170,6 +209,17 @@ struct LabTerminalView: View {
           Text(definition.defenseSummary)
           Button("Zakończ misję", action: finishMission)
             .buttonStyle(.borderedProminent)
+        }
+      }
+
+      if let completionSummary {
+        Section("Wynik misji") {
+          Label("\(completionSummary.reward.xp) XP", systemImage: "bolt.fill")
+          Label(completionSummary.reward.grade.rawValue, systemImage: completionSummary.medalIcon)
+          Label(completionSummary.elapsedText, systemImage: "clock.fill")
+          Text(completionSummary.assistanceText)
+            .font(.footnote)
+            .foregroundStyle(.secondary)
         }
       }
     }
@@ -205,37 +255,63 @@ struct LabTerminalView: View {
     session.capturedFlagIDs.count == definition.flags.count
   }
 
+  private var textHint: String {
+    if let objective = definition.objectives.first(where: {
+      !session.completedObjectiveIDs.contains($0.id)
+    }) {
+      return "Skup się na celu: \(objective.title)"
+    }
+    return "Sprawdź odkrycia i dopasuj odpowiedź do wykonanych celów."
+  }
+
+  private var nextAnswer: String {
+    definition.flags.first(where: { !session.capturedFlagIDs.contains($0.id) })?.answer ?? ""
+  }
+
   private func runCommand() {
     let input = commandInput.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !input.isEmpty else { return }
     let result = LabEngine.execute(input, definition: definition, session: &session)
     feedback = result.status == .success ? nil : result.output
     if result.status == .success {
+      if let revealedAnswer = result.revealedAnswer {
+        if distribution == .developer {
+          answerInput = revealedAnswer
+          answerMessage = "Tryb deweloperski: odpowiedź została wpisana automatycznie."
+        } else {
+          answerMessage = "Odpowiedź jest widoczna w terminalu. Przepisz ją poniżej."
+        }
+      }
       _ = progressStore.saveCheckpoint(lessonID: lesson.id, mode: mode, session: session)
     }
     commandInput = ""
   }
 
-  private func submitFlag() {
-    switch LabEngine.submit(flag: flagInput, definition: definition, session: &session) {
+  private func submitAnswer() {
+    switch LabEngine.submit(answer: answerInput, definition: definition, session: &session) {
     case .incorrect:
-      flagMessage = "Flaga nie pasuje. Przeanalizuj wyniki jeszcze raz."
+      answerMessage = "Odpowiedź nie pasuje. Przeanalizuj wyniki jeszcze raz."
     case .locked:
-      flagMessage = "Najpierw wykonaj cele prowadzące do tej flagi."
+      answerMessage = "Najpierw wykonaj cele prowadzące do tej odpowiedzi."
     case .accepted:
-      flagMessage = "Flaga zdobyta."
-      flagInput = ""
+      answerMessage = "Odpowiedź poprawna."
+      answerInput = ""
       _ = progressStore.saveCheckpoint(lessonID: lesson.id, mode: mode, session: session)
     case .alreadyCaptured:
-      flagMessage = "Ta flaga została już zdobyta."
+      answerMessage = "Ta odpowiedź została już zaliczona."
     }
   }
 
   private func finishMission() {
+    let reward = progressStore.reward(lessonID: lesson.id, mode: mode)
+    let assistance = progressStore.labProgress(for: lesson.id).assistanceByMode[mode] ?? .none
     if progressStore.completeLab(lessonID: lesson.id, mode: mode) {
-      flagMessage = mode == .guided
-        ? "Misja ukończona. Odblokowano tryb przygodowy i 100 XP."
-        : "Tryb przygodowy ukończony. Zdobywasz 150 XP."
+      completionSummary = LabCompletionSummary(
+        reward: reward,
+        assistance: assistance,
+        elapsedSeconds: max(0, Date().timeIntervalSince(startedAt))
+      )
+      answerMessage = "Misja ukończona. Zdobywasz \(reward.xp) XP i medal: \(reward.grade.rawValue)."
     }
   }
 
@@ -247,8 +323,38 @@ struct LabTerminalView: View {
     )
     commandInput = ""
     feedback = nil
-    flagInput = ""
-    flagMessage = nil
-    revealAdventureHints = false
+    answerInput = ""
+    answerMessage = nil
+    revealTextHint = false
+    revealCommands = distribution == .developer
+    startedAt = Date()
+    completionSummary = nil
+  }
+}
+
+private struct LabCompletionSummary {
+  let reward: LabReward
+  let assistance: LabAssistanceLevel
+  let elapsedSeconds: TimeInterval
+
+  var elapsedText: String {
+    let seconds = Int(elapsedSeconds.rounded())
+    return "\(seconds / 60) min \(seconds % 60) s"
+  }
+
+  var assistanceText: String {
+    switch assistance {
+    case .none: "Rozwiązanie samodzielne — pełna punktacja."
+    case .hint: "Użyto podpowiedzi tekstowej."
+    case .solution: "Użyto gotowego polecenia lub rozwiązania."
+    }
+  }
+
+  var medalIcon: String {
+    switch reward.grade {
+    case .gold: "medal.fill"
+    case .silver: "shield.lefthalf.filled"
+    case .bronze: "seal.fill"
+    }
   }
 }

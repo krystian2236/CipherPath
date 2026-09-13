@@ -19,11 +19,67 @@ enum LabMode: String, Codable, CaseIterable, Hashable, Sendable {
   }
 }
 
+enum LabAssistanceLevel: Int, Codable, Comparable, Sendable {
+  case none = 0
+  case hint = 1
+  case solution = 2
+
+  static func < (lhs: Self, rhs: Self) -> Bool { lhs.rawValue < rhs.rawValue }
+}
+
+enum LabGrade: String, Codable, Equatable, Sendable {
+  case gold = "Złoto"
+  case silver = "Srebro"
+  case bronze = "Brąz"
+}
+
+struct LabReward: Codable, Equatable, Sendable {
+  let xp: Int
+  let grade: LabGrade
+
+  static func evaluate(mode: LabMode, assistance: LabAssistanceLevel) -> Self {
+    switch (mode, assistance) {
+    case (.guided, .none): LabReward(xp: 100, grade: .gold)
+    case (.guided, .hint): LabReward(xp: 80, grade: .silver)
+    case (.guided, .solution): LabReward(xp: 50, grade: .bronze)
+    case (.adventure, .none): LabReward(xp: 150, grade: .gold)
+    case (.adventure, .hint): LabReward(xp: 120, grade: .silver)
+    case (.adventure, .solution): LabReward(xp: 80, grade: .bronze)
+    }
+  }
+}
+
 struct LabMissionProgress: Codable, Equatable, Sendable {
   var completedModes: Set<LabMode> = []
   var hintUsedModes: Set<LabMode> = []
+  var assistanceByMode: [LabMode: LabAssistanceLevel] = [:]
   var xp = 0
   var checkpoints: [LabMode: LabCheckpoint] = [:]
+
+  private enum CodingKeys: String, CodingKey {
+    case completedModes
+    case hintUsedModes
+    case assistanceByMode
+    case xp
+    case checkpoints
+  }
+
+  init() {}
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    completedModes = try container.decodeIfPresent(Set<LabMode>.self, forKey: .completedModes) ?? []
+    hintUsedModes = try container.decodeIfPresent(Set<LabMode>.self, forKey: .hintUsedModes) ?? []
+    assistanceByMode = try container.decodeIfPresent(
+      [LabMode: LabAssistanceLevel].self,
+      forKey: .assistanceByMode
+    ) ?? Dictionary(uniqueKeysWithValues: hintUsedModes.map { ($0, .hint) })
+    xp = try container.decodeIfPresent(Int.self, forKey: .xp) ?? 0
+    checkpoints = try container.decodeIfPresent(
+      [LabMode: LabCheckpoint].self,
+      forKey: .checkpoints
+    ) ?? [:]
+  }
 }
 
 struct LabCheckpoint: Codable, Equatable, Sendable {
@@ -40,11 +96,13 @@ struct LabObjective: Equatable, Sendable {
 struct LabFlag: Equatable, Sendable {
   let id: String
   let value: String
+  let answer: String
   let requiredObjectiveIDs: Set<String>
 
-  init(id: String, value: String, requiredObjectiveIDs: Set<String> = []) {
+  init(id: String, value: String, answer: String, requiredObjectiveIDs: Set<String> = []) {
     self.id = id
     self.value = value
+    self.answer = answer
     self.requiredObjectiveIDs = requiredObjectiveIDs
   }
 }
@@ -106,6 +164,13 @@ enum LabExecutionStatus: Equatable, Sendable {
 struct LabExecutionResult: Equatable, Sendable {
   let status: LabExecutionStatus
   let output: String
+  let revealedAnswer: String?
+
+  init(status: LabExecutionStatus, output: String, revealedAnswer: String? = nil) {
+    self.status = status
+    self.output = output
+    self.revealedAnswer = revealedAnswer
+  }
 }
 
 enum LabFlagResult: Equatable, Sendable {

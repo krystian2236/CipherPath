@@ -36,7 +36,7 @@ enum AchievementCatalog {
     case .firstFlag:
       return AchievementProgress(
         id: id,
-        title: "Pierwsza flaga",
+        title: "Pierwsza odpowiedź",
         requirement: "Ukończ pierwsze laboratorium",
         rarity: .bronze,
         current: min(guidedCount, 1),

@@ -1,5 +1,95 @@
 import SwiftUI
 
+struct MissionBriefingView: View {
+  let lesson: LearningLesson
+  @ObservedObject var progressStore: LearningProgressStore
+
+  private var briefing: MissionBriefing { .forLesson(lesson) }
+
+  var body: some View {
+    ScrollView {
+      VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: 10) {
+          Label(lesson.path.title.uppercased(), systemImage: lesson.path.iconName)
+            .font(.caption.bold())
+            .foregroundStyle(lesson.path.tint)
+          Text(lesson.title)
+            .font(.largeTitle.bold())
+          Text(briefing.story)
+            .font(.body)
+            .foregroundStyle(.secondary)
+        }
+
+        HStack(spacing: 12) {
+          briefingBadge(icon: "clock.fill", text: "\(briefing.estimatedMinutes) min")
+          briefingBadge(icon: "gauge.with.dots.needle.33percent", text: briefing.difficulty.rawValue)
+          briefingBadge(icon: "wifi.slash", text: "Offline")
+        }
+
+        briefingSection("Twoja misja", icon: "scope") {
+          Text(briefing.objective)
+        }
+
+        briefingSection("Czego się nauczysz", icon: "brain.head.profile") {
+          ForEach(briefing.learningOutcomes, id: \.self) { outcome in
+            Label(outcome, systemImage: "checkmark.circle.fill")
+              .foregroundStyle(.secondary)
+          }
+        }
+
+        Label(
+          "Misja działa wyłącznie na wbudowanych, fikcyjnych danych. Nie atakuje żadnego prawdziwego systemu.",
+          systemImage: "lock.shield.fill"
+        )
+        .font(.footnote)
+        .foregroundStyle(.secondary)
+        .padding(14)
+        .background(.green.opacity(0.1), in: RoundedRectangle(cornerRadius: 14))
+
+        NavigationLink {
+          LessonFlowView(lesson: lesson, progressStore: progressStore)
+        } label: {
+          Label(
+            progressStore.isCompleted(lessonID: lesson.id) ? "Zagraj ponownie" : "Rozpocznij misję",
+            systemImage: "play.fill"
+          )
+          .fontWeight(.semibold)
+          .frame(maxWidth: .infinity)
+          .padding(.vertical, 13)
+        }
+        .buttonStyle(.borderedProminent)
+        .tint(lesson.path.tint)
+      }
+      .padding(20)
+    }
+    .background(Color(.systemGroupedBackground))
+    .navigationTitle("Odprawa")
+    .navigationBarTitleDisplayMode(.inline)
+  }
+
+  private func briefingBadge(icon: String, text: String) -> some View {
+    Label(text, systemImage: icon)
+      .font(.caption.bold())
+      .padding(.horizontal, 10)
+      .padding(.vertical, 8)
+      .background(.secondary.opacity(0.12), in: Capsule())
+  }
+
+  private func briefingSection<Content: View>(
+    _ title: String,
+    icon: String,
+    @ViewBuilder content: () -> Content
+  ) -> some View {
+    VStack(alignment: .leading, spacing: 12) {
+      Label(title, systemImage: icon).font(.headline)
+      content()
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .padding(16)
+    .background(.background, in: RoundedRectangle(cornerRadius: 18))
+  }
+}
+
 struct LessonMissionContent: Equatable, Sendable {
   let legalNotice: String
   let learnText: String

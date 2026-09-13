@@ -15,7 +15,7 @@ struct AchievementTests {
     let lessonID = "fundamentals-digital-safety"
     let store = LearningProgressStore(defaults: isolatedDefaults())
 
-    #expect(!store.canStartLab(lessonID: lessonID, mode: .adventure))
+    #expect(!store.canStartLab(lessonID: lessonID, mode: .adventure, distribution: .appStore))
     #expect(store.completeLab(lessonID: lessonID, mode: .guided))
     #expect(store.canStartLab(lessonID: lessonID, mode: .adventure))
     #expect(store.labProgress(for: lessonID).xp == 100)
@@ -23,6 +23,43 @@ struct AchievementTests {
     #expect(store.labProgress(for: lessonID).xp == 100)
     #expect(store.completeLab(lessonID: lessonID, mode: .adventure))
     #expect(store.labProgress(for: lessonID).xp == 250)
+  }
+
+  @Test("Assistance produces gold silver and bronze mission rewards")
+  func assistanceChangesRewardAndGrade() {
+    #expect(LabReward.evaluate(mode: .adventure, assistance: .none) == LabReward(xp: 150, grade: .gold))
+    #expect(LabReward.evaluate(mode: .adventure, assistance: .hint) == LabReward(xp: 120, grade: .silver))
+    #expect(LabReward.evaluate(mode: .adventure, assistance: .solution) == LabReward(xp: 80, grade: .bronze))
+  }
+
+  @Test("Developer assistance stays unrestricted and does not reduce rewards")
+  @MainActor
+  func developerAssistanceHasNoPenaltyOrAdventureGate() {
+    let lessonID = "fundamentals-digital-safety"
+    let store = LearningProgressStore(defaults: isolatedDefaults())
+
+    #expect(store.canStartLab(lessonID: lessonID, mode: .adventure, distribution: .developer))
+    #expect(!store.recordAssistance(
+      lessonID: lessonID,
+      mode: .adventure,
+      level: .solution,
+      distribution: .developer
+    ))
+    #expect(store.reward(lessonID: lessonID, mode: .adventure) == LabReward(xp: 150, grade: .gold))
+  }
+
+  @Test("Store build keeps the strongest assistance and applies it once")
+  @MainActor
+  func storeAssistancePersistsStrongestLevel() {
+    let lessonID = "web-http-anatomy"
+    let store = LearningProgressStore(defaults: isolatedDefaults())
+
+    #expect(store.recordAssistance(lessonID: lessonID, mode: .guided, level: .hint, distribution: .appStore))
+    #expect(store.recordAssistance(lessonID: lessonID, mode: .guided, level: .solution, distribution: .appStore))
+    #expect(!store.recordAssistance(lessonID: lessonID, mode: .guided, level: .hint, distribution: .appStore))
+    #expect(store.reward(lessonID: lessonID, mode: .guided) == LabReward(xp: 50, grade: .bronze))
+    #expect(store.completeLab(lessonID: lessonID, mode: .guided))
+    #expect(store.labProgress(for: lessonID).xp == 50)
   }
 
   @Test("Records hint use per mode and restores it without terminal history")

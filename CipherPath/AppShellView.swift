@@ -64,14 +64,15 @@ struct AppShellView: View {
     TabView(selection: selectedTab) {
       DashboardView(selectedTab: selectedTab, progressStore: learningProgressStore)
         .tabItem { Label("Start", systemImage: "house.fill") }.tag(AppTab.start)
-      LearningPathListView(progressStore: learningProgressStore)
+      LearningPathListView(progressStore: learningProgressStore, accessPolicy: .current)
         .tabItem { Label("Ścieżki", systemImage: "safari.fill") }.tag(AppTab.paths)
-      MissionsView(progressStore: learningProgressStore)
+      MissionsView(progressStore: learningProgressStore, accessPolicy: .current)
         .tabItem { Label("Misje", systemImage: "target") }.tag(AppTab.missions)
       PracticeHubView(
         scanner: scanner,
         tools: tools,
         knownDeviceStore: knownDeviceStore,
+        learningProgressStore: learningProgressStore,
         selectedTab: selectedTab,
         ishWorkspaceRouteRaw: $ishWorkspaceRouteRaw
       )
@@ -104,6 +105,7 @@ private struct PracticeHubView: View {
   @ObservedObject var scanner: NetworkScanner
   @ObservedObject var tools: NetworkToolsModel
   @ObservedObject var knownDeviceStore: KnownDeviceStore
+  @ObservedObject var learningProgressStore: LearningProgressStore
   @Binding var selectedTab: AppTab
   @Binding var ishWorkspaceRouteRaw: String
 
@@ -133,9 +135,48 @@ private struct PracticeHubView: View {
             ServicesHubView(scanner: scanner, tools: tools)
           }
         }
+        Section("Informacje") {
+          NavigationLink("Prywatność i bezpieczeństwo") {
+            PrivacySecurityView(progressStore: learningProgressStore)
+          }
+        }
       }
       .navigationTitle("Praktyka")
     }
+  }
+}
+
+private struct PrivacySecurityView: View {
+  @ObservedObject var progressStore: LearningProgressStore
+  @Environment(\.openURL) private var openURL
+
+  var body: some View {
+    List {
+      Section("Twoje dane") {
+        Label("Brak konta, reklam, analityki i śledzenia", systemImage: "hand.raised.fill")
+        Label("Postęp, historia skanów i urządzenia pozostają lokalnie", systemImage: "iphone")
+        Label("CipherPath nie przechowuje haseł ani kluczy prywatnych", systemImage: "key.slash")
+      }
+      Section("Sieć") {
+        Text("Dostęp do sieci lokalnej jest używany dopiero po uruchomieniu narzędzia przez użytkownika.")
+        Text("Publiczny adres IP jest pobierany z api64.ipify.org tylko po naciśnięciu odpowiedniego przycisku.")
+        Button("Otwórz ustawienia prywatności iOS") {
+          if let url = URL(string: UIApplication.openSettingsURLString) {
+            openURL(url)
+          }
+        }
+      }
+      Section("Kontrola użytkownika") {
+        Button("Usuń postęp nauki", role: .destructive) {
+          progressStore.reset()
+        }
+        Text("Historię i pozostałe dane lokalne można całkowicie usunąć przez odinstalowanie aplikacji.")
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+      }
+    }
+    .navigationTitle("Prywatność")
+    .navigationBarTitleDisplayMode(.inline)
   }
 }
 

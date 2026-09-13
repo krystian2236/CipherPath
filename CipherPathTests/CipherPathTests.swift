@@ -56,6 +56,98 @@ struct StarterCurriculumTests {
   }
 }
 
+@Suite("Content access")
+struct ContentAccessTests {
+  @Test("Future economy previews stay visible but inactive")
+  func futureEconomyPreviewsAreInactive() {
+    #expect(FutureFeatureCatalog.previews.map(\.id) == ["points", "store"])
+    #expect(FutureFeatureCatalog.previews.allSatisfy { !$0.isEnabled })
+  }
+
+  @Test("Developer build has no paid lesson gate while App Store starts free")
+  func distributionSelectsIndependentAccessRules() {
+    #expect(ContentAccessPolicy.forDistribution(.developer).tier == .pro)
+    #expect(ContentAccessPolicy.forDistribution(.appStore).tier == .free)
+  }
+
+  @Test("TestFlight demo opens all ten playable missions")
+  func testFlightDemoOpensCurrentCatalog() {
+    let policy = ContentAccessPolicy(tier: .testFlightDemo)
+    let playable = StarterCurriculum.lessons.filter { $0.availability == .available }
+
+    #expect(playable.count == 10)
+    #expect(playable.allSatisfy { policy.access(for: $0) == .included })
+  }
+
+  @Test("Free tier opens one mission in every path")
+  func freeTierOpensOneMissionPerPath() {
+    let policy = ContentAccessPolicy(tier: .free)
+
+    for path in LearningPath.allCases {
+      let lessons = StarterCurriculum.lessons(in: path)
+      #expect(policy.access(for: lessons[0]) == .included)
+      #expect(policy.access(for: lessons[1]) == .requiresPro)
+      #expect(policy.access(for: lessons[2]) == .comingSoon)
+    }
+  }
+
+  @Test("Pro tier opens every released mission")
+  func proTierOpensReleasedCatalog() {
+    let policy = ContentAccessPolicy(tier: .pro)
+
+    for lesson in StarterCurriculum.lessons {
+      let expected: LessonAccess = lesson.availability == .available ? .included : .comingSoon
+      #expect(policy.access(for: lesson) == expected)
+    }
+  }
+}
+
+@Suite("Mission briefing")
+struct MissionBriefingTests {
+  @Test("Every playable mission has a complete briefing before the lab")
+  func playableMissionsHaveCompleteBriefings() {
+    let playable = StarterCurriculum.lessons.filter { $0.availability == .available }
+
+    for lesson in playable {
+      let briefing = MissionBriefing.forLesson(lesson)
+      #expect(!briefing.story.isEmpty)
+      #expect(!briefing.objective.isEmpty)
+      #expect(!briefing.learningOutcomes.isEmpty)
+      #expect(briefing.estimatedMinutes > 0)
+      #expect(briefing.difficulty == .easy || briefing.difficulty == .medium)
+    }
+  }
+}
+
+@Suite("Port scan access")
+struct PortScanAccessTests {
+  @Test("App Store scan requires consent and a private address")
+  func appStoreRequiresConsentAndPrivateAddress() {
+    let policy = PortScanAccessPolicy(mode: .appStore)
+
+    #expect(policy.validate(host: "192.168.1.20", authorizationConfirmed: false) == .authorizationRequired)
+    #expect(policy.validate(host: "192.168.1.20", authorizationConfirmed: true) == .allowed("192.168.1.20"))
+    #expect(policy.validate(host: "8.8.8.8", authorizationConfirmed: true) == .privateAddressRequired)
+    #expect(policy.validate(host: "example.com", authorizationConfirmed: true) == .privateAddressRequired)
+  }
+
+  @Test("Developer scan accepts a valid host without the Store gate")
+  func developerAcceptsValidHostWithoutStoreGate() {
+    let policy = PortScanAccessPolicy(mode: .developer)
+
+    #expect(policy.validate(host: "example.com", authorizationConfirmed: false) == .allowed("example.com"))
+    #expect(policy.validate(host: "8.8.8.8", authorizationConfirmed: false) == .allowed("8.8.8.8"))
+  }
+
+  @Test("Every mode rejects malformed hosts")
+  func modesRejectMalformedHosts() {
+    for mode in AppDistributionMode.allCases {
+      let policy = PortScanAccessPolicy(mode: mode)
+      #expect(policy.validate(host: "not a host", authorizationConfirmed: true) == .invalidHost)
+    }
+  }
+}
+
 @Suite("Learning progress")
 struct LearningProgressTests {
   private func isolatedDefaults() -> UserDefaults {

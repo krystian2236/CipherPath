@@ -69,6 +69,7 @@ enum StarterLabs {
     flags: [
       LabFlag(
         id: "user", value: "CIPHER{PING_IS_NOT_PROOF}",
+        answer: "Brak ping nie dowodzi wyłączenia hosta",
         requiredObjectiveIDs: ["availability", "services"]
       )
     ],
@@ -102,19 +103,20 @@ enum StarterLabs {
       LabRule(
         command: .curl(url: "http://192.0.2.11/status"),
         output: "host=scout-01\nstate=training\nflag=CIPHER{SCOUT_READY}",
-        discovery: "Odnaleziona flaga użytkownika",
+        discovery: "Odnaleziona odpowiedź użytkownika",
         objectiveID: "flag"
       ),
     ],
     objectives: [
       LabObjective(id: "availability", title: "Sprawdź, czy host odpowiada"),
       LabObjective(id: "services", title: "Rozpoznaj otwarte usługi"),
-      LabObjective(id: "flag", title: "Znajdź flagę w serwisie WWW"),
+      LabObjective(id: "flag", title: "Znajdź odpowiedź w serwisie WWW"),
     ],
     flags: [
       LabFlag(
         id: "user",
         value: "CIPHER{SCOUT_READY}",
+        answer: "Scout gotowy",
         requiredObjectiveIDs: ["availability", "services", "flag"]
       )
     ],
@@ -152,6 +154,7 @@ enum StarterLabs {
     flags: [
       LabFlag(
         id: "incident", value: "CIPHER{ANOMALY_0914}",
+        answer: "Anomalia o 09:14",
         requiredObjectiveIDs: ["locate", "anomaly"]
       )
     ],
@@ -185,6 +188,7 @@ enum StarterLabs {
     flags: [
       LabFlag(
         id: "incident", value: "CIPHER{PRESERVE_THEN_CONTAIN}",
+        answer: "Najpierw zachowaj ślady, potem ogranicz incydent",
         requiredObjectiveIDs: ["timeline", "contain"]
       )
     ],
@@ -218,7 +222,7 @@ enum StarterLabs {
       LabRule(
         command: .cat(path: "notice.txt"),
         output: "Remove anonymous access after migration.\nCIPHER{ANON_SHARE_FOUND}",
-        discovery: "Flaga znajdowała się w publicznym pliku",
+        discovery: "Odpowiedź znajdowała się w publicznym pliku",
         objectiveID: "flag"
       ),
     ],
@@ -230,6 +234,7 @@ enum StarterLabs {
     flags: [
       LabFlag(
         id: "user", value: "CIPHER{ANON_SHARE_FOUND}",
+        answer: "Znaleziono anonimowy udział",
         requiredObjectiveIDs: ["service", "access", "flag"]
       )
     ],
@@ -253,7 +258,7 @@ enum StarterLabs {
       LabRule(
         command: .cat(path: "/home/trainee/user.txt"),
         output: "CIPHER{USER_ACCESS}",
-        discovery: "Zdobyto flagę użytkownika",
+        discovery: "Odnaleziono odpowiedź użytkownika",
         objectiveID: "user"
       ),
       LabRule(
@@ -265,23 +270,25 @@ enum StarterLabs {
       LabRule(
         command: .cat(path: "/root/root.txt"),
         output: "CIPHER{ROOT_RULE_REVIEW}",
-        discovery: "Zdobyto flagę administratora",
+        discovery: "Odnaleziono odpowiedź administratora",
         objectiveID: "root"
       ),
     ],
     objectives: [
       LabObjective(id: "access", title: "Wejdź na przygotowane konto"),
-      LabObjective(id: "user", title: "Zdobądź flagę użytkownika"),
+      LabObjective(id: "user", title: "Odnajdź odpowiedź użytkownika"),
       LabObjective(id: "sudo", title: "Sprawdź dozwolone reguły sudo"),
-      LabObjective(id: "root", title: "Zdobądź flagę administratora"),
+      LabObjective(id: "root", title: "Odnajdź odpowiedź administratora"),
     ],
     flags: [
       LabFlag(
         id: "user", value: "CIPHER{USER_ACCESS}",
+        answer: "Dostęp użytkownika zdobyty",
         requiredObjectiveIDs: ["access", "user"]
       ),
       LabFlag(
         id: "root", value: "CIPHER{ROOT_RULE_REVIEW}",
+        answer: "Reguła administratora wymaga przeglądu",
         requiredObjectiveIDs: ["access", "user", "sudo", "root"]
       ),
     ],
@@ -315,19 +322,20 @@ enum StarterLabs {
       LabRule(
         command: .curl(url: "http://192.0.2.40/backup/note.txt"),
         output: "Training backup only\nCIPHER{ROBOTS_ARE_CLUES}",
-        discovery: "Odnaleziona flaga w publicznej kopii zapasowej",
+        discovery: "Odnaleziona odpowiedź w publicznej kopii zapasowej",
         objectiveID: "flag"
       ),
     ],
     objectives: [
       LabObjective(id: "service", title: "Rozpoznaj usługę WWW"),
       LabObjective(id: "clue", title: "Odszukaj wskazówkę administratora"),
-      LabObjective(id: "flag", title: "Znajdź flagę w ujawnionym pliku"),
+      LabObjective(id: "flag", title: "Znajdź odpowiedź w ujawnionym pliku"),
     ],
     flags: [
       LabFlag(
         id: "user",
         value: "CIPHER{ROBOTS_ARE_CLUES}",
+        answer: "Robots.txt ujawnia wskazówki",
         requiredObjectiveIDs: ["service", "clue", "flag"]
       )
     ],
@@ -360,7 +368,7 @@ enum StarterLabs {
       LabRule(
         command: .curl(url: "http://192.0.2.41/api/debug"),
         output: "debug_note=CIPHER{DEBUG_IS_DATA}",
-        discovery: "Endpoint debugowania ujawnił flagę",
+        discovery: "Endpoint debugowania ujawnił odpowiedź",
         objectiveID: "flag"
       ),
     ],
@@ -372,6 +380,7 @@ enum StarterLabs {
     flags: [
       LabFlag(
         id: "api", value: "CIPHER{DEBUG_IS_DATA}",
+        answer: "Dane debugowania są wrażliwe",
         requiredObjectiveIDs: ["request", "headers", "flag"]
       )
     ],
@@ -412,6 +421,7 @@ enum StarterLabs {
     flags: [
       LabFlag(
         id: "mobile", value: "CIPHER{MOVE_SECRETS_TO_KEYCHAIN}",
+        answer: "Przenieś sekrety do Keychain",
         requiredObjectiveIDs: ["container", "locate", "flag"]
       )
     ],
@@ -452,6 +462,7 @@ enum StarterLabs {
     flags: [
       LabFlag(
         id: "transport", value: "CIPHER{TLS_BEFORE_LOGIN}",
+        answer: "TLS przed logowaniem",
         requiredObjectiveIDs: ["request", "transport", "flag"]
       )
     ],

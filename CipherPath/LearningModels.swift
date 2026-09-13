@@ -1,5 +1,18 @@
 import Foundation
 
+enum AppDistributionMode: CaseIterable, Equatable, Sendable {
+  case appStore
+  case developer
+
+  static var currentBuild: Self {
+    #if DEBUG
+      .developer
+    #else
+      .appStore
+    #endif
+  }
+}
+
 enum LearningPath: String, CaseIterable, Codable, Hashable, Sendable {
   case fundamentals
   case blueTeam
@@ -28,6 +41,96 @@ enum LessonAvailability: String, Codable, Equatable, Sendable {
   case comingSoon
 }
 
+enum ContentAccessTier: String, Codable, Equatable, Sendable {
+  case free
+  case testFlightDemo
+  case pro
+}
+
+enum LessonAccess: Equatable, Sendable {
+  case included
+  case requiresPro
+  case comingSoon
+}
+
+struct ContentAccessPolicy: Equatable, Sendable {
+  static let current = forDistribution(.currentBuild)
+
+  let tier: ContentAccessTier
+
+  static func forDistribution(_ distribution: AppDistributionMode) -> Self {
+    switch distribution {
+    case .developer:
+      ContentAccessPolicy(tier: .pro)
+    case .appStore:
+      ContentAccessPolicy(tier: .free)
+    }
+  }
+
+  func access(for lesson: LearningLesson) -> LessonAccess {
+    guard lesson.availability == .available else { return .comingSoon }
+
+    switch tier {
+    case .free:
+      return lesson.order == 1 ? .included : .requiresPro
+    case .testFlightDemo, .pro:
+      return .included
+    }
+  }
+
+  func includedLessons(in path: LearningPath) -> Int {
+    StarterCurriculum.lessons(in: path).filter { access(for: $0) == .included }.count
+  }
+}
+
+enum MissionDifficulty: String, Equatable, Sendable {
+  case easy = "Łatwa"
+  case medium = "Średnia"
+}
+
+struct MissionBriefing: Equatable, Sendable {
+  let story: String
+  let objective: String
+  let learningOutcomes: [String]
+  let estimatedMinutes: Int
+  let difficulty: MissionDifficulty
+
+  static func forLesson(_ lesson: LearningLesson) -> Self {
+    let story: String
+    let objective: String
+
+    switch lesson.path {
+    case .fundamentals:
+      story = "Otrzymujesz dostęp do kontrolowanego hosta szkoleniowego. Zbierz pierwsze wskazówki i ustal, co naprawdę działa w sieci."
+      objective = "Rozpoznaj przygotowane usługi i odnajdź odpowiedź bez wychodzenia poza laboratorium."
+    case .blueTeam:
+      story = "Centrum operacyjne zgłasza nietypowe zdarzenie. Materiał dowodowy jest gotowy, a Twoim zadaniem jest oddzielić sygnał od szumu."
+      objective = "Przeanalizuj ślady, potwierdź incydent i wybierz bezpieczną reakcję."
+    case .redTeam:
+      story = "Właściciel fikcyjnego systemu zlecił legalny test w ściśle określonym zakresie. Sprawdź, gdzie zaczyna się ścieżka ryzyka."
+      objective = "Znajdź kontrolowaną słabość, ustal odpowiedź i wskaż sposób obrony."
+    case .webSecurity:
+      story = "Aplikacja demonstracyjna zachowuje się nietypowo. Zbadaj przygotowane odpowiedzi i odkryj błąd konfiguracji."
+      objective = "Połącz wskazówki z warstwy HTTP i odnajdź odpowiedź w symulacji offline."
+    case .mobileSecurity:
+      story = "Testowa aplikacja mobilna trafia do przeglądu bezpieczeństwa przed wydaniem. Ty wykonujesz kontrolę jej danych i komunikacji."
+      objective = "Oceń przygotowany przypadek i wybierz ochronę właściwą dla iPhone’a."
+    }
+
+    return MissionBriefing(
+      story: story,
+      objective: objective,
+      learningOutcomes: [
+        lesson.summary,
+        "Praca z dowodami w bezpiecznej symulacji",
+        "Rozpoznanie ryzyka i właściwej obrony",
+      ],
+      estimatedMinutes: lesson.order == 1 ? 8 : 12,
+      difficulty: lesson.order == 1 ? .easy : .medium
+    )
+  }
+}
+
 enum LessonStage: String, CaseIterable, Codable, Equatable, Sendable {
   case learn
   case check
@@ -38,7 +141,7 @@ enum LessonStage: String, CaseIterable, Codable, Equatable, Sendable {
     switch self {
     case .learn: "Poznaj"
     case .check: "Sprawdź"
-    case .findFlag: "Znajdź flagę"
+    case .findFlag: "Znajdź odpowiedź"
     case .explanation: "Wyjaśnienie"
     }
   }
@@ -66,7 +169,7 @@ enum StarterCurriculum {
     lesson(
       id: "fundamentals-read-port-scan", path: .fundamentals, order: 2,
       title: "Network Scout",
-      summary: "Uruchom wirtualny cel, rozpoznaj usługi i odnajdź flagę."),
+      summary: "Uruchom wirtualny cel, rozpoznaj usługi i odnajdź odpowiedź."),
     lesson(
       id: "fundamentals-network-addresses", path: .fundamentals, order: 3,
       title: "Adresy i sieci prywatne",
@@ -108,7 +211,7 @@ enum StarterCurriculum {
     lesson(
       id: "red-team-threat-thinking", path: .redTeam, order: 2,
       title: "Permission Trail",
-      summary: "Zdobądź flagę użytkownika i przeanalizuj niebezpieczną regułę sudo."),
+      summary: "Odnajdź odpowiedź użytkownika i przeanalizuj niebezpieczną regułę sudo."),
     lesson(
       id: "red-team-owned-lab-recon", path: .redTeam, order: 3,
       title: "Rozpoznanie własnego labu",

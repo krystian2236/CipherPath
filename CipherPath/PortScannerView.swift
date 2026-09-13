@@ -7,6 +7,7 @@ struct PortScannerView: View {
   @State private var customStart = "1"
   @State private var customEnd = "512"
   @State private var showClosedPorts = false
+  @State private var authorizationConfirmed = false
 
   private var visibleResults: [PortScanEntry] {
     showClosedPorts
@@ -93,6 +94,18 @@ struct PortScannerView: View {
           }
           .font(.caption2)
           .foregroundStyle(.secondary)
+        }
+
+        if model.portScanAccessPolicy.requiresAuthorization {
+          Toggle(
+            "Potwierdzam własność sieci lub zgodę właściciela",
+            isOn: $authorizationConfirmed
+          )
+          .font(.caption)
+        } else {
+          Label("Build Developer — rozszerzone cele diagnostyczne", systemImage: "hammer.fill")
+            .font(.caption)
+            .foregroundStyle(.orange)
         }
 
         if model.isScanningPorts {
@@ -196,7 +209,8 @@ struct PortScannerView: View {
       host: host,
       preset: preset,
       customStart: customStart,
-      customEnd: customEnd
+      customEnd: customEnd,
+      authorizationConfirmed: authorizationConfirmed
     )
   }
 }

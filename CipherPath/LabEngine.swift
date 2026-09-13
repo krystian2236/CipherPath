@@ -57,18 +57,29 @@ enum LabEngine {
       )
     }
 
-    session.history.append(LabTerminalEntry(command: input, output: rule.output))
+    let revealedFlag = definition.flags.first { rule.output.contains($0.value) }
+    let readableOutput = revealedFlag.map {
+      rule.output.replacingOccurrences(
+        of: $0.value,
+        with: "[✓] ❯ Odpowiedź: \($0.answer)"
+      )
+    } ?? rule.output
+    session.history.append(LabTerminalEntry(command: input, output: readableOutput))
     if let discovery = rule.discovery, !session.discoveries.contains(discovery) {
       session.discoveries.append(discovery)
     }
     if let objectiveID = rule.objectiveID {
       session.completedObjectiveIDs.insert(objectiveID)
     }
-    return LabExecutionResult(status: .success, output: rule.output)
+    return LabExecutionResult(
+      status: .success,
+      output: readableOutput,
+      revealedAnswer: revealedFlag?.answer
+    )
   }
 
   static func submit(
-    flag input: String,
+    answer input: String,
     definition: LabDefinition,
     session: inout LabSession
   ) -> LabFlagResult {
@@ -78,7 +89,7 @@ enum LabEngine {
 
     let normalized = input.trimmingCharacters(in: .whitespacesAndNewlines)
     guard let flag = definition.flags.first(where: {
-      $0.value.caseInsensitiveCompare(normalized) == .orderedSame
+      $0.answer.caseInsensitiveCompare(normalized) == .orderedSame
     }) else {
       return .incorrect
     }
