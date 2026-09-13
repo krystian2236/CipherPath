@@ -48,6 +48,8 @@
 		E00000000000000000000038 /* LabTerminalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000034 /* LabTerminalView.swift */; };
 		E00000000000000000000039 /* AchievementTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000035 /* AchievementTests.swift */; };
 		E00000000000000000000040 /* AchievementModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000036 /* AchievementModels.swift */; };
+		E00000000000000000000041 /* PointsWalletTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000037 /* PointsWalletTests.swift */; };
+		E00000000000000000000042 /* PointsModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000038 /* PointsModels.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -105,6 +107,8 @@
 		F00000000000000000000034 /* LabTerminalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabTerminalView.swift; sourceTree = "<group>"; };
 		F00000000000000000000035 /* AchievementTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AchievementTests.swift; sourceTree = "<group>"; };
 		F00000000000000000000036 /* AchievementModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AchievementModels.swift; sourceTree = "<group>"; };
+		F00000000000000000000037 /* PointsWalletTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointsWalletTests.swift; sourceTree = "<group>"; };
+		F00000000000000000000038 /* PointsModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointsModels.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -169,6 +173,7 @@
 				F00000000000000000000033 /* StarterLabs.swift */,
 				F00000000000000000000034 /* LabTerminalView.swift */,
 				F00000000000000000000036 /* AchievementModels.swift */,
+				F00000000000000000000038 /* PointsModels.swift */,
 				F0000000000000000000001B /* ScanDetailsView.swift */,
 				F00000000000000000000007 /* ScannerView.swift */,
 				F00000000000000000000008 /* SupportingViews.swift */,
@@ -186,6 +191,7 @@
 				F00000000000000000000028 /* LabEngineTests.swift */,
 				F00000000000000000000032 /* StarterLabsTests.swift */,
 				F00000000000000000000035 /* AchievementTests.swift */,
+				F00000000000000000000037 /* PointsWalletTests.swift */,
 			);
 			path = CipherPathTests;
 			sourceTree = "<group>";
@@ -330,6 +336,7 @@
 				E00000000000000000000037 /* StarterLabs.swift in Sources */,
 				E00000000000000000000038 /* LabTerminalView.swift in Sources */,
 				E00000000000000000000040 /* AchievementModels.swift in Sources */,
+				E00000000000000000000042 /* PointsModels.swift in Sources */,
 				E00000000000000000000018 /* ScanDetailsView.swift in Sources */,
 				E00000000000000000000007 /* ScannerView.swift in Sources */,
 				E00000000000000000000008 /* SupportingViews.swift in Sources */,
@@ -345,6 +352,7 @@
 				E00000000000000000000032 /* LabEngineTests.swift in Sources */,
 				E00000000000000000000036 /* StarterLabsTests.swift in Sources */,
 				E00000000000000000000039 /* AchievementTests.swift in Sources */,
+				E00000000000000000000041 /* PointsWalletTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
