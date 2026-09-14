@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-for dependency in xcodebuild plutil mktemp grep sed head cat rm; do
+for dependency in xcodebuild plutil mktemp grep sed cat rm; do
   command -v "$dependency" >/dev/null || {
     print -u2 "Brak wymaganego narzędzia: $dependency"
     exit 1
@@ -23,9 +23,9 @@ build_settings="$(
 )"
 
 build_setting() {
+  local key="$1"
   print -r -- "$build_settings" \
-    | sed -n "s/^[[:space:]]*$1 = //p" \
-    | head -n 1
+    | sed -n "/^[[:space:]]*$key = /{s/^[[:space:]]*$key = //;p;q;}"
 }
 
 expected_marketing_version="$(build_setting MARKETING_VERSION)"
