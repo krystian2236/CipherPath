@@ -9,7 +9,7 @@ unit_log="$(mktemp /private/tmp/cipherpath-unit.XXXXXX)"
 check_log="$(mktemp /private/tmp/cipherpath-pre-push.XXXXXX)"
 trap 'rm -f -- "$unit_log" "$check_log"' EXIT
 
-for dependency in git zsh mktemp grep rm; do
+for dependency in git zsh mktemp grep sed rm cat; do
   command -v "$dependency" >/dev/null || {
     print -u2 "Brak wymaganego narzędzia: $dependency"
     exit 1
@@ -48,7 +48,7 @@ fi
 
 print "\n=== Integralność projektu ==="
 if "$repo_root/scripts/test-project-integrity.sh" >"$check_log" 2>&1; then
-  grep -E '\*\* BUILD SUCCEEDED \*\*|Integralność bundle: OK' "$check_log"
+  grep -E '\*\* BUILD SUCCEEDED \*\*|Wersja bundle:|Integralność bundle: OK' "$check_log"
 else
   cat "$check_log"
   exit 1
