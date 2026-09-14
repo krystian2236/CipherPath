@@ -66,7 +66,7 @@ enum LessonAccess: Equatable, Sendable {
 }
 
 struct ContentAccessPolicy: Equatable, Sendable {
-  static let current = forDistribution(.currentBuild)
+  static let current = releasePolicy(for: .currentBuild)
 
   let tier: ContentAccessTier
 
@@ -76,6 +76,16 @@ struct ContentAccessPolicy: Equatable, Sendable {
       ContentAccessPolicy(tier: .pro)
     case .appStore:
       ContentAccessPolicy(tier: .free)
+    }
+  }
+
+  static func releasePolicy(for distribution: AppDistributionMode) -> Self {
+    switch distribution {
+    case .developer:
+      forDistribution(.developer)
+    case .appStore:
+      // Keep the current release open until a real StoreKit entitlement flow exists.
+      ContentAccessPolicy(tier: .pro)
     }
   }
 
