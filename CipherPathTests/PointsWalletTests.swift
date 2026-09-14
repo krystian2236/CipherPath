@@ -116,3 +116,11 @@ struct ReleaseSurfaceTests {
     #expect(!AppDistributionMode.appStore.showsFutureStore)
   }
 }
+
+@Suite("Scan accessibility")
+struct ScanAccessibilityTests {
+  @Test("Scan progress announces interpolated host counts")
+  func scanProgressAnnouncesActualCounts() {
+    #expect(ScanProgressAccessibility.value(completed: 7, total: 42) == "7 z 42 adresów")
+  }
+}
