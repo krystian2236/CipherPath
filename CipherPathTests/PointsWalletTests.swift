@@ -82,8 +82,7 @@ struct FeaturedLessonAccessTests {
     let appStorePolicy = ContentAccessPolicy.forDistribution(.appStore)
     let appStoreLesson = FeaturedLessonSelection.lesson(for: appStorePolicy)
 
-    #expect(appStoreLesson.path == .blueTeam)
-    #expect(appStoreLesson.order == 1)
+    #expect(appStoreLesson.id == "blue-team-suspicious-login")
     #expect(appStorePolicy.access(for: appStoreLesson) == .included)
 
     let developerPolicy = ContentAccessPolicy.forDistribution(.developer)
@@ -114,6 +113,11 @@ struct ReleaseSurfaceTests {
     #expect(AppDistributionMode.developer.showsFutureStore)
     #expect(!AppDistributionMode.appStore.showsMissionsTab)
     #expect(!AppDistributionMode.appStore.showsFutureStore)
+  }
+
+  @Test("App Store keeps the current catalog open until StoreKit ships")
+  func appStoreHasNoDeadPaidGate() {
+    #expect(ContentAccessPolicy.forDistribution(.appStore).tier == .pro)
   }
 }
 
