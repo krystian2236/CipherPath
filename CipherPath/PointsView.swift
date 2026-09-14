@@ -120,8 +120,8 @@ struct PointsView: View {
   private var developerActionPresented: Binding<Bool> {
     Binding(
       get: { developerAction != nil },
-      set: { if !$0 { developerAction = nil }
-    })
+      set: { if !$0 { developerAction = nil } }
+    )
   }
 
   private func perform(_ action: DeveloperPointsAction) {
