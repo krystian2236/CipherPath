@@ -74,3 +74,22 @@ struct PointsWalletTests {
     #expect(wallet.transactions.last?.kind == .developerAdjustment)
   }
 }
+
+@Suite("Featured lesson access")
+struct FeaturedLessonAccessTests {
+  @Test("Featured lesson always respects the selected access tier")
+  func featuredLessonRespectsAccessPolicy() {
+    let appStorePolicy = ContentAccessPolicy.forDistribution(.appStore)
+    let appStoreLesson = FeaturedLessonSelection.lesson(for: appStorePolicy)
+
+    #expect(appStoreLesson.path == .blueTeam)
+    #expect(appStoreLesson.order == 1)
+    #expect(appStorePolicy.access(for: appStoreLesson) == .included)
+
+    let developerPolicy = ContentAccessPolicy.forDistribution(.developer)
+    let developerLesson = FeaturedLessonSelection.lesson(for: developerPolicy)
+
+    #expect(developerLesson.id == "blue-team-suspicious-login")
+    #expect(developerPolicy.access(for: developerLesson) == .included)
+  }
+}
