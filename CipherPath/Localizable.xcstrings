@@ -30,6 +30,96 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "System follows the iPhone language. Polish and English override it immediately without restarting the app." } },
         "pl" : { "stringUnit" : { "state" : "translated", "value" : "System używa języka iPhone’a. Polski i English przełączają język od razu, bez ponownego uruchamiania aplikacji." } }
       }
+    },
+    "start.header.tagline" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Small steps.\nBigger possibilities." } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Małe kroki.\nWiększe możliwości." } }
+      }
+    },
+    "start.header.principles" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "LAW  •  SAFETY  •  PRACTICE" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "PRAWO  •  BEZPIECZEŃSTWO  •  PRAKTYKA" } }
+      }
+    },
+    "start.featured.subtitle" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Real knowledge. A safer world." } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Realna wiedza. Bezpieczniejszy świat." } }
+      }
+    },
+    "start.featured.badge" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "BLUE TEAM • OFFLINE SIMULATION" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "BLUE TEAM • SYMULACJA OFFLINE" } }
+      }
+    },
+    "start.featured.briefing" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "View briefing" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Zobacz odprawę" } }
+      }
+    },
+    "start.achievements.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Achievements" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Osiągnięcia" } }
+      }
+    },
+    "start.common.see_all" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "See all" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Zobacz wszystkie" } }
+      }
+    },
+    "start.common.coming_soon" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Coming soon" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Wkrótce" } }
+      }
+    },
+    "start.points.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Points" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Punkty" } }
+      }
+    },
+    "start.points.subtitle" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Earn them in lessons and spend them on hints" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Zdobywaj w lekcjach i wykorzystuj na podpowiedzi" } }
+      }
+    },
+    "start.store.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Store" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Sklep" } }
+      }
+    },
+    "start.store.subtitle" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Point packs and subscription" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Pakiety punktów i subskrypcja" } }
+      }
+    },
+    "start.points.accessibility_hint" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Opens points history" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Otwiera historię punktów" } }
+      }
+    },
+    "start.common.unavailable_hint" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Feature not available yet" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Funkcja jeszcze niedostępna" } }
+      }
+    },
+    "start.footer" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Consistent learning today, bigger possibilities tomorrow." } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Systematyczna nauka dziś, większe możliwości jutro." } }
+      }
     }
   },
   "version" : "1.0"
