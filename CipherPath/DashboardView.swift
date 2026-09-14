@@ -149,7 +149,7 @@ struct DashboardView: View {
     VStack(alignment: .leading, spacing: 12) {
       Text("CipherPath Pro").font(.title3.bold())
       HStack(spacing: 10) {
-        ForEach(FutureFeatureCatalog.previews) { feature in
+        ForEach(visibleFutureFeatures) { feature in
           if feature.id == "points" {
             NavigationLink {
               PointsView(progressStore: progressStore)
@@ -162,6 +162,12 @@ struct DashboardView: View {
           }
         }
       }
+    }
+  }
+
+  private var visibleFutureFeatures: [FutureFeaturePreview] {
+    FutureFeatureCatalog.previews.filter {
+      $0.id != "store" || AppDistributionMode.currentBuild.showsFutureStore
     }
   }
 
