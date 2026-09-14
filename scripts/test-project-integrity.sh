@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-for dependency in xcodebuild plutil mktemp grep cat rm; do
+for dependency in xcodebuild plutil mktemp grep sed head cat rm; do
   command -v "$dependency" >/dev/null || {
     print -u2 "Brak wymaganego narzędzia: $dependency"
     exit 1
@@ -13,6 +13,32 @@ repo_root="${0:A:h:h}"
 derived_data="$(mktemp -d /private/tmp/cipherpath-integrity.XXXXXX)"
 build_log="$derived_data/xcodebuild.log"
 trap 'rm -rf -- "$derived_data"' EXIT
+
+build_settings="$(
+  xcodebuild \
+    -project "$repo_root/CipherPath.xcodeproj" \
+    -scheme "CipherPath App Store" \
+    -configuration Release \
+    -showBuildSettings
+)"
+
+build_setting() {
+  print -r -- "$build_settings" \
+    | sed -n "s/^[[:space:]]*$1 = //p" \
+    | head -n 1
+}
+
+expected_marketing_version="$(build_setting MARKETING_VERSION)"
+expected_build_number="$(build_setting CURRENT_PROJECT_VERSION)"
+
+[[ -n "$expected_marketing_version" ]] || {
+  print -u2 "Nie udało się odczytać MARKETING_VERSION z ustawień Xcode"
+  exit 1
+}
+[[ -n "$expected_build_number" ]] || {
+  print -u2 "Nie udało się odczytać CURRENT_PROJECT_VERSION z ustawień Xcode"
+  exit 1
+}
 
 build_bundle() {
   xcodebuild \
@@ -60,7 +86,8 @@ assert_plist_value() {
 }
 
 assert_plist_value CFBundleIdentifier pl.krystian.CipherPath
-assert_plist_value CFBundleShortVersionString 1.3
+assert_plist_value CFBundleShortVersionString "$expected_marketing_version"
+assert_plist_value CFBundleVersion "$expected_build_number"
 assert_plist_value ITSAppUsesNonExemptEncryption false
 
 local_network_description="$(
@@ -101,4 +128,5 @@ assert_privacy_value NSPrivacyAccessedAPITypes.0.NSPrivacyAccessedAPIType \
 assert_privacy_value NSPrivacyAccessedAPITypes.0.NSPrivacyAccessedAPITypeReasons.0 \
   CA92.1
 
+print "Wersja bundle: $expected_marketing_version ($expected_build_number)"
 print "Integralność bundle: OK"
