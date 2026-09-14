@@ -1,5 +1,11 @@
 import SwiftUI
 
+enum ScanProgressAccessibility {
+  static func value(completed: Int, total: Int) -> String {
+    "\(completed) z \(total) adresów"
+  }
+}
+
 struct ScannerView: View {
   @ObservedObject var scanner: NetworkScanner
   @ObservedObject var knownDeviceStore: KnownDeviceStore
@@ -314,7 +320,9 @@ private struct ScanStatusView: View {
         ProgressView(value: Double(completed), total: Double(max(total, 1)))
           .tint(.cyan)
           .accessibilityLabel("Postęp skanowania")
-          .accessibilityValue("(completed) z (total) adresów")
+          .accessibilityValue(
+            ScanProgressAccessibility.value(completed: completed, total: total)
+          )
       }
     case .finished(let date):
       InfoBanner(
