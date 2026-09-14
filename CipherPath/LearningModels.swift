@@ -113,6 +113,11 @@ enum FeaturedLessonSelection {
   }
 }
 
+enum DashboardCopy {
+  static let featuredLessonTitle = "Polecana lekcja"
+  static let pointsSubtitle = "Zdobywaj w lekcjach i wykorzystuj na podpowiedzi"
+}
+
 enum MissionDifficulty: String, Equatable, Sendable {
   case easy = "Łatwa"
   case medium = "Średnia"
