@@ -4,7 +4,10 @@ import UIKit
 enum DevLocation: String, CaseIterable, Sendable {
   case dashboard = "START"
   case dashboardMission = "START / DZISIEJSZA MISJA"
+  case dashboardAchievements = "START / OSIĄGNIĘCIA"
+  case dashboardPoints = "START / PUNKTY"
   case paths = "ŚCIEŻKI"
+  case pathDetail = "ŚCIEŻKI / SZCZEGÓŁY"
   case missions = "MISJE"
   case missionCard = "MISJE / KARTA MISJI"
   case briefing = "ODPRAWA"
@@ -14,11 +17,101 @@ enum DevLocation: String, CaseIterable, Sendable {
   case labAnswer = "LAB / ODPOWIEDŹ"
   case labDefense = "LAB / OBRONA"
   case practice = "PRAKTYKA"
+  case practiceScanner = "PRAKTYKA / SKANER"
+  case practiceToolbox = "PRAKTYKA / TOOLBOX"
+  case practiceDevices = "PRAKTYKA / URZĄDZENIA"
+  case practiceServices = "PRAKTYKA / USŁUGI"
   case achievements = "OSIĄGNIĘCIA"
   case points = "PUNKTY"
 
+  // Legacy values are kept temporarily so older tests and references remain valid
+  // while the visible DEV system moves to stable English technical identifiers.
   var label: String { "[DEV: \(rawValue)]" }
   var copyValue: String { "DEV: \(rawValue)" }
+
+  var displayLabel: String { "[DEV: VECTORSEC / \(technicalPath)]" }
+
+  var uiRef: String {
+    "UIREF app=VectorSec screen=\(screen) component=\(component) view=\(viewName)"
+  }
+
+  private var technicalPath: String {
+    switch self {
+    case .dashboard: "START"
+    case .dashboardMission: "START / FEATURED_LESSON"
+    case .dashboardAchievements: "START / ACHIEVEMENTS"
+    case .dashboardPoints: "START / POINTS"
+    case .paths: "PATHS"
+    case .pathDetail: "PATHS / PATH_DETAIL"
+    case .missions: "MISSIONS"
+    case .missionCard: "MISSIONS / MISSION_CARD"
+    case .briefing: "LESSON / BRIEFING"
+    case .labMode: "LAB / MODE"
+    case .labObjectives: "LAB / OBJECTIVES"
+    case .labTerminal: "LAB / TERMINAL"
+    case .labAnswer: "LAB / ANSWER"
+    case .labDefense: "LAB / DEFENSE"
+    case .practice: "PRACTICE"
+    case .practiceScanner: "PRACTICE / SCANNER"
+    case .practiceToolbox: "PRACTICE / TOOLBOX"
+    case .practiceDevices: "PRACTICE / DEVICES"
+    case .practiceServices: "PRACTICE / SERVICES"
+    case .achievements: "ACHIEVEMENTS"
+    case .points: "POINTS"
+    }
+  }
+
+  private var screen: String {
+    switch self {
+    case .dashboard, .dashboardMission, .dashboardAchievements, .dashboardPoints: "start"
+    case .paths, .pathDetail: "paths"
+    case .missions, .missionCard: "missions"
+    case .briefing: "lesson"
+    case .labMode, .labObjectives, .labTerminal, .labAnswer, .labDefense: "lab"
+    case .practice, .practiceScanner, .practiceToolbox, .practiceDevices, .practiceServices: "practice"
+    case .achievements: "achievements"
+    case .points: "points"
+    }
+  }
+
+  private var component: String {
+    switch self {
+    case .dashboard, .paths, .missions, .practice, .achievements, .points: "root"
+    case .dashboardMission: "featuredLesson"
+    case .dashboardAchievements: "achievements"
+    case .dashboardPoints: "points"
+    case .pathDetail: "pathDetail"
+    case .missionCard: "missionCard"
+    case .briefing: "briefing"
+    case .labMode: "mode"
+    case .labObjectives: "objectives"
+    case .labTerminal: "terminal"
+    case .labAnswer: "answer"
+    case .labDefense: "defense"
+    case .practiceScanner: "scanner"
+    case .practiceToolbox: "toolbox"
+    case .practiceDevices: "devices"
+    case .practiceServices: "services"
+    }
+  }
+
+  private var viewName: String {
+    switch self {
+    case .dashboard, .dashboardMission, .dashboardAchievements, .dashboardPoints: "DashboardView"
+    case .paths: "LearningPathListView"
+    case .pathDetail: "LearningPathDetailView"
+    case .missions, .missionCard: "MissionsView"
+    case .briefing: "MissionBriefingView"
+    case .labMode, .labObjectives, .labTerminal, .labAnswer, .labDefense: "LabTerminalView"
+    case .practice: "PracticeHubView"
+    case .practiceScanner: "ScannerView"
+    case .practiceToolbox: "ToolboxView"
+    case .practiceDevices: "DevicesView"
+    case .practiceServices: "ServicesHubView"
+    case .achievements: "AchievementsView"
+    case .points: "PointsView"
+    }
+  }
 
   static func isVisible(in distribution: AppDistributionMode) -> Bool {
     distribution == .developer
@@ -33,7 +126,7 @@ struct DevLocationLabel: View {
   var body: some View {
     if DevLocation.isVisible(in: distribution) {
       HStack(spacing: 4) {
-        Text(location.label)
+        Text(location.displayLabel)
         if copied {
           Image(systemName: "checkmark")
         }
@@ -45,19 +138,19 @@ struct DevLocationLabel: View {
         .contentShape(Rectangle())
         .onTapGesture(perform: copyLocation)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(location.label)
-        .accessibilityHint("Kopiuje nazwę części aplikacji")
+        .accessibilityLabel(location.displayLabel)
+        .accessibilityHint("Kopiuje techniczny identyfikator UI")
         .accessibilityAddTraits(.isButton)
         .accessibilityAction { copyLocation() }
     }
   }
 
   private func copyLocation() {
-    UIPasteboard.general.string = location.copyValue
+    UIPasteboard.general.string = location.uiRef
     copied = true
     UIAccessibility.post(
       notification: .announcement,
-      argument: "Skopiowano \(location.copyValue)"
+      argument: "Skopiowano \(location.uiRef)"
     )
     DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
       copied = false
