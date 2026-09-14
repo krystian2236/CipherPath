@@ -131,6 +131,7 @@ struct DashboardView: View {
 
   private var achievementSection: some View {
     VStack(alignment: .leading, spacing: 12) {
+      DevLocationLabel(location: .dashboardAchievements)
       sectionHeader("Osiągnięcia", destination: .achievements)
       HStack(spacing: 10) {
         ForEach(AchievementCatalog.evaluateAll(progressStore.progress), id: \.id) { achievement in
@@ -147,6 +148,7 @@ struct DashboardView: View {
 
   private var futureFeaturesSection: some View {
     VStack(alignment: .leading, spacing: 12) {
+      DevLocationLabel(location: .dashboardPoints)
       Text(DashboardCopy.featureSectionTitle(for: .currentBuild)).font(.title3.bold())
       HStack(spacing: 10) {
         ForEach(visibleFutureFeatures) { feature in
