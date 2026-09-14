@@ -182,3 +182,29 @@ struct DevUIReferenceTests {
     #expect(!DevLocation.isVisible(in: .appStore))
   }
 }
+
+@Suite("App language")
+struct AppLanguageTests {
+  @Test("Language choices stay stable for persisted preferences")
+  func choicesStayStable() {
+    #expect(AppLanguage.allCases == [.system, .polish, .english])
+    #expect(AppLanguage.system.rawValue == "system")
+    #expect(AppLanguage.polish.rawValue == "pl")
+    #expect(AppLanguage.english.rawValue == "en")
+  }
+
+  @Test("Only explicit language choices override the system locale")
+  func localeOverrideMatchesSelection() {
+    #expect(AppLanguage.system.localeOverride == nil)
+    #expect(AppLanguage.polish.localeOverride?.identifier == "pl")
+    #expect(AppLanguage.english.localeOverride?.identifier == "en")
+  }
+
+  @Test("Unknown stored values safely fall back to System")
+  func storedValueFallbackIsSafe() {
+    #expect(AppLanguage.fromStoredValue("pl") == .polish)
+    #expect(AppLanguage.fromStoredValue("en") == .english)
+    #expect(AppLanguage.fromStoredValue("unknown") == .system)
+    #expect(AppLanguage.fromStoredValue(nil) == .system)
+  }
+}
