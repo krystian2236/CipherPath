@@ -129,15 +129,51 @@ private struct PracticeHubView: View {
         Section("Narzędzia CipherPath") {
           NavigationLink("Skan prywatnej sieci") {
             ScannerView(scanner: scanner, knownDeviceStore: knownDeviceStore, selectedTab: $selectedTab)
+              .safeAreaInset(edge: .top, spacing: 0) {
+                if DevLocation.isVisible(in: .currentBuild) {
+                  DevLocationLabel(location: .practiceScanner)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 5)
+                    .background(.thinMaterial)
+                }
+              }
           }
           NavigationLink("Bezpieczny Toolbox") {
             ToolboxView(scanner: scanner, workspaceRouteRaw: $ishWorkspaceRouteRaw)
+              .safeAreaInset(edge: .top, spacing: 0) {
+                if DevLocation.isVisible(in: .currentBuild) {
+                  DevLocationLabel(location: .practiceToolbox)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 5)
+                    .background(.thinMaterial)
+                }
+              }
           }
           NavigationLink("Urządzenia") {
             DevicesView(scanner: scanner, knownDeviceStore: knownDeviceStore, selectedTab: $selectedTab)
+              .safeAreaInset(edge: .top, spacing: 0) {
+                if DevLocation.isVisible(in: .currentBuild) {
+                  DevLocationLabel(location: .practiceDevices)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 5)
+                    .background(.thinMaterial)
+                }
+              }
           }
           NavigationLink("Usługi i diagnostyka") {
             ServicesHubView(scanner: scanner, tools: tools)
+              .safeAreaInset(edge: .top, spacing: 0) {
+                if DevLocation.isVisible(in: .currentBuild) {
+                  DevLocationLabel(location: .practiceServices)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 5)
+                    .background(.thinMaterial)
+                }
+              }
           }
         }
         Section("Informacje") {
