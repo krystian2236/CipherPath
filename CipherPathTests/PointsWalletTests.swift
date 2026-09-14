@@ -226,4 +226,16 @@ struct DashboardLocalizationTests {
         == "Earn points in lessons and spend them on hints"
     )
   }
+
+  @Test("Dashboard uses stable String Catalog keys")
+  func dashboardKeysStayStable() {
+    #expect(DashboardL10n.tagline == "start.header.tagline")
+    #expect(DashboardL10n.principles == "start.header.principles")
+    #expect(DashboardL10n.featuredSubtitle == "start.featured.subtitle")
+    #expect(DashboardL10n.briefingButton == "start.featured.briefing")
+    #expect(DashboardL10n.achievementsTitle == "start.achievements.title")
+    #expect(DashboardL10n.seeAll == "start.common.see_all")
+    #expect(DashboardL10n.comingSoon == "start.common.coming_soon")
+    #expect(DashboardL10n.footer == "start.footer")
+  }
 }

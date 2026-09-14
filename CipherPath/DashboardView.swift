@@ -59,12 +59,12 @@ struct DashboardView: View {
       HStack(alignment: .firstTextBaseline) {
         Text("Cipher") + Text("Path").foregroundStyle(.indigo)
         Spacer()
-        Text("dashboard.header.tagline")
+        Text(LocalizedStringKey(DashboardL10n.tagline))
           .font(.caption)
           .foregroundStyle(.secondary)
       }
       .font(.largeTitle.bold())
-      Text("dashboard.header.category_line")
+      Text(LocalizedStringKey(DashboardL10n.principles))
         .font(.caption2.weight(.semibold))
         .tracking(2)
         .foregroundStyle(.secondary)
@@ -75,7 +75,7 @@ struct DashboardView: View {
     VStack(alignment: .leading, spacing: 14) {
       DevLocationLabel(location: .dashboardMission)
       Text("dashboard.featured_lesson.title").font(.largeTitle.bold())
-      Text("dashboard.featured_lesson.subtitle").foregroundStyle(.secondary)
+      Text(LocalizedStringKey(DashboardL10n.featuredSubtitle)).foregroundStyle(.secondary)
       VStack(alignment: .leading, spacing: 12) {
         Label("dashboard.featured_lesson.badge", systemImage: "lock.shield.fill")
           .font(.caption2.bold())
@@ -90,7 +90,7 @@ struct DashboardView: View {
         } label: {
           HStack {
             Spacer()
-            Text("dashboard.featured_lesson.action").fontWeight(.semibold)
+            Text(LocalizedStringKey(DashboardL10n.briefingButton)).fontWeight(.semibold)
             Image(systemName: "chevron.right")
             Spacer()
           }
@@ -132,7 +132,7 @@ struct DashboardView: View {
   private var achievementSection: some View {
     VStack(alignment: .leading, spacing: 12) {
       DevLocationLabel(location: .dashboardAchievements)
-      sectionHeader("dashboard.achievements.title", destination: .achievements)
+      sectionHeader(DashboardL10n.achievementsTitle, destination: .achievements)
       HStack(spacing: 10) {
         ForEach(AchievementCatalog.evaluateAll(progressStore.progress), id: \.id) { achievement in
           achievementCard(
@@ -189,7 +189,7 @@ struct DashboardView: View {
             .font(.caption.bold())
             .foregroundStyle(.cyan)
         } else {
-          Label("dashboard.future.coming_soon", systemImage: "lock.fill")
+          Label(LocalizedStringKey(DashboardL10n.comingSoon), systemImage: "lock.fill")
             .font(.caption2.bold())
             .foregroundStyle(.secondary)
         }
@@ -242,14 +242,14 @@ struct DashboardView: View {
     HStack {
       Text(LocalizedStringKey(title)).font(.title3.bold())
       Spacer()
-      Button("dashboard.section.see_all") { selectedTab = destination }
+      Button(LocalizedStringKey(DashboardL10n.seeAll)) { selectedTab = destination }
         .font(.caption.bold())
         .foregroundStyle(.indigo)
     }
   }
 
   private var footer: some View {
-    Label("dashboard.footer", systemImage: "leaf.fill")
+    Label(LocalizedStringKey(DashboardL10n.footer), systemImage: "leaf.fill")
       .font(.footnote)
       .foregroundStyle(.secondary)
       .frame(maxWidth: .infinity, alignment: .leading)

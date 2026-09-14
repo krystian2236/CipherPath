@@ -154,6 +154,17 @@ enum DashboardCopy {
 
 }
 
+enum DashboardL10n {
+  static let tagline = "start.header.tagline"
+  static let principles = "start.header.principles"
+  static let featuredSubtitle = "start.featured.subtitle"
+  static let briefingButton = "start.featured.briefing"
+  static let achievementsTitle = "start.achievements.title"
+  static let seeAll = "start.common.see_all"
+  static let comingSoon = "start.common.coming_soon"
+  static let footer = "start.footer"
+}
+
 enum MissionDifficulty: String, Equatable, Sendable {
   case easy = "Łatwa"
   case medium = "Średnia"

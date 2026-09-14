@@ -43,13 +43,13 @@
         "pl" : { "stringUnit" : { "state" : "translated", "value" : "OK" } }
       }
     },
-    "dashboard.header.tagline" : {
+    "start.header.tagline" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Small steps.\nBigger possibilities." } },
         "pl" : { "stringUnit" : { "state" : "translated", "value" : "Małe kroki.\nWiększe możliwości." } }
       }
     },
-    "dashboard.header.category_line" : {
+    "start.header.principles" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "LAW  •  SECURITY  •  PRACTICE" } },
         "pl" : { "stringUnit" : { "state" : "translated", "value" : "PRAWO  •  BEZPIECZEŃSTWO  •  PRAKTYKA" } }
@@ -67,7 +67,7 @@
         "pl" : { "stringUnit" : { "state" : "translated", "value" : "Zdobywaj w lekcjach i wykorzystuj na podpowiedzi" } }
       }
     },
-    "dashboard.featured_lesson.subtitle" : {
+    "start.featured.subtitle" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Real knowledge. A safer world." } },
         "pl" : { "stringUnit" : { "state" : "translated", "value" : "Realna wiedza. Bezpieczniejszy świat." } }
@@ -85,13 +85,13 @@
         "pl" : { "stringUnit" : { "state" : "translated", "value" : "8 min" } }
       }
     },
-    "dashboard.featured_lesson.action" : {
+    "start.featured.briefing" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "View briefing" } },
         "pl" : { "stringUnit" : { "state" : "translated", "value" : "Zobacz odprawę" } }
       }
     },
-    "dashboard.achievements.title" : {
+    "start.achievements.title" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Achievements" } },
         "pl" : { "stringUnit" : { "state" : "translated", "value" : "Osiągnięcia" } }
@@ -109,13 +109,13 @@
         "pl" : { "stringUnit" : { "state" : "translated", "value" : "Punkty" } }
       }
     },
-    "dashboard.future.coming_soon" : {
+    "start.common.coming_soon" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Coming soon" } },
         "pl" : { "stringUnit" : { "state" : "translated", "value" : "Wkrótce" } }
       }
     },
-    "dashboard.section.see_all" : {
+    "start.common.see_all" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "See all" } },
         "pl" : { "stringUnit" : { "state" : "translated", "value" : "Zobacz wszystkie" } }
@@ -133,7 +133,7 @@
         "pl" : { "stringUnit" : { "state" : "translated", "value" : "Funkcja jeszcze niedostępna" } }
       }
     },
-    "dashboard.footer" : {
+    "start.footer" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Consistent learning today, greater possibilities tomorrow." } },
         "pl" : { "stringUnit" : { "state" : "translated", "value" : "Systematyczna nauka dziś, większe możliwości jutro." } }
