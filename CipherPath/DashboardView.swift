@@ -147,7 +147,7 @@ struct DashboardView: View {
 
   private var futureFeaturesSection: some View {
     VStack(alignment: .leading, spacing: 12) {
-      Text("CipherPath Pro").font(.title3.bold())
+      Text(DashboardCopy.featureSectionTitle(for: .currentBuild)).font(.title3.bold())
       HStack(spacing: 10) {
         ForEach(visibleFutureFeatures) { feature in
           if feature.id == "points" {
