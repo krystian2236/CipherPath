@@ -57,6 +57,14 @@ pokazywany w buildzie App Store.
 Podobnie przyszły **Sklep** pozostaje widoczny wyłącznie w development do czasu
 wdrożenia rzeczywistego StoreKit.
 
+## Język aplikacji
+
+Na ekranie Start dostępna jest ikona ustawień, z której można wybrać język
+interfejsu: **System**, **Polski** lub **Angielski**. Wybór jest zapisywany
+lokalnie na urządzeniu i nadpisuje `Locale` całej aplikacji niezależnie od
+języka systemowego iOS. Teksty ekranu Start i pulpitu pochodzą ze wspólnego
+String Catalog (`Localizable.xcstrings`) i są w pełni dwujęzyczne.
+
 ## Polecana lekcja i postęp
 
 Ekran Start wybiera polecaną lekcję przez tę samą politykę dostępu co widok

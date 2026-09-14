@@ -17,7 +17,9 @@
 - poprawiono tekst dostępności postępu skanowania tak, aby VoiceOver odczytywał rzeczywiste wartości,
 - rozszerzono zasady agentów o kontrolę spójności UI, README, CHANGELOG, Free/Pro i powierzchni Release,
 - usunięto stały UDID Simulatora z instrukcji pracy i zastąpiono go dynamicznym wyborem urządzenia,
-- zaktualizowano README do faktycznego stanu aplikacji.
+- zaktualizowano README do faktycznego stanu aplikacji,
+- dodano przełącznik języka aplikacji (System/Polski/Angielski) dostępny z ikony ustawień na ekranie Start,
+- przeniesiono teksty ekranu Start i pulpitu do String Catalog, dzięki czemu są w pełni dwujęzyczne (PL/EN).
 
 ## 1.3
 
