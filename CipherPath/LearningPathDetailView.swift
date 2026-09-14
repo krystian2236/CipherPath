@@ -8,7 +8,7 @@ struct LearningPathDetailView: View {
   var body: some View {
     List {
       Section {
-        DevLocationLabel(location: .paths)
+        DevLocationLabel(location: .pathDetail)
       }
       ForEach(StarterCurriculum.lessons(in: path)) { lesson in
         if accessPolicy.access(for: lesson) == .included {
