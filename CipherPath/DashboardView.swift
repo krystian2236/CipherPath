@@ -27,30 +27,6 @@ enum FutureFeatureCatalog {
   ]
 }
 
-enum FeaturedLessonSelection {
-  private static let preferredLessonID = "blue-team-suspicious-login"
-
-  static func lesson(for policy: ContentAccessPolicy) -> LearningLesson {
-    let blueTeamLessons = StarterCurriculum.lessons(in: .blueTeam)
-
-    if let preferred = blueTeamLessons.first(where: { $0.id == preferredLessonID }),
-      policy.access(for: preferred) == .included
-    {
-      return preferred
-    }
-
-    if let includedBlueTeamLesson = blueTeamLessons.first(where: {
-      policy.access(for: $0) == .included
-    }) {
-      return includedBlueTeamLesson
-    }
-
-    return StarterCurriculum.lessons.first(where: {
-      policy.access(for: $0) == .included
-    }) ?? StarterCurriculum.lessons[0]
-  }
-}
-
 struct DashboardView: View {
   @Binding var selectedTab: AppTab
   @ObservedObject var progressStore: LearningProgressStore
