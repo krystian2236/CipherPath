@@ -137,6 +137,8 @@ struct AchievementTests {
   @MainActor
   func evaluatesAchievementConditions() {
     let store = LearningProgressStore(defaults: isolatedDefaults())
+    let totalAvailable = StarterCurriculum.lessons.filter { $0.availability == .available }.count
+    let halfTarget = Int((Double(totalAvailable) / 2).rounded(.up))
 
     #expect(!AchievementCatalog.evaluate(store.progress, id: .firstFlag).isUnlocked)
     #expect(store.completeLab(lessonID: "fundamentals-digital-safety", mode: .guided))
@@ -144,15 +146,24 @@ struct AchievementTests {
     #expect(store.completeLab(lessonID: "fundamentals-digital-safety", mode: .adventure))
     #expect(AchievementCatalog.evaluate(store.progress, id: .withoutHints).isUnlocked)
     #expect(!AchievementCatalog.evaluate(store.progress, id: .labMaster).isUnlocked)
+    #expect(!AchievementCatalog.evaluate(store.progress, id: .halfwayThere).isUnlocked)
 
     for lesson in StarterCurriculum.lessons.filter({ $0.availability == .available }).dropFirst() {
+      #expect(store.completeLab(lessonID: lesson.id, mode: .guided))
+      if AchievementCatalog.evaluate(store.progress, id: .halfwayThere).isUnlocked { break }
+    }
+    #expect(AchievementCatalog.evaluate(store.progress, id: .halfwayThere).current == halfTarget)
+
+    for lesson in StarterCurriculum.lessons.filter({ $0.availability == .available }) where store
+      .labProgress(for: lesson.id).completedModes.contains(.guided) == false
+    {
       #expect(store.completeLab(lessonID: lesson.id, mode: .guided))
     }
 
     let master = AchievementCatalog.evaluate(store.progress, id: .labMaster)
     #expect(master.isUnlocked)
-    #expect(master.current == 10)
-    #expect(master.target == 10)
+    #expect(master.current == totalAvailable)
+    #expect(master.target == totalAvailable)
   }
 
   @Test("Restores a safe checkpoint without command history")
