@@ -5,95 +5,163 @@
 </p>
 
 CipherPath to natywna aplikacja SwiftUI na iOS 17+ do legalnej nauki
-cyberbezpieczeństwa na iPhonie. Łączy krótkie lekcje offline z defensywnymi
-narzędziami odziedziczonymi z NetScope. Ćwiczenia dotyczą wyłącznie symulacji,
-własnych urządzeń i środowisk, na których testowanie uzyskano zgodę.
+cyberbezpieczeństwa na iPhonie. Łączy lekcje i laboratoria offline z defensywnymi
+narzędziami do pracy we własnej sieci lub środowisku, na którego testowanie
+uzyskano zgodę.
 
-## Kurs MVP
+## Aktualny stan aplikacji
 
-- pięć ścieżek: Podstawy, Blue Team, Red Team, Web Security i Mobile Security;
-- 25 widocznych lekcji: po dwie dostępne i trzy zapowiedziane w każdej ścieżce;
-- każda dostępna lekcja prowadzi przez: Poznaj, Sprawdź, Znajdź flagę i Wyjaśnienie;
-- bezpieczne symulacje offline oraz przygotowanie do własnego, kontrolowanego labu;
-- zachowany Toolbox, diagnostyka prywatnej sieci, iSH i skróty SSH;
-- brak automatycznego uruchamiania poleceń i brak publicznych celów labów.
+Bieżący katalog zawiera pięć ścieżek nauki:
 
-Szczegółowy zakres znajduje się w
-`docs/superpowers/specs/2026-09-12-cipherpath-course-design.md`, a realizacja jest
-prowadzona etapami po 25% według
-`docs/superpowers/plans/2026-09-12-cipherpath-course-mvp.md`.
+- **Podstawy**,
+- **Blue Team**,
+- **Red Team**,
+- **Web Security**,
+- **Mobile Security**.
 
-## Odziedziczone funkcje sieciowe
+Każda ścieżka ma pięć lekcji, czyli łącznie **25 lekcji**. Każda aktualnie
+wydana lekcja przechodzi przez cztery etapy:
 
-- pięć czytelnych zakładek: **Start**, **Sieć**, **Porty**, **Ping** i **Bonjour**,
-- kompaktowy pulpit z liczbą urządzeń, usług i wyników wymagających uwagi,
-- trzy profile skanu prywatnej podsieci IPv4 `/24`: szybki, standardowy
-  i rozszerzony,
-- wykrywanie typowych usług TCP bez logowania i wysyłania poleceń,
-- odwrotne DNS oraz szacowanie rodzaju urządzenia na podstawie usług,
-- szczegóły portów: kategoria, opis i informacja o typowym szyfrowaniu,
-- lokalna historia ośmiu ostatnich skanów,
-- szczegółowe statystyki przebiegu: liczba prób, hostów, odpowiedzi,
-  przekroczeń czasu i odmów dostępu,
-- telemetria każdego urządzenia: liczba sprawdzonych portów, czas wykrywania
-  i opóźnienie otwartych usług,
-- odkrywanie usług Bonjour, między innymi AirPlay, drukarek, SSH, HTTP,
+1. **Poznaj**,
+2. **Sprawdź**,
+3. **Znajdź odpowiedź**,
+4. **Wyjaśnienie**.
+
+Materiały szkoleniowe i przygotowane laboratoria działają lokalnie. Aplikacja
+nie uruchamia automatycznie poleceń na zewnętrznych systemach i nie udostępnia
+publicznych celów treningowych.
+
+### Dostęp do lekcji
+
+Kod zawiera przygotowany model `free`, `testFlightDemo` i `pro`, ale w bieżącym
+wydaniu nie ma jeszcze StoreKit ani obsługi płatnego entitlementu. Dlatego
+aktualna polityka Release udostępnia cały gotowy katalog zamiast pokazywać
+martwą blokadę PRO bez możliwości zakupu.
+
+Docelowe ograniczenia Free/Pro pozostają w modelu jako przygotowanie pod
+przyszłą, pełną integrację StoreKit.
+
+## Nawigacja
+
+W buildzie App Store użytkownik widzi cztery główne zakładki:
+
+- **Start** — polecana lekcja, punkty i podsumowanie osiągnięć,
+- **Ścieżki** — pięć ścieżek i 25 lekcji,
+- **Praktyka** — narzędzia sieciowe i defensywny Toolbox,
+- **Osiągnięcia** — postęp i odblokowane osiągnięcia.
+
+W buildzie developerskim dodatkowo dostępna jest zakładka **Misje**. Obecnie
+jest to ekran zapowiadający przyszłe, niezależne wyzwania i dlatego nie jest
+pokazywany w buildzie App Store.
+
+Podobnie przyszły **Sklep** pozostaje widoczny wyłącznie w development do czasu
+wdrożenia rzeczywistego StoreKit.
+
+## Polecana lekcja i postęp
+
+Ekran Start wybiera polecaną lekcję przez tę samą politykę dostępu co widok
+Ścieżek. Dzięki temu lekcja nie może być zablokowana w jednym miejscu i dostępna
+inną drogą w tym samym buildzie.
+
+Postęp nauki, punkty i osiągnięcia są przechowywane lokalnie na urządzeniu.
+Punkty mogą być używane przez przygotowane mechanizmy podpowiedzi i rozwiązań w
+laboratoriach.
+
+## Praktyka
+
+Zakładka **Praktyka** grupuje funkcje sieciowe w jednym miejscu:
+
+- skan prywatnej sieci lokalnej,
+- listę wykrytych urządzeń,
+- szczegóły urządzeń i widocznych usług,
+- skanowanie wybranych portów TCP,
+- DNS, lokalny i opcjonalny publiczny adres IP oraz TCP Ping,
+- wykrywanie usług Bonjour,
+- defensywny Toolbox.
+
+Skan sieci lokalnej jest ograniczony do prywatnego lub link-localnego IPv4 i
+lokalnego zakresu `/24`.
+
+## CipherPath Toolbox
+
+Toolbox prowadzi użytkownika przez workflow:
+
+**Discover → Inspect → Verify**.
+
+Najpierw wykonywany jest lokalny skan i wybór konkretnego urządzenia. Dalsze
+narzędzia korzystają wyłącznie z bieżącego kontekstu sieci i wybranego celu.
+CipherPath może przygotować polecenie do skopiowania lub przekazania do
+skonfigurowanego klienta SSH, ale nie wykonuje go automatycznie na zdalnym
+urządzeniu.
+
+Biblioteka skrótów SSH oraz narzędzia współpracujące z iSH służą do pracy we
+własnym środowisku. Aplikacja nie przechowuje haseł ani kluczy prywatnych.
+
+## Funkcje sieciowe
+
+Aktualny kod obejmuje między innymi:
+
+- trzy profile skanowania prywatnej podsieci: szybki, standardowy i rozszerzony,
+- wykrywanie typowych usług TCP bez logowania do urządzeń,
+- odwrotne DNS i rozpoznawanie nazw hostów,
+- szacowanie rodzaju urządzenia na podstawie widocznych usług,
+- opis portów, kategorię usługi i informację o typowym szyfrowaniu,
+- statystyki przebiegu skanu i telemetrię prób TCP,
+- wykrywanie usług Bonjour, między innymi HTTP, SSH, drukarek, AirPlay,
   Google Cast, HomeKit, Matter i MQTT,
-- filtrowanie urządzeń, rozszerzony widok szczegółów i bogatszy eksport CSV,
-- **My IP** z lokalnym IPv4 i opcjonalnym publicznym IPv4/IPv6,
-- diagnostyka domen: DNS, TCP ping i test wskazanego portu,
-- skaner portów w stylu Nmap z profilami WWW, IoT, zdalnego dostępu,
-  serwerów i baz danych oraz zakresem własnym do 512 portów,
-- wyniki skanowania pozostają na urządzeniu.
+- skaner portów z profilami oraz własnym zakresem ograniczonym do 512 portów,
+- diagnostykę DNS i TCP,
+- lokalny adres IP oraz opcjonalne pobranie publicznego IPv4/IPv6.
 
-## Integracja z iSH
+Publiczny adres IP jest pobierany z `api64.ipify.org` dopiero po świadomym
+wybraniu odpowiedniej funkcji przez użytkownika.
 
-Ekran **Start → Narzędzia dla iSH** przygotowuje:
+## Prywatność
 
-- polecenie instalacji Nmap w Alpine,
-- polecenie jednorazowego skanu dla podsieci albo wybranego urządzenia,
-- skrypt `cipherpath-ish.sh`, który można zapisać w aplikacji Pliki,
-  przenieść do lokalizacji iSH i uruchomić,
-- trzy tryby: inwentaryzacja, rozszerzony TCP i lekka identyfikacja usług.
+CipherPath nie wymaga konta i w obecnym kodzie nie zawiera reklam, analityki ani
+śledzenia. Postęp, historia skanów i informacje o znanych urządzeniach są
+przechowywane lokalnie.
 
-CipherPath używa w poleceniach iSH trybu `--unprivileged -sT`, czyli zwykłych
-połączeń TCP zamiast surowych pakietów. Cel jest ograniczony do prywatnego IPv4.
-Samodzielny skrypt `CipherPath-iSH-Toolkit.sh` jest również dołączony obok paczki
-projektu.
-
-Przykładowe uruchomienie w iSH:
-
-```sh
-apk update && apk add nmap
-chmod +x CipherPath-iSH-Toolkit.sh
-./CipherPath-iSH-Toolkit.sh 192.168.1.0/24
-```
+`PrivacyInfo.xcprivacy` deklaruje brak śledzenia i brak zbieranych typów danych.
+Dostęp do sieci lokalnej jest opisany w `Info.plist` i jest potrzebny do
+funkcji skanowania oraz Bonjour.
 
 ## Uruchomienie
 
 1. Otwórz `CipherPath.xcodeproj` w Xcode.
-2. W ustawieniach targetu `CipherPath` wybierz swój Apple Development Team.
-3. Podłącz iPhone’a, wybierz go jako urządzenie docelowe i uruchom aplikację.
-4. Naciśnij **Skanuj moją sieć** i zaakceptuj dostęp do sieci lokalnej.
+2. W ustawieniach targetu wybierz swój Apple Development Team.
+3. Uruchom aplikację na iPhonie albo właściwym Simulatorze.
+4. Do testów skanowania sieci lokalnej użyj prawdziwego iPhone’a podłączonego do
+   testowanej sieci Wi‑Fi.
+5. Przy pierwszym użyciu funkcji sieciowych zaakceptuj dostęp do sieci lokalnej.
 
-Publiczny adres IP jest odczytywany z `api64.ipify.org` dopiero po wybraniu
-przycisku **Pobierz publiczny IP**.
-
-Skanowanie sieci lokalnej należy testować na prawdziwym iPhonie. Symulator nie
-odwzorowuje uprawnienia Local Network i może widzieć inną sieć niż telefon.
+Preferowany Simulator developerski jest nazwany `CipherPath — iPhone 17`, ale
+jego UDID nie jest traktowany jako stały. Aktualny identyfikator należy ustalać
+z `xcrun simctl list devices available`.
 
 ## Zakres bezpieczeństwa
 
-Aplikacja skanuje wyłącznie prywatny lub link-localny adres IPv4 urządzenia
-i ogranicza zakres do lokalnego `/24`. Nie obsługuje publicznych celów,
-uwierzytelniania, exploitów ani wykonywania poleceń na wykrytych urządzeniach.
+Automatyczny skan CipherPath działa wyłącznie w prywatnej sieci lokalnej.
+Toolbox i przygotowywane polecenia należy uruchamiać tylko wobec własnych
+urządzeń lub systemów objętych zgodą właściciela.
 
-Narzędzie Port Scan pozwala sprawdzić domenę lub adres wskazany przez
-użytkownika, ale ogranicza pojedynczy własny zakres do 512 portów. Należy go
-używać wyłącznie wobec własnych systemów lub po uzyskaniu zgody właściciela.
-„TCP Ping” mierzy czas zestawienia połączenia TCP, ponieważ iOS nie udostępnia
-zwykłym aplikacjom surowego ICMP w taki sposób jak narzędzia desktopowe.
-
-Ocena rodzaju urządzenia i poziomu ekspozycji jest wskazówką opartą na
-widocznych portach. Nie zastępuje audytu bezpieczeństwa ani nie potwierdza
+Aplikacja nie zawiera modułów eksploatacji, łamania haseł ani automatycznego
+uwierzytelniania do wykrytych urządzeń. Ocena rodzaju urządzenia i poziomu
+ekspozycji jest wskazówką opartą na widocznych usługach i nie potwierdza
 podatności.
+
+„TCP Ping” mierzy czas zestawienia połączenia TCP. Zwykła aplikacja iOS nie ma
+takiego dostępu do surowego ICMP jak typowe narzędzia desktopowe.
+
+## Dokumentacja projektu
+
+Szczegółowy projekt kursu znajduje się w:
+
+`docs/superpowers/specs/2026-09-12-cipherpath-course-design.md`
+
+Plan realizacji MVP znajduje się w:
+
+`docs/superpowers/plans/2026-09-12-cipherpath-course-mvp.md`
+
+Zasady pracy agentów są zapisane w `AGENTS.md`, a ręczny audyt gotowości do
+App Store jest opisany w `.github/agents/app-store-reviewer.agent.md`.
