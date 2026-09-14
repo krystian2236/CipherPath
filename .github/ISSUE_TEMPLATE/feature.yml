@@ -1,5 +1,5 @@
 name: Feature
-about: Zaplanuj nową funkcję VectorSec
+description: Zaplanuj nową funkcję VectorSec
 body:
   - type: markdown
     attributes:
