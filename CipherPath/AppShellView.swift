@@ -66,8 +66,10 @@ struct AppShellView: View {
         .tabItem { Label("Start", systemImage: "house.fill") }.tag(AppTab.start)
       LearningPathListView(progressStore: learningProgressStore, accessPolicy: .current)
         .tabItem { Label("Ścieżki", systemImage: "safari.fill") }.tag(AppTab.paths)
-      MissionsView(progressStore: learningProgressStore, accessPolicy: .current)
-        .tabItem { Label("Misje", systemImage: "target") }.tag(AppTab.missions)
+      if AppDistributionMode.currentBuild.showsMissionsTab {
+        MissionsView(progressStore: learningProgressStore, accessPolicy: .current)
+          .tabItem { Label("Misje", systemImage: "target") }.tag(AppTab.missions)
+      }
       PracticeHubView(
         scanner: scanner,
         tools: tools,
