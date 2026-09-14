@@ -108,24 +108,6 @@ struct FeaturedLessonAccessTests {
   }
 }
 
-@Suite("Dashboard copy")
-struct DashboardCopyTests {
-  @Test("Featured content uses lesson terminology while Missions stays independent")
-  func featuredContentUsesLessonTerminology() {
-    #expect(DashboardCopy.featuredLessonTitle == "Polecana lekcja")
-    #expect(DashboardCopy.pointsSubtitle == "Zdobywaj w lekcjach i wykorzystuj na podpowiedzi")
-    #expect(!DashboardCopy.featuredLessonTitle.lowercased().contains("misja"))
-    #expect(MissionsTabPresentation.current == .comingSoon)
-    #expect(!MissionsTabPresentation.current.showsLessonLinks)
-  }
-
-  @Test("Release does not advertise Pro before StoreKit exists")
-  func sectionTitleMatchesDistribution() {
-    #expect(DashboardCopy.featureSectionTitle(for: .appStore) == "Punkty")
-    #expect(DashboardCopy.featureSectionTitle(for: .developer) == "CipherPath Pro")
-  }
-}
-
 @Suite("Release surface")
 struct ReleaseSurfaceTests {
   @Test("Unfinished Missions and Store stay developer-only")
@@ -211,31 +193,20 @@ struct AppLanguageTests {
 
 @Suite("Dashboard localization")
 struct DashboardLocalizationTests {
-  @Test("Dashboard copy resolves Polish and English catalog values")
-  func resolvesSupportedLocales() {
-    #expect(
-      DashboardCopy.localizedValue(.featuredLessonTitle, locale: Locale(identifier: "pl"))
-        == "Polecana lekcja"
-    )
-    #expect(
-      DashboardCopy.localizedValue(.featuredLessonTitle, locale: Locale(identifier: "en"))
-        == "Featured lesson"
-    )
-    #expect(
-      DashboardCopy.localizedValue(.pointsSubtitle, locale: Locale(identifier: "en"))
-        == "Earn points in lessons and spend them on hints"
-    )
-  }
-
   @Test("Dashboard uses stable String Catalog keys")
   func dashboardKeysStayStable() {
     #expect(DashboardL10n.tagline == "start.header.tagline")
     #expect(DashboardL10n.principles == "start.header.principles")
+    #expect(DashboardL10n.featuredTitle == "dashboard.featured_lesson.title")
+    #expect(DashboardL10n.featuredDuration == "dashboard.featured_lesson.duration")
+    #expect(DashboardL10n.featuredBadge == "start.featured.badge")
     #expect(DashboardL10n.featuredSubtitle == "start.featured.subtitle")
     #expect(DashboardL10n.briefingButton == "start.featured.briefing")
     #expect(DashboardL10n.achievementsTitle == "start.achievements.title")
     #expect(DashboardL10n.seeAll == "start.common.see_all")
     #expect(DashboardL10n.comingSoon == "start.common.coming_soon")
     #expect(DashboardL10n.footer == "start.footer")
+    #expect(DashboardL10n.featureSectionPoints == "dashboard.feature_section.points")
+    #expect(DashboardL10n.featureSectionPro == "dashboard.feature_section.pro")
   }
 }

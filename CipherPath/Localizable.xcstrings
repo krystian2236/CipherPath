@@ -73,7 +73,7 @@
         "pl" : { "stringUnit" : { "state" : "translated", "value" : "Realna wiedza. Bezpieczniejszy świat." } }
       }
     },
-    "dashboard.featured_lesson.badge" : {
+    "start.featured.badge" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "BLUE TEAM • OFFLINE SIMULATION" } },
         "pl" : { "stringUnit" : { "state" : "translated", "value" : "BLUE TEAM • SYMULACJA OFFLINE" } }
@@ -97,6 +97,60 @@
         "pl" : { "stringUnit" : { "state" : "translated", "value" : "Osiągnięcia" } }
       }
     },
+    "start.common.see_all" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "See all" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Zobacz wszystkie" } }
+      }
+    },
+    "start.common.coming_soon" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Coming soon" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Wkrótce" } }
+      }
+    },
+    "dashboard.points.accessibility_hint" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Opens points history" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Otwiera historię punktów" } }
+      }
+    },
+    "start.points.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Points" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Punkty" } }
+      }
+    },
+    "start.points.subtitle" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Earn them in lessons and spend them on hints" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Zdobywaj w lekcjach i wykorzystuj na podpowiedzi" } }
+      }
+    },
+    "start.store.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Store" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Sklep" } }
+      }
+    },
+    "start.store.subtitle" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Point packs and subscription" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Pakiety punktów i subskrypcja" } }
+      }
+    },
+    "start.points.accessibility_hint" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Opens points history" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Otwiera historię punktów" } }
+      }
+    },
+    "start.common.unavailable_hint" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Feature not available yet" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Funkcja jeszcze niedostępna" } }
+      }
+    },
     "dashboard.feature_section.pro" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "CipherPath Pro" } },
@@ -107,24 +161,6 @@
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Points" } },
         "pl" : { "stringUnit" : { "state" : "translated", "value" : "Punkty" } }
-      }
-    },
-    "start.common.coming_soon" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Coming soon" } },
-        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Wkrótce" } }
-      }
-    },
-    "start.common.see_all" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "See all" } },
-        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Zobacz wszystkie" } }
-      }
-    },
-    "dashboard.points.accessibility_hint" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Opens points history" } },
-        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Otwiera historię punktów" } }
       }
     },
     "dashboard.future.accessibility_hint" : {

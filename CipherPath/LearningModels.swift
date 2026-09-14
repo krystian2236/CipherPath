@@ -131,40 +131,6 @@ enum FeaturedLessonSelection {
   }
 }
 
-enum DashboardCopy {
-  enum Key: String, Sendable {
-    case featuredLessonTitle = "dashboard.featured_lesson.title"
-    case pointsSubtitle = "dashboard.points.subtitle"
-    case featureSectionPro = "dashboard.feature_section.pro"
-    case featureSectionPoints = "dashboard.feature_section.points"
-  }
-
-  static func localizedValue(_ key: Key, locale: Locale? = nil) -> String {
-    String(localized: String.LocalizationValue(key.rawValue), locale: locale ?? .current)
-  }
-
-  static var featuredLessonTitle: String { localizedValue(.featuredLessonTitle) }
-  static var pointsSubtitle: String { localizedValue(.pointsSubtitle) }
-
-  static func featureSectionTitle(for distribution: AppDistributionMode) -> String {
-    distribution.showsFutureStore
-      ? localizedValue(.featureSectionPro)
-      : localizedValue(.featureSectionPoints)
-  }
-
-}
-
-enum DashboardL10n {
-  static let tagline = "start.header.tagline"
-  static let principles = "start.header.principles"
-  static let featuredSubtitle = "start.featured.subtitle"
-  static let briefingButton = "start.featured.briefing"
-  static let achievementsTitle = "start.achievements.title"
-  static let seeAll = "start.common.see_all"
-  static let comingSoon = "start.common.coming_soon"
-  static let footer = "start.footer"
-}
-
 enum MissionDifficulty: String, Equatable, Sendable {
   case easy = "Łatwa"
   case medium = "Średnia"

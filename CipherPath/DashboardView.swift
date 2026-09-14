@@ -1,9 +1,31 @@
 import SwiftUI
 
+enum DashboardL10n {
+  static let tagline = "start.header.tagline"
+  static let principles = "start.header.principles"
+  static let featuredSubtitle = "start.featured.subtitle"
+  static let featuredBadge = "start.featured.badge"
+  static let featuredTitle = "dashboard.featured_lesson.title"
+  static let featuredDuration = "dashboard.featured_lesson.duration"
+  static let briefingButton = "start.featured.briefing"
+  static let achievementsTitle = "start.achievements.title"
+  static let seeAll = "start.common.see_all"
+  static let comingSoon = "start.common.coming_soon"
+  static let pointsTitle = "start.points.title"
+  static let pointsSubtitle = "start.points.subtitle"
+  static let storeTitle = "start.store.title"
+  static let storeSubtitle = "start.store.subtitle"
+  static let pointsAccessibilityHint = "start.points.accessibility_hint"
+  static let unavailableAccessibilityHint = "start.common.unavailable_hint"
+  static let footer = "start.footer"
+  static let featureSectionPro = "dashboard.feature_section.pro"
+  static let featureSectionPoints = "dashboard.feature_section.points"
+}
+
 struct FutureFeaturePreview: Identifiable, Equatable, Sendable {
   let id: String
-  let title: String
-  let subtitle: String
+  let titleKey: String
+  let subtitleKey: String
   let icon: String
   let isEnabled: Bool
 }
@@ -12,15 +34,15 @@ enum FutureFeatureCatalog {
   static let previews = [
     FutureFeaturePreview(
       id: "points",
-      title: "Punkty",
-      subtitle: DashboardCopy.pointsSubtitle,
+      titleKey: DashboardL10n.pointsTitle,
+      subtitleKey: DashboardL10n.pointsSubtitle,
       icon: "sparkles",
       isEnabled: true
     ),
     FutureFeaturePreview(
       id: "store",
-      title: "Sklep",
-      subtitle: "Pakiety punktów i subskrypcja",
+      titleKey: DashboardL10n.storeTitle,
+      subtitleKey: DashboardL10n.storeSubtitle,
       icon: "cart.fill",
       isEnabled: false
     ),
@@ -74,15 +96,19 @@ struct DashboardView: View {
   private var missionCard: some View {
     VStack(alignment: .leading, spacing: 14) {
       DevLocationLabel(location: .dashboardMission)
-      Text("dashboard.featured_lesson.title").font(.largeTitle.bold())
+      Text(LocalizedStringKey(DashboardL10n.featuredTitle)).font(.largeTitle.bold())
       Text(LocalizedStringKey(DashboardL10n.featuredSubtitle)).foregroundStyle(.secondary)
       VStack(alignment: .leading, spacing: 12) {
-        Label("dashboard.featured_lesson.badge", systemImage: "lock.shield.fill")
-          .font(.caption2.bold())
-          .foregroundStyle(.indigo)
+        Label {
+          Text(LocalizedStringKey(DashboardL10n.featuredBadge))
+        } icon: {
+          Image(systemName: "lock.shield.fill")
+        }
+        .font(.caption2.bold())
+        .foregroundStyle(.indigo)
         Text(featuredLesson.title).font(.title2.bold())
         Text(featuredLesson.summary).font(.subheadline).foregroundStyle(.secondary)
-        Label("dashboard.featured_lesson.duration", systemImage: "clock")
+        Label(LocalizedStringKey(DashboardL10n.featuredDuration), systemImage: "clock")
           .font(.subheadline.weight(.semibold))
           .foregroundStyle(.secondary)
         NavigationLink {
@@ -132,7 +158,7 @@ struct DashboardView: View {
   private var achievementSection: some View {
     VStack(alignment: .leading, spacing: 12) {
       DevLocationLabel(location: .dashboardAchievements)
-      sectionHeader(DashboardL10n.achievementsTitle, destination: .achievements)
+      sectionHeader(LocalizedStringKey(DashboardL10n.achievementsTitle), destination: .achievements)
       HStack(spacing: 10) {
         ForEach(AchievementCatalog.evaluateAll(progressStore.progress), id: \.id) { achievement in
           achievementCard(
@@ -150,9 +176,11 @@ struct DashboardView: View {
     VStack(alignment: .leading, spacing: 12) {
       DevLocationLabel(location: .dashboardPoints)
       Text(
-        AppDistributionMode.currentBuild.showsFutureStore
-          ? "dashboard.feature_section.pro"
-          : "dashboard.feature_section.points"
+        LocalizedStringKey(
+          AppDistributionMode.currentBuild.showsFutureStore
+            ? DashboardL10n.featureSectionPro
+            : DashboardL10n.featureSectionPoints
+        )
       ).font(.title3.bold())
       HStack(spacing: 10) {
         ForEach(visibleFutureFeatures) { feature in
@@ -189,29 +217,31 @@ struct DashboardView: View {
             .font(.caption.bold())
             .foregroundStyle(.cyan)
         } else {
-          Label(LocalizedStringKey(DashboardL10n.comingSoon), systemImage: "lock.fill")
-            .font(.caption2.bold())
-            .foregroundStyle(.secondary)
+          Label {
+            Text(LocalizedStringKey(DashboardL10n.comingSoon))
+          } icon: {
+            Image(systemName: "lock.fill")
+          }
+          .font(.caption2.bold())
+          .foregroundStyle(.secondary)
         }
       }
-      Text(feature.title).font(.headline)
-      Group {
-        if feature.id == "points" {
-          Text("dashboard.points.subtitle")
-        } else {
-          Text(feature.subtitle)
-        }
-      }
-      .font(.caption)
-      .foregroundStyle(.secondary)
-      .fixedSize(horizontal: false, vertical: true)
+      Text(LocalizedStringKey(feature.titleKey)).font(.headline)
+      Text(LocalizedStringKey(feature.subtitleKey))
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
     }
     .frame(maxWidth: .infinity, minHeight: 112, alignment: .topLeading)
     .padding(14)
     .background(.white.opacity(0.035), in: RoundedRectangle(cornerRadius: 16))
     .overlay(RoundedRectangle(cornerRadius: 16).stroke(.white.opacity(0.08)))
     .accessibilityElement(children: .combine)
-    .accessibilityHint(feature.isEnabled ? String(localized: "dashboard.points.accessibility_hint") : String(localized: "dashboard.future.accessibility_hint"))
+    .accessibilityHint(
+      LocalizedStringKey(
+        feature.isEnabled ? DashboardL10n.pointsAccessibilityHint : DashboardL10n.unavailableAccessibilityHint
+      )
+    )
   }
 
   private func achievementCard(
@@ -238,23 +268,31 @@ struct DashboardView: View {
     }
   }
 
-  private func sectionHeader(_ title: String, destination: AppTab) -> some View {
+  private func sectionHeader(_ title: LocalizedStringKey, destination: AppTab) -> some View {
     HStack {
-      Text(LocalizedStringKey(title)).font(.title3.bold())
+      Text(title).font(.title3.bold())
       Spacer()
-      Button(LocalizedStringKey(DashboardL10n.seeAll)) { selectedTab = destination }
-        .font(.caption.bold())
-        .foregroundStyle(.indigo)
+      Button {
+        selectedTab = destination
+      } label: {
+        Text(LocalizedStringKey(DashboardL10n.seeAll))
+      }
+      .font(.caption.bold())
+      .foregroundStyle(.indigo)
     }
   }
 
   private var footer: some View {
-    Label(LocalizedStringKey(DashboardL10n.footer), systemImage: "leaf.fill")
-      .font(.footnote)
-      .foregroundStyle(.secondary)
-      .frame(maxWidth: .infinity, alignment: .leading)
-      .padding(16)
-      .background(.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 16))
+    Label {
+      Text(LocalizedStringKey(DashboardL10n.footer))
+    } icon: {
+      Image(systemName: "leaf.fill")
+    }
+    .font(.footnote)
+    .foregroundStyle(.secondary)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .padding(16)
+    .background(.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 16))
   }
 }
 
