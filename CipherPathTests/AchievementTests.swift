@@ -155,6 +155,27 @@ struct AchievementTests {
     #expect(master.target == 10)
   }
 
+  @Test("Awards distinct path medals from completed missions")
+  @MainActor
+  func evaluatesPathAchievements() {
+    let store = LearningProgressStore(defaults: isolatedDefaults())
+
+    #expect(store.completeLab(lessonID: "blue-team-find-log-event", mode: .guided))
+    #expect(store.completeLab(lessonID: "blue-team-suspicious-login", mode: .guided))
+    #expect(store.completeLab(lessonID: "web-http-anatomy", mode: .guided))
+    #expect(store.completeLab(lessonID: "web-spot-input-risk", mode: .guided))
+
+    let blueTeam = AchievementCatalog.evaluate(store.progress, id: .blueTeamAnalyst)
+    let web = AchievementCatalog.evaluate(store.progress, id: .webDefender)
+    let redTeam = AchievementCatalog.evaluate(store.progress, id: .redTeamOperator)
+
+    #expect(blueTeam.isUnlocked)
+    #expect(web.isUnlocked)
+    #expect(!redTeam.isUnlocked)
+    #expect(blueTeam.current == 2)
+    #expect(web.current == 2)
+  }
+
   @Test("Restores a safe checkpoint without command history")
   @MainActor
   func restoresSafeCheckpoint() {

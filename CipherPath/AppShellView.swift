@@ -69,12 +69,7 @@ struct AppShellView: View {
       MissionsView(progressStore: learningProgressStore, accessPolicy: .current)
         .tabItem { Label("Misje", systemImage: "target") }.tag(AppTab.missions)
       PracticeHubView(
-        scanner: scanner,
-        tools: tools,
-        knownDeviceStore: knownDeviceStore,
-        learningProgressStore: learningProgressStore,
-        selectedTab: selectedTab,
-        ishWorkspaceRouteRaw: $ishWorkspaceRouteRaw
+        selectedTab: selectedTab
       )
         .tabItem { Label("Praktyka", systemImage: "chart.bar.fill") }.tag(AppTab.practice)
       AchievementsView(progressStore: learningProgressStore)
@@ -102,12 +97,10 @@ struct AppShellView: View {
 }
 
 private struct PracticeHubView: View {
-  @ObservedObject var scanner: NetworkScanner
-  @ObservedObject var tools: NetworkToolsModel
-  @ObservedObject var knownDeviceStore: KnownDeviceStore
-  @ObservedObject var learningProgressStore: LearningProgressStore
   @Binding var selectedTab: AppTab
-  @Binding var ishWorkspaceRouteRaw: String
+  @Environment(\.openURL) private var openURL
+  @State private var showStoreFallback = false
+  @State private var launchUnavailable = false
 
   var body: some View {
     NavigationStack {
@@ -115,36 +108,81 @@ private struct PracticeHubView: View {
         Section {
           DevLocationLabel(location: .practice)
         }
-        Section {
+        Section("Praktyka sieciowa") {
           InfoBanner(
-            icon: "lock.shield.fill",
-            title: "Tylko własne środowisko",
-            message: "Narzędzia służą wyłącznie do Twojej sieci albo systemów objętych zgodą właściciela."
+            icon: "arrow.up.right.square.fill",
+            title: "Praktyka przeniesiona do NetScope",
+            message: "NetScope to dedykowane laboratoria i symulacje. Kliknij, aby wejść do pełnej wersji."
           )
           .listRowInsets(EdgeInsets())
           .listRowBackground(Color.clear)
+
+          Button {
+            openNetScope()
+          } label: {
+            Label("Przejdź do NetScope", systemImage: "arrow.up.right.square")
+              .frame(maxWidth: .infinity)
+          }
+          .buttonStyle(.borderedProminent)
+          .tint(.cyan)
+
+          Button("Chcę kupić pełny dostęp") {
+            showStoreFallback = true
+          }
+          .foregroundStyle(.orange)
+          .buttonStyle(.plain)
         }
-        Section("Narzędzia CipherPath") {
-          NavigationLink("Skan prywatnej sieci") {
-            ScannerView(scanner: scanner, knownDeviceStore: knownDeviceStore, selectedTab: $selectedTab)
-          }
-          NavigationLink("Bezpieczny Toolbox") {
-            ToolboxView(scanner: scanner, workspaceRouteRaw: $ishWorkspaceRouteRaw)
-          }
-          NavigationLink("Urządzenia") {
-            DevicesView(scanner: scanner, knownDeviceStore: knownDeviceStore, selectedTab: $selectedTab)
-          }
-          NavigationLink("Usługi i diagnostyka") {
-            ServicesHubView(scanner: scanner, tools: tools)
-          }
+        Section("Co możesz dalej") {
+          Button("Zobacz ścieżki") { selectedTab = .paths }
+            .buttonStyle(.bordered)
+          Button("Zobacz osiągnięcia") { selectedTab = .achievements }
+            .buttonStyle(.borderedProminent)
+            .tint(.yellow)
+          Button("Przejdź do Misji") { selectedTab = .missions }
+            .buttonStyle(.bordered)
         }
-        Section("Informacje") {
-          NavigationLink("Prywatność i bezpieczeństwo") {
-            PrivacySecurityView(progressStore: learningProgressStore)
-          }
+        Section("Brak działania w aplikacji") {
+          Text("Od tej chwili zakładka jest przewodnikiem do NetScope.")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+          Button("Wróc do Start") { selectedTab = .start }
+            .buttonStyle(.bordered)
         }
+        .listRowSeparator(.hidden)
       }
       .navigationTitle("Praktyka")
+      .alert("NetScope niedostępny", isPresented: $launchUnavailable) {
+        Button("Otwórz sklep NetScope") {
+          if let storeURL = URL(string: "https://apps.apple.com/us/search?term=NetScope") {
+            openURL(storeURL)
+          }
+        }
+        Button("Anuluj", role: .cancel) {}
+      } message: {
+        Text("Aby otworzyć Laboratoria, zainstaluj NetScope.")
+      }
+      .confirmationDialog("Co chcesz zrobić?", isPresented: $showStoreFallback, titleVisibility: .visible) {
+        Button("Kup pełny dostęp") {
+          if let storeURL = URL(string: "https://apps.apple.com/us/search?term=NetScope") {
+            openURL(storeURL)
+          }
+        }
+        Button("Anuluj", role: .cancel) {}
+      } message: {
+        Text("Wybierz opcję, jeśli nie masz jeszcze NetScope w App Store.")
+      }
+    }
+  }
+
+  private func openNetScope() {
+    guard let url = URL(string: AppDistributionMode.currentBuild == .developer ? "netscope-dev://start" : "netscope://start") else {
+      launchUnavailable = true
+      return
+    }
+    openURL(url) { accepted in
+      if !accepted {
+        launchUnavailable = true
+      }
     }
   }
 }

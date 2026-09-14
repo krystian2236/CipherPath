@@ -30,16 +30,26 @@ enum FutureFeatureCatalog {
 struct DashboardView: View {
   @Binding var selectedTab: AppTab
   @ObservedObject var progressStore: LearningProgressStore
+  private let distribution = AppDistributionMode.currentBuild
+  private let featuredLessonID = "blue-team-suspicious-login"
 
-  private let featuredLesson = StarterCurriculum.lessons.first {
-    $0.id == "blue-team-suspicious-login"
-  } ?? StarterCurriculum.lessons[0]
+  private var featuredLessons: [LearningLesson] {
+    StarterCurriculum.lessons.filter { progressStore.canStart($0) }
+  }
+
+  private var featuredLesson: LearningLesson? {
+    featuredLessons.first(where: { $0.id == featuredLessonID })
+  }
+
+  private var missionFallbackMessage: String {
+    featuredLessons.isEmpty ? "Brak dostępnych misji" : "Brak dopasowanej misji"
+  }
 
   var body: some View {
     NavigationStack {
       ScrollView {
         LazyVStack(alignment: .leading, spacing: 22) {
-          DevLocationLabel(location: .dashboard)
+          DevLocationLabel(location: .dashboard, distribution: distribution)
           header
           missionCard
           missionStages
@@ -75,31 +85,36 @@ struct DashboardView: View {
 
   private var missionCard: some View {
     VStack(alignment: .leading, spacing: 14) {
-      DevLocationLabel(location: .dashboardMission)
+      DevLocationLabel(location: .dashboardMission, distribution: distribution)
       Text("Dzisiejsza misja").font(.largeTitle.bold())
       Text("Realna wiedza. Bezpieczniejszy świat.").foregroundStyle(.secondary)
       VStack(alignment: .leading, spacing: 12) {
-        Label("BLUE TEAM • SYMULACJA OFFLINE", systemImage: "lock.shield.fill")
-          .font(.caption2.bold())
-          .foregroundStyle(.indigo)
-        Text(featuredLesson.title).font(.title2.bold())
-        Text(featuredLesson.summary).font(.subheadline).foregroundStyle(.secondary)
-        Label("8 min", systemImage: "clock")
-          .font(.subheadline.weight(.semibold))
-          .foregroundStyle(.secondary)
-        NavigationLink {
-          MissionBriefingView(lesson: featuredLesson, progressStore: progressStore)
-        } label: {
-          HStack {
-            Spacer()
-            Text("Zobacz odprawę").fontWeight(.semibold)
-            Image(systemName: "chevron.right")
-            Spacer()
+        if let lesson = featuredLesson {
+          Label("BLUE TEAM • SYMULACJA OFFLINE", systemImage: "lock.shield.fill")
+            .font(.caption2.bold())
+            .foregroundStyle(.indigo)
+          Text(lesson.title).font(.title2.bold())
+          Text(lesson.summary).font(.subheadline).foregroundStyle(.secondary)
+          Label("8 min", systemImage: "clock")
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(.secondary)
+          NavigationLink {
+            MissionBriefingView(lesson: lesson, progressStore: progressStore)
+          } label: {
+            HStack {
+              Spacer()
+              Text("Zobacz odprawę").fontWeight(.semibold)
+              Image(systemName: "chevron.right")
+              Spacer()
+            }
+            .padding(.vertical, 13)
           }
-          .padding(.vertical, 13)
+          .buttonStyle(.borderedProminent)
+          .tint(.indigo)
+        } else {
+          Text("Brak dostępnych misji").font(.title2.bold())
+          Text(missionFallbackMessage).font(.subheadline).foregroundStyle(.secondary)
         }
-        .buttonStyle(.borderedProminent)
-        .tint(.indigo)
       }
       .padding(18)
       .background(
@@ -151,17 +166,13 @@ struct DashboardView: View {
     VStack(alignment: .leading, spacing: 12) {
       Text("CipherPath Pro").font(.title3.bold())
       HStack(spacing: 10) {
-        ForEach(FutureFeatureCatalog.previews) { feature in
-          if feature.id == "points" {
-            NavigationLink {
-              PointsView(progressStore: progressStore)
-            } label: {
-              futureFeatureCard(feature)
-            }
-            .buttonStyle(.plain)
-          } else {
+        ForEach(FutureFeatureCatalog.previews.filter { $0.id == "points" }) { feature in
+          NavigationLink {
+            PointsView(progressStore: progressStore, distribution: distribution)
+          } label: {
             futureFeatureCard(feature)
           }
+          .buttonStyle(.plain)
         }
       }
     }
@@ -175,7 +186,7 @@ struct DashboardView: View {
           .foregroundStyle(feature.isEnabled ? .cyan : .secondary)
         Spacer()
         if feature.isEnabled {
-          Text(AppDistributionMode.currentBuild == .developer ? "∞" : "\(progressStore.pointsBalance)")
+          Text(distribution == .developer ? "∞" : "\(progressStore.pointsBalance)")
             .font(.caption.bold())
             .foregroundStyle(.cyan)
         } else {
