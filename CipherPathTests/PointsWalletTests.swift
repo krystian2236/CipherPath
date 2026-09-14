@@ -208,3 +208,22 @@ struct AppLanguageTests {
     #expect(AppLanguage.fromStoredValue(nil) == .system)
   }
 }
+
+@Suite("Dashboard localization")
+struct DashboardLocalizationTests {
+  @Test("Dashboard copy resolves Polish and English catalog values")
+  func resolvesSupportedLocales() {
+    #expect(
+      DashboardCopy.localizedValue(.featuredLessonTitle, locale: Locale(identifier: "pl"))
+        == "Polecana lekcja"
+    )
+    #expect(
+      DashboardCopy.localizedValue(.featuredLessonTitle, locale: Locale(identifier: "en"))
+        == "Featured lesson"
+    )
+    #expect(
+      DashboardCopy.localizedValue(.pointsSubtitle, locale: Locale(identifier: "en"))
+        == "Earn points in lessons and spend them on hints"
+    )
+  }
+}

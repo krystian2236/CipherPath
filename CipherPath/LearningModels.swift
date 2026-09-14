@@ -132,12 +132,26 @@ enum FeaturedLessonSelection {
 }
 
 enum DashboardCopy {
-  static let featuredLessonTitle = "Polecana lekcja"
-  static let pointsSubtitle = "Zdobywaj w lekcjach i wykorzystuj na podpowiedzi"
+  enum Key: String, Sendable {
+    case featuredLessonTitle = "dashboard.featured_lesson.title"
+    case pointsSubtitle = "dashboard.points.subtitle"
+    case featureSectionPro = "dashboard.feature_section.pro"
+    case featureSectionPoints = "dashboard.feature_section.points"
+  }
+
+  static func localizedValue(_ key: Key, locale: Locale? = nil) -> String {
+    String(localized: String.LocalizationValue(key.rawValue), locale: locale ?? .current)
+  }
+
+  static var featuredLessonTitle: String { localizedValue(.featuredLessonTitle) }
+  static var pointsSubtitle: String { localizedValue(.pointsSubtitle) }
 
   static func featureSectionTitle(for distribution: AppDistributionMode) -> String {
-    distribution.showsFutureStore ? "CipherPath Pro" : "Punkty"
+    distribution.showsFutureStore
+      ? localizedValue(.featureSectionPro)
+      : localizedValue(.featureSectionPoints)
   }
+
 }
 
 enum MissionDifficulty: String, Equatable, Sendable {

@@ -30,6 +30,114 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "System follows the iPhone language. Polish and English override it immediately without restarting the app." } },
         "pl" : { "stringUnit" : { "state" : "translated", "value" : "System używa języka iPhone’a. Polski i English przełączają język od razu, bez ponownego uruchamiania aplikacji." } }
       }
+    },
+    "settings.language.accessibility_label" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Language settings" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Ustawienia języka" } }
+      }
+    },
+    "common.ok" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "OK" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "OK" } }
+      }
+    },
+    "dashboard.header.tagline" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Small steps.\nBigger possibilities." } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Małe kroki.\nWiększe możliwości." } }
+      }
+    },
+    "dashboard.header.category_line" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "LAW  •  SECURITY  •  PRACTICE" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "PRAWO  •  BEZPIECZEŃSTWO  •  PRAKTYKA" } }
+      }
+    },
+    "dashboard.featured_lesson.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Featured lesson" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Polecana lekcja" } }
+      }
+    },
+    "dashboard.points.subtitle" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Earn points in lessons and spend them on hints" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Zdobywaj w lekcjach i wykorzystuj na podpowiedzi" } }
+      }
+    },
+    "dashboard.featured_lesson.subtitle" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Real knowledge. A safer world." } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Realna wiedza. Bezpieczniejszy świat." } }
+      }
+    },
+    "dashboard.featured_lesson.badge" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "BLUE TEAM • OFFLINE SIMULATION" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "BLUE TEAM • SYMULACJA OFFLINE" } }
+      }
+    },
+    "dashboard.featured_lesson.duration" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "8 min" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "8 min" } }
+      }
+    },
+    "dashboard.featured_lesson.action" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "View briefing" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Zobacz odprawę" } }
+      }
+    },
+    "dashboard.achievements.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Achievements" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Osiągnięcia" } }
+      }
+    },
+    "dashboard.feature_section.pro" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "CipherPath Pro" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "CipherPath Pro" } }
+      }
+    },
+    "dashboard.feature_section.points" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Points" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Punkty" } }
+      }
+    },
+    "dashboard.future.coming_soon" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Coming soon" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Wkrótce" } }
+      }
+    },
+    "dashboard.section.see_all" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "See all" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Zobacz wszystkie" } }
+      }
+    },
+    "dashboard.points.accessibility_hint" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Opens points history" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Otwiera historię punktów" } }
+      }
+    },
+    "dashboard.future.accessibility_hint" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Feature not yet available" } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Funkcja jeszcze niedostępna" } }
+      }
+    },
+    "dashboard.footer" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Consistent learning today, greater possibilities tomorrow." } },
+        "pl" : { "stringUnit" : { "state" : "translated", "value" : "Systematyczna nauka dziś, większe możliwości jutro." } }
+      }
     }
   },
   "version" : "1.0"

@@ -40,7 +40,7 @@ private struct LanguageRootView: View {
             .frame(width: 36, height: 36)
             .background(.thinMaterial, in: Circle())
         }
-        .accessibilityLabel("Language settings")
+        .accessibilityLabel("settings.language.accessibility_label")
         .padding(.top, 8)
         .padding(.trailing, 12)
       }
@@ -58,21 +58,21 @@ private struct LanguageSettingsView: View {
     NavigationStack {
       Form {
         Section {
-          Picker("Język / Language", selection: $storedLanguage) {
-            Text("System").tag(AppLanguage.system.rawValue)
-            Text("Polski").tag(AppLanguage.polish.rawValue)
-            Text("English").tag(AppLanguage.english.rawValue)
+          Picker("settings.language.title", selection: $storedLanguage) {
+            Text("settings.language.system").tag(AppLanguage.system.rawValue)
+            Text("settings.language.polish").tag(AppLanguage.polish.rawValue)
+            Text("settings.language.english").tag(AppLanguage.english.rawValue)
           }
           .pickerStyle(.inline)
         } footer: {
-          Text("System follows the iPhone language. Polski and English override it immediately without restarting the app.")
+          Text("settings.language.footer")
         }
       }
-      .navigationTitle("Język / Language")
+      .navigationTitle("settings.language.title")
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .confirmationAction) {
-          Button("OK") { dismiss() }
+          Button("common.ok") { dismiss() }
         }
       }
     }
