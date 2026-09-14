@@ -26,7 +26,7 @@ struct PointsHistoryRowModel: Identifiable, Equatable, Sendable {
   private static func title(for kind: PointsTransactionKind) -> String {
     switch kind {
     case .initialBalance: "Punkty na start"
-    case .missionReward: "Nagroda za misję"
+    case .missionReward: "Nagroda za lekcję"
     case .hint: "Podpowiedź"
     case .solution: "Rozwiązanie"
     case .developerAdjustment: "Korekta deweloperska"
@@ -67,7 +67,7 @@ struct PointsView: View {
             .foregroundStyle(.cyan)
           Text(distribution == .developer
             ? "Tryb Dev nie ogranicza podpowiedzi ani rozwiązań."
-            : "Zdobywaj punkty za misje i wykorzystuj je na pomoc.")
+            : "Zdobywaj punkty za lekcje i wykorzystuj je na pomoc.")
             .font(.footnote)
             .foregroundStyle(.secondary)
         }
@@ -120,8 +120,8 @@ struct PointsView: View {
   private var developerActionPresented: Binding<Bool> {
     Binding(
       get: { developerAction != nil },
-      set: { if !$0 { developerAction = nil } }
-    )
+      set: { if !$0 { developerAction = nil }
+    })
   }
 
   private func perform(_ action: DeveloperPointsAction) {
