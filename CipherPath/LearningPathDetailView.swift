@@ -48,7 +48,6 @@ private struct LessonRow: View {
       Image(systemName: iconName)
         .foregroundStyle(lesson.availability == .available ? path.tint : .secondary)
       VStack(alignment: .leading, spacing: 4) {
-        DevLocationLabel(location: .missionCard)
         Text("Lekcja \(lesson.order)").font(.caption).foregroundStyle(.secondary)
         Text(lesson.title).font(.headline)
         Text(lesson.summary).font(.caption).foregroundStyle(.secondary)
