@@ -105,3 +105,14 @@ struct DashboardCopyTests {
     #expect(!MissionsTabPresentation.current.showsLessonLinks)
   }
 }
+
+@Suite("Release surface")
+struct ReleaseSurfaceTests {
+  @Test("Unfinished Missions and Store stay developer-only")
+  func unfinishedFeaturesStayDeveloperOnly() {
+    #expect(AppDistributionMode.developer.showsMissionsTab)
+    #expect(AppDistributionMode.developer.showsFutureStore)
+    #expect(!AppDistributionMode.appStore.showsMissionsTab)
+    #expect(!AppDistributionMode.appStore.showsFutureStore)
+  }
+}
