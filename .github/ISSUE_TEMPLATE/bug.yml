@@ -1,5 +1,5 @@
 name: Bug
-about: Zgłoś błąd w VectorSec
+description: Zgłoś błąd w VectorSec
 body:
   - type: markdown
     attributes:
