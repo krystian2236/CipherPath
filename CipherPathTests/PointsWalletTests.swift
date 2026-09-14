@@ -151,3 +151,34 @@ struct ScanAccessibilityTests {
     #expect(ScanProgressAccessibility.value(completed: 7, total: 42) == "7 z 42 adresów")
   }
 }
+
+@Suite("DEV UI references")
+struct DevUIReferenceTests {
+  @Test("VectorSec labels use stable English technical paths")
+  func labelsUseStablePaths() {
+    #expect(DevLocation.dashboard.displayLabel == "[DEV: VECTORSEC / START]")
+    #expect(DevLocation.dashboardMission.displayLabel == "[DEV: VECTORSEC / START / FEATURED_LESSON]")
+    #expect(DevLocation.pathDetail.displayLabel == "[DEV: VECTORSEC / PATHS / PATH_DETAIL]")
+    #expect(DevLocation.practiceScanner.displayLabel == "[DEV: VECTORSEC / PRACTICE / SCANNER]")
+    #expect(DevLocation.labTerminal.displayLabel == "[DEV: VECTORSEC / LAB / TERMINAL]")
+  }
+
+  @Test("Tap copy values identify app screen component and SwiftUI view")
+  func copyValuesAreAgentReady() {
+    #expect(
+      DevLocation.dashboardMission.uiRef
+        == "UIREF app=VectorSec screen=start component=featuredLesson view=DashboardView"
+    )
+    #expect(
+      DevLocation.practiceToolbox.uiRef
+        == "UIREF app=VectorSec screen=practice component=toolbox view=ToolboxView"
+    )
+    #expect(Set(DevLocation.allCases.map(\.uiRef)).count == DevLocation.allCases.count)
+  }
+
+  @Test("DEV references never appear in App Store distribution")
+  func visibilityStaysDeveloperOnly() {
+    #expect(DevLocation.isVisible(in: .developer))
+    #expect(!DevLocation.isVisible(in: .appStore))
+  }
+}
