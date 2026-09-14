@@ -13,7 +13,7 @@ enum FutureFeatureCatalog {
     FutureFeaturePreview(
       id: "points",
       title: "Punkty",
-      subtitle: "Zdobywaj w misjach i wykorzystuj na podpowiedzi",
+      subtitle: DashboardCopy.pointsSubtitle,
       icon: "sparkles",
       isEnabled: true
     ),
@@ -74,7 +74,7 @@ struct DashboardView: View {
   private var missionCard: some View {
     VStack(alignment: .leading, spacing: 14) {
       DevLocationLabel(location: .dashboardMission)
-      Text("Dzisiejsza misja").font(.largeTitle.bold())
+      Text(DashboardCopy.featuredLessonTitle).font(.largeTitle.bold())
       Text("Realna wiedza. Bezpieczniejszy świat.").foregroundStyle(.secondary)
       VStack(alignment: .leading, spacing: 12) {
         Label("BLUE TEAM • SYMULACJA OFFLINE", systemImage: "lock.shield.fill")
