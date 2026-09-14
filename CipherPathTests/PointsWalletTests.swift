@@ -93,3 +93,15 @@ struct FeaturedLessonAccessTests {
     #expect(developerPolicy.access(for: developerLesson) == .included)
   }
 }
+
+@Suite("Dashboard copy")
+struct DashboardCopyTests {
+  @Test("Featured content uses lesson terminology while Missions stays independent")
+  func featuredContentUsesLessonTerminology() {
+    #expect(DashboardCopy.featuredLessonTitle == "Polecana lekcja")
+    #expect(DashboardCopy.pointsSubtitle == "Zdobywaj w lekcjach i wykorzystuj na podpowiedzi")
+    #expect(!DashboardCopy.featuredLessonTitle.lowercased().contains("misja"))
+    #expect(MissionsTabPresentation.current == .comingSoon)
+    #expect(!MissionsTabPresentation.current.showsLessonLinks)
+  }
+}
