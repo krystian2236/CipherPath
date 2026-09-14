@@ -64,6 +64,21 @@ struct PointsWalletTests {
     #expect(wallet.transactions.filter { $0.kind == .missionReward }.count == 1)
   }
 
+  @Test("Lesson reward uses lesson wording in visible history")
+  func lessonRewardUsesLessonWording() {
+    let transaction = PointsTransaction(
+      id: "reward:test",
+      kind: .missionReward,
+      amount: 100,
+      date: Date(timeIntervalSince1970: 10),
+      lessonID: "blue-team-find-log-event",
+      mode: nil
+    )
+
+    let row = PointsHistoryRowModel.rows(for: [transaction])[0]
+    #expect(row.title == "Nagroda za lekcję")
+  }
+
   @Test("Developer adjustment adds test points")
   func addsDeveloperTestPoints() {
     var wallet = PointsWallet.initial
@@ -102,6 +117,12 @@ struct DashboardCopyTests {
     #expect(!DashboardCopy.featuredLessonTitle.lowercased().contains("misja"))
     #expect(MissionsTabPresentation.current == .comingSoon)
     #expect(!MissionsTabPresentation.current.showsLessonLinks)
+  }
+
+  @Test("Release does not advertise Pro before StoreKit exists")
+  func sectionTitleMatchesDistribution() {
+    #expect(DashboardCopy.featureSectionTitle(for: .appStore) == "Punkty")
+    #expect(DashboardCopy.featureSectionTitle(for: .developer) == "CipherPath Pro")
   }
 }
 
