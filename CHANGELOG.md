@@ -1,5 +1,24 @@
 # CipherPath — historia zmian
 
+## Unreleased
+
+- dodano pięć ścieżek nauki: Podstawy, Blue Team, Red Team, Web Security i Mobile Security,
+- dodano pełny katalog 25 lekcji z etapami: Poznaj, Sprawdź, Znajdź odpowiedź i Wyjaśnienie,
+- dodano przygotowane laboratoria i terminal szkoleniowy działające w kontrolowanym środowisku offline,
+- dodano ekran Start z polecaną lekcją, punktami i podsumowaniem osiągnięć,
+- dodano zapisywanie postępu nauki, system punktów oraz osiągnięcia,
+- uporządkowano główną nawigację na Start, Ścieżki, Praktyka i Osiągnięcia w buildzie App Store,
+- pozostawiono zakładkę Misje jako developerski podgląd przyszłych niezależnych wyzwań,
+- ukryto przyszły Sklep w buildzie App Store do czasu wdrożenia rzeczywistego StoreKit,
+- ujednolicono dostęp do polecanej lekcji i Ścieżek przez wspólną politykę dostępu,
+- dodano tymczasową politykę Release otwierającą cały gotowy katalog do czasu wdrożenia StoreKit i entitlementów,
+- przebudowano Toolbox wokół workflow Discover → Inspect → Verify i wybranego urządzenia,
+- zgrupowano skan sieci, urządzenia, usługi i diagnostykę w zakładce Praktyka,
+- poprawiono tekst dostępności postępu skanowania tak, aby VoiceOver odczytywał rzeczywiste wartości,
+- rozszerzono zasady agentów o kontrolę spójności UI, README, CHANGELOG, Free/Pro i powierzchni Release,
+- usunięto stały UDID Simulatora z instrukcji pracy i zastąpiono go dynamicznym wyborem urządzenia,
+- zaktualizowano README do faktycznego stanu aplikacji.
+
 ## 1.3
 
 - dodano ekran szczegółów przebiegu skanowania,
