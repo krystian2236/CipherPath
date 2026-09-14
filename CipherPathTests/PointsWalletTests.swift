@@ -77,15 +77,15 @@ struct PointsWalletTests {
 
 @Suite("Featured lesson access")
 struct FeaturedLessonAccessTests {
-  @Test("Featured lesson always respects the selected access tier")
+  @Test("Featured lesson always respects the active release policy")
   func featuredLessonRespectsAccessPolicy() {
-    let appStorePolicy = ContentAccessPolicy.forDistribution(.appStore)
+    let appStorePolicy = ContentAccessPolicy.releasePolicy(for: .appStore)
     let appStoreLesson = FeaturedLessonSelection.lesson(for: appStorePolicy)
 
     #expect(appStoreLesson.id == "blue-team-suspicious-login")
     #expect(appStorePolicy.access(for: appStoreLesson) == .included)
 
-    let developerPolicy = ContentAccessPolicy.forDistribution(.developer)
+    let developerPolicy = ContentAccessPolicy.releasePolicy(for: .developer)
     let developerLesson = FeaturedLessonSelection.lesson(for: developerPolicy)
 
     #expect(developerLesson.id == "blue-team-suspicious-login")
@@ -115,9 +115,11 @@ struct ReleaseSurfaceTests {
     #expect(!AppDistributionMode.appStore.showsFutureStore)
   }
 
-  @Test("App Store keeps the current catalog open until StoreKit ships")
+  @Test("App Store release stays open until StoreKit ships")
   func appStoreHasNoDeadPaidGate() {
-    #expect(ContentAccessPolicy.forDistribution(.appStore).tier == .pro)
+    #expect(ContentAccessPolicy.forDistribution(.appStore).tier == .free)
+    #expect(ContentAccessPolicy.releasePolicy(for: .appStore).tier == .pro)
+    #expect(ContentAccessPolicy.releasePolicy(for: .developer).tier == .pro)
   }
 }
 
