@@ -1,9 +1,27 @@
 import SwiftUI
 
+enum DashboardL10n {
+  static let tagline = "start.header.tagline"
+  static let principles = "start.header.principles"
+  static let featuredSubtitle = "start.featured.subtitle"
+  static let featuredBadge = "start.featured.badge"
+  static let briefingButton = "start.featured.briefing"
+  static let achievementsTitle = "start.achievements.title"
+  static let seeAll = "start.common.see_all"
+  static let comingSoon = "start.common.coming_soon"
+  static let pointsTitle = "start.points.title"
+  static let pointsSubtitle = "start.points.subtitle"
+  static let storeTitle = "start.store.title"
+  static let storeSubtitle = "start.store.subtitle"
+  static let pointsAccessibilityHint = "start.points.accessibility_hint"
+  static let unavailableAccessibilityHint = "start.common.unavailable_hint"
+  static let footer = "start.footer"
+}
+
 struct FutureFeaturePreview: Identifiable, Equatable, Sendable {
   let id: String
-  let title: String
-  let subtitle: String
+  let titleKey: String
+  let subtitleKey: String
   let icon: String
   let isEnabled: Bool
 }
@@ -12,15 +30,15 @@ enum FutureFeatureCatalog {
   static let previews = [
     FutureFeaturePreview(
       id: "points",
-      title: "Punkty",
-      subtitle: DashboardCopy.pointsSubtitle,
+      titleKey: DashboardL10n.pointsTitle,
+      subtitleKey: DashboardL10n.pointsSubtitle,
       icon: "sparkles",
       isEnabled: true
     ),
     FutureFeaturePreview(
       id: "store",
-      title: "Sklep",
-      subtitle: "Pakiety punktów i subskrypcja",
+      titleKey: DashboardL10n.storeTitle,
+      subtitleKey: DashboardL10n.storeSubtitle,
       icon: "cart.fill",
       isEnabled: false
     ),
@@ -59,12 +77,12 @@ struct DashboardView: View {
       HStack(alignment: .firstTextBaseline) {
         Text("Cipher") + Text("Path").foregroundStyle(.indigo)
         Spacer()
-        Text("Małe kroki.\nWiększe możliwości.")
+        Text(LocalizedStringKey(DashboardL10n.tagline))
           .font(.caption)
           .foregroundStyle(.secondary)
       }
       .font(.largeTitle.bold())
-      Text("PRAWO  •  BEZPIECZEŃSTWO  •  PRAKTYKA")
+      Text(LocalizedStringKey(DashboardL10n.principles))
         .font(.caption2.weight(.semibold))
         .tracking(2)
         .foregroundStyle(.secondary)
@@ -75,11 +93,15 @@ struct DashboardView: View {
     VStack(alignment: .leading, spacing: 14) {
       DevLocationLabel(location: .dashboardMission)
       Text(DashboardCopy.featuredLessonTitle).font(.largeTitle.bold())
-      Text("Realna wiedza. Bezpieczniejszy świat.").foregroundStyle(.secondary)
+      Text(LocalizedStringKey(DashboardL10n.featuredSubtitle)).foregroundStyle(.secondary)
       VStack(alignment: .leading, spacing: 12) {
-        Label("BLUE TEAM • SYMULACJA OFFLINE", systemImage: "lock.shield.fill")
-          .font(.caption2.bold())
-          .foregroundStyle(.indigo)
+        Label {
+          Text(LocalizedStringKey(DashboardL10n.featuredBadge))
+        } icon: {
+          Image(systemName: "lock.shield.fill")
+        }
+        .font(.caption2.bold())
+        .foregroundStyle(.indigo)
         Text(featuredLesson.title).font(.title2.bold())
         Text(featuredLesson.summary).font(.subheadline).foregroundStyle(.secondary)
         Label("8 min", systemImage: "clock")
@@ -90,7 +112,7 @@ struct DashboardView: View {
         } label: {
           HStack {
             Spacer()
-            Text("Zobacz odprawę").fontWeight(.semibold)
+            Text(LocalizedStringKey(DashboardL10n.briefingButton)).fontWeight(.semibold)
             Image(systemName: "chevron.right")
             Spacer()
           }
@@ -132,7 +154,7 @@ struct DashboardView: View {
   private var achievementSection: some View {
     VStack(alignment: .leading, spacing: 12) {
       DevLocationLabel(location: .dashboardAchievements)
-      sectionHeader("Osiągnięcia", destination: .achievements)
+      sectionHeader(LocalizedStringKey(DashboardL10n.achievementsTitle), destination: .achievements)
       HStack(spacing: 10) {
         ForEach(AchievementCatalog.evaluateAll(progressStore.progress), id: \.id) { achievement in
           achievementCard(
@@ -185,13 +207,17 @@ struct DashboardView: View {
             .font(.caption.bold())
             .foregroundStyle(.cyan)
         } else {
-          Label("Wkrótce", systemImage: "lock.fill")
-            .font(.caption2.bold())
-            .foregroundStyle(.secondary)
+          Label {
+            Text(LocalizedStringKey(DashboardL10n.comingSoon))
+          } icon: {
+            Image(systemName: "lock.fill")
+          }
+          .font(.caption2.bold())
+          .foregroundStyle(.secondary)
         }
       }
-      Text(feature.title).font(.headline)
-      Text(feature.subtitle)
+      Text(LocalizedStringKey(feature.titleKey)).font(.headline)
+      Text(LocalizedStringKey(feature.subtitleKey))
         .font(.caption)
         .foregroundStyle(.secondary)
         .fixedSize(horizontal: false, vertical: true)
@@ -201,7 +227,11 @@ struct DashboardView: View {
     .background(.white.opacity(0.035), in: RoundedRectangle(cornerRadius: 16))
     .overlay(RoundedRectangle(cornerRadius: 16).stroke(.white.opacity(0.08)))
     .accessibilityElement(children: .combine)
-    .accessibilityHint(feature.isEnabled ? "Otwiera historię punktów" : "Funkcja jeszcze niedostępna")
+    .accessibilityHint(
+      LocalizedStringKey(
+        feature.isEnabled ? DashboardL10n.pointsAccessibilityHint : DashboardL10n.unavailableAccessibilityHint
+      )
+    )
   }
 
   private func achievementCard(
@@ -228,23 +258,31 @@ struct DashboardView: View {
     }
   }
 
-  private func sectionHeader(_ title: String, destination: AppTab) -> some View {
+  private func sectionHeader(_ title: LocalizedStringKey, destination: AppTab) -> some View {
     HStack {
       Text(title).font(.title3.bold())
       Spacer()
-      Button("Zobacz wszystkie") { selectedTab = destination }
-        .font(.caption.bold())
-        .foregroundStyle(.indigo)
+      Button {
+        selectedTab = destination
+      } label: {
+        Text(LocalizedStringKey(DashboardL10n.seeAll))
+      }
+      .font(.caption.bold())
+      .foregroundStyle(.indigo)
     }
   }
 
   private var footer: some View {
-    Label("Systematyczna nauka dziś, większe możliwości jutro.", systemImage: "leaf.fill")
-      .font(.footnote)
-      .foregroundStyle(.secondary)
-      .frame(maxWidth: .infinity, alignment: .leading)
-      .padding(16)
-      .background(.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 16))
+    Label {
+      Text(LocalizedStringKey(DashboardL10n.footer))
+    } icon: {
+      Image(systemName: "leaf.fill")
+    }
+    .font(.footnote)
+    .foregroundStyle(.secondary)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .padding(16)
+    .background(.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 16))
   }
 }
 
