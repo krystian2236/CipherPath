@@ -134,6 +134,10 @@ enum FeaturedLessonSelection {
 enum DashboardCopy {
   static let featuredLessonTitle = "Polecana lekcja"
   static let pointsSubtitle = "Zdobywaj w lekcjach i wykorzystuj na podpowiedzi"
+
+  static func featureSectionTitle(for distribution: AppDistributionMode) -> String {
+    distribution.showsFutureStore ? "CipherPath Pro" : "Punkty"
+  }
 }
 
 enum MissionDifficulty: String, Equatable, Sendable {
