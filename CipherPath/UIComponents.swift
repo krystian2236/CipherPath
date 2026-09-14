@@ -1,6 +1,27 @@
 import SwiftUI
 import UIKit
 
+enum AppLanguage: String, CaseIterable, Sendable {
+  case system
+  case polish = "pl"
+  case english = "en"
+
+  var localeOverride: Locale? {
+    switch self {
+    case .system: nil
+    case .polish: Locale(identifier: "pl")
+    case .english: Locale(identifier: "en")
+    }
+  }
+
+  static func fromStoredValue(_ value: String?) -> AppLanguage {
+    guard let value, let language = AppLanguage(rawValue: value) else {
+      return .system
+    }
+    return language
+  }
+}
+
 enum DevLocation: String, CaseIterable, Sendable {
   case dashboard = "START"
   case dashboardMission = "START / DZISIEJSZA MISJA"
