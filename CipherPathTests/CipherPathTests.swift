@@ -68,7 +68,8 @@ struct ContentAccessTests {
   @Test("Developer location labels are stable and hidden from store builds")
   func developerLocationLabelsIdentifyAppParts() {
     #expect(DevLocation.dashboardMission.label == "[DEV: START / DZISIEJSZA MISJA]")
-    #expect(DevLocation.pathCard.label == "[DEV: KARTA ŚCIEŻKI]")
+    #expect(!DevLocation.allCases.map(\.copyValue).contains("DEV: KARTA ŚCIEŻKI"))
+    #expect(!DevLocation.allCases.map(\.copyValue).contains("DEV: LAB / MASZYNA"))
     #expect(DevLocation.labTerminal.label == "[DEV: LAB / TERMINAL]")
     #expect(DevLocation.labTerminal.copyValue == "DEV: LAB / TERMINAL")
     #expect(DevLocation.achievements.label == "[DEV: OSIĄGNIĘCIA]")

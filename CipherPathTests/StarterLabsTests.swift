@@ -67,6 +67,7 @@ struct StarterLabsTests {
     #expect(availableLessons.count == 25)
     #expect(definitions.count == 25)
     #expect(Set(definitions.map(\.id)).count == 25)
+    #expect(Set(definitions.map(\.targetAddress)).count == definitions.count)
     #expect(Set(definitions.map(\.allowedPrograms)).count >= 5)
     #expect(definitions.contains { $0.flags.count == 2 })
 
@@ -113,6 +114,14 @@ struct StarterLabsTests {
     )
 
     #expect(evidence.allowedPrograms.contains("sha256sum"))
+    #expect(evidence.allowedPrograms.contains("ls"))
+    #expect(evidence.rules.contains {
+      $0.command == .ls(path: "/case") && $0.output.contains("notes")
+    })
+    #expect(evidence.rules.contains {
+      $0.command == .lsAll(path: "/case/notes") && $0.output.contains(".template.txt")
+    })
+    #expect(evidence.suggestedCommands.first == "ls /case")
     #expect(response.rules.contains { $0.output.contains("isolate after preserve") })
     #expect(report.flags.first?.answer == "Raport łączy dowód, wpływ i naprawę")
     #expect(access.allowedPrograms == ["curl"])
@@ -134,11 +143,31 @@ struct StarterLabsTests {
       StarterLabs.definition(for: "mobile-transport-security")
     )
 
-    #expect(terminal.suggestedCommands == ["ls /training", "cd /training", "cat briefing.txt"])
+    #expect(terminal.suggestedCommands == ["ls", "cd training", "ls", "cat briefing.txt"])
     #expect(baseline.rules.contains { $0.output.contains("unexpected=8443/tcp") })
     #expect(riskChain.flags.first?.answer == "Trzy słabości tworzą jedną ścieżkę ryzyka")
     #expect(transport.allowedPrograms == ["cat", "curl"])
     #expect(transport.rules.contains { $0.output.contains("NSAllowsArbitraryLoads=true") })
+  }
+
+  @Test("Discovers the training files from the shell root")
+  func discoversTrainingFilesWithRelativeCommands() throws {
+    let terminal = try #require(
+      StarterLabs.definition(for: "fundamentals-terminal-basics")
+    )
+    var session = LabSession(definitionID: terminal.id)
+
+    _ = LabEngine.execute("run", definition: terminal, session: &session)
+    let root = LabEngine.execute("ls", definition: terminal, session: &session)
+    let change = LabEngine.execute("cd training", definition: terminal, session: &session)
+    let training = LabEngine.execute("ls", definition: terminal, session: &session)
+    let briefing = LabEngine.execute("cat briefing.txt", definition: terminal, session: &session)
+
+    #expect(root.output == "training/")
+    #expect(change.status == .success)
+    #expect(session.currentDirectory == "/training")
+    #expect(training.output.contains("briefing.txt"))
+    #expect(briefing.revealedAnswer == "Najpierw odczytaj, potem działaj")
   }
 
   @Test("Adds a file integrity investigation and an HTTP session review")
@@ -186,12 +215,18 @@ struct StarterLabsTests {
         #expect(definition.rules.contains { $0.output.contains(flag.value) })
       }
 
+      var session = LabSession(definitionID: definition.id)
+      LabEngine.start(session: &session)
       for suggestion in definition.suggestedCommands {
         guard case .command(let command) = LabCommandParser.parse(suggestion) else {
           Issue.record("Nieprawidłowa podpowiedź: \(suggestion)")
           continue
         }
-        #expect(definition.rules.contains { $0.command == command })
+        #expect(definition.allowedPrograms.contains(command.program))
+        #expect(
+          LabEngine.execute(suggestion, definition: definition, session: &session).status
+            == .success
+        )
       }
     }
   }

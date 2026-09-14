@@ -175,6 +175,7 @@ struct LabTerminalEntry: Equatable, Sendable {
 struct LabSession: Equatable, Sendable {
   let definitionID: String
   var isRunning = false
+  var currentDirectory = "/"
   var history: [LabTerminalEntry] = []
   var discoveries: [String] = []
   var completedObjectiveIDs: Set<String> = []
@@ -213,6 +214,8 @@ extension LabCommand {
   var program: String {
     switch self {
     case .help: "help"
+    case .run: "run"
+    case .ip: "ip"
     case .clear: "clear"
     case .ping: "ping"
     case .nmap: "nmap"
@@ -221,6 +224,7 @@ extension LabCommand {
     case .smbclient: "smbclient"
     case .ssh: "ssh"
     case .ls: "ls"
+    case .lsAll: "ls"
     case .cd: "cd"
     case .cat: "cat"
     case .sha256sum: "sha256sum"
@@ -244,7 +248,7 @@ extension LabCommand {
     case .smbclient(let arguments):
       guard let share = arguments.first(where: { $0.hasPrefix("//") }) else { return nil }
       return share.dropFirst(2).split(separator: "/").first.map(String.init)
-    case .help, .clear, .ls, .cd, .cat, .sha256sum, .find, .id, .whoami, .sudoList:
+    case .help, .run, .ip, .clear, .ls, .lsAll, .cd, .cat, .sha256sum, .find, .id, .whoami, .sudoList:
       return nil
     }
   }

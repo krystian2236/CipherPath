@@ -27,22 +27,6 @@ enum FutureFeatureCatalog {
   ]
 }
 
-struct PathCardSummary: Equatable, Sendable {
-  let includedCount: Int
-  let remainingCount: Int
-  let remainingLabel: String
-
-  static func make(for path: LearningPath, policy: ContentAccessPolicy) -> Self {
-    let lessons = StarterCurriculum.lessons(in: path)
-    let includedCount = lessons.filter { policy.access(for: $0) == .included }.count
-    return PathCardSummary(
-      includedCount: includedCount,
-      remainingCount: lessons.count - includedCount,
-      remainingLabel: policy.tier == .pro ? "zapowiedziane" : "zapowiedziane lub Pro"
-    )
-  }
-}
-
 struct DashboardView: View {
   @Binding var selectedTab: AppTab
   @ObservedObject var progressStore: LearningProgressStore
@@ -59,7 +43,6 @@ struct DashboardView: View {
           header
           missionCard
           missionStages
-          pathSection
           achievementSection
           futureFeaturesSection
           footer
@@ -144,50 +127,6 @@ struct DashboardView: View {
           Text(stage.title).font(.caption2.bold()).multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
-      }
-    }
-  }
-
-  private var pathSection: some View {
-    VStack(alignment: .leading, spacing: 12) {
-      DevLocationLabel(location: .dashboardPaths)
-      sectionHeader("Twoje ścieżki", destination: .paths)
-      ScrollView(.horizontal, showsIndicators: false) {
-        HStack(spacing: 10) {
-          ForEach(StarterCurriculum.paths, id: \.self) { path in
-            let summary = PathCardSummary.make(for: path, policy: .current)
-            NavigationLink {
-              LearningPathDetailView(
-                path: path,
-                progressStore: progressStore,
-                accessPolicy: .current
-              )
-            } label: {
-              VStack(alignment: .leading, spacing: 9) {
-                DevLocationLabel(location: .pathCard)
-                Image(systemName: path.iconName).font(.title2).foregroundStyle(path.tint)
-                Text(path.shortTitle).font(.subheadline.bold())
-                HStack(spacing: 4) {
-                  ForEach(1...5, id: \.self) { number in
-                    Image(systemName: number <= summary.includedCount ? "circle.fill" : "lock.fill")
-                      .font(.caption2)
-                      .foregroundStyle(number <= summary.includedCount ? path.tint : .secondary)
-                  }
-                }
-                Text(
-                  "\(summary.includedCount) dostępne\n\(summary.remainingCount) \(summary.remainingLabel)"
-                )
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-              }
-              .frame(width: 112, alignment: .leading)
-              .padding(13)
-              .background(path.tint.opacity(0.11), in: RoundedRectangle(cornerRadius: 16))
-              .overlay(RoundedRectangle(cornerRadius: 16).stroke(path.tint.opacity(0.35)))
-            }
-            .buttonStyle(.plain)
-          }
-        }
       }
     }
   }

@@ -17,7 +17,7 @@ trap 'rm -rf -- "$derived_data"' EXIT
 build_bundle() {
   xcodebuild \
     -project "$repo_root/CipherPath.xcodeproj" \
-    -scheme CipherPath \
+    -scheme "CipherPath App Store" \
     -configuration Release \
     -sdk iphoneos \
     -destination 'generic/platform=iOS' \

@@ -6,7 +6,10 @@ import Testing
 struct LabCommandParserTests {
   @Test("Recognizes the safe starter command set")
   func recognizesSafeCommands() {
-    #expect(LabCommandParser.parse("help") == .command(.help))
+    #expect(LabCommandParser.parse("krg -help") == .command(.help))
+    #expect(LabCommandParser.parse("help").isRejected)
+    #expect(!LabCommandParser.parse("run").isRejected)
+    #expect(!LabCommandParser.parse("ip").isRejected)
     #expect(
       LabCommandParser.parse("ping 10.10.0.12")
         == .command(.ping(target: "10.10.0.12"))
@@ -20,6 +23,10 @@ struct LabCommandParserTests {
         == .command(.curl(url: "http://10.10.0.12/robots.txt"))
     )
     #expect(LabCommandParser.parse("cat user.txt") == .command(.cat(path: "user.txt")))
+    #expect(
+      LabCommandParser.parse("ls -la /case/notes")
+        == .command(.lsAll(path: "/case/notes"))
+    )
     #expect(!LabCommandParser.parse("sha256sum /evidence/app.bin").isRejected)
   }
 
@@ -78,6 +85,27 @@ struct LabEngineTests {
     suggestedCommands: ["ping 10.10.0.12", "nmap -sC -sV 10.10.0.12"],
     defenseSummary: "Otwarty port nie oznacza automatycznie podatności."
   )
+
+  @Test("Starts the offline lab from the terminal and reveals its assigned address")
+  func startsFromTerminalAndReportsOfflineAddress() {
+    var session = LabSession(definitionID: definition.id)
+
+    let stoppedHelp = LabEngine.execute("krg -help", definition: definition, session: &session)
+    let run = LabEngine.execute("run", definition: definition, session: &session)
+    let help = LabEngine.execute("krg -help", definition: definition, session: &session)
+    let ip = LabEngine.execute("ip", definition: definition, session: &session)
+
+    #expect(stoppedHelp.status == .machineStopped)
+    #expect(run.status == .success)
+    #expect(session.isRunning)
+    #expect(run.output == "Jeśli chcesz uzyskać pomoc, wpisz krg -help.")
+    #expect(help.status == .success)
+    #expect(help.output.contains("krg -help"))
+    #expect(help.output.contains("ip"))
+    #expect(ip.status == .success)
+    #expect(ip.output == "lab0: 10.10.0.12\nnetwork: offline simulation")
+    #expect(session.history.map(\.command) == ["krg -help", "ip"])
+  }
 
   @Test("Requires the virtual machine to be started")
   func requiresStartedSession() {
@@ -179,12 +207,14 @@ struct LabEngineTests {
     var session = LabSession(definitionID: definition.id)
     LabEngine.start(session: &session)
 
-    let help = LabEngine.execute("help", definition: definition, session: &session)
+    let help = LabEngine.execute("krg -help", definition: definition, session: &session)
     _ = LabEngine.execute("ping 10.10.0.12", definition: definition, session: &session)
     let clear = LabEngine.execute("clear", definition: definition, session: &session)
 
     #expect(help.status == .success)
-    #expect(help.output == "Dostępne polecenia: nmap, ping")
+    #expect(help.output.contains("krg -help —"))
+    #expect(help.output.contains("ip —"))
+    #expect(help.output.contains("Programy misji: nmap, ping"))
     #expect(clear.status == .success)
     #expect(session.history.isEmpty)
   }

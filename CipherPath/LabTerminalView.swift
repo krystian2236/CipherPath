@@ -62,29 +62,6 @@ struct LabTerminalView: View {
         }
       }
 
-      Section("Wirtualna maszyna") {
-        DevLocationLabel(location: .labMachine)
-        HStack {
-          VStack(alignment: .leading, spacing: 3) {
-            Text(definition.title).font(.headline)
-            Text("Cel: \(definition.targetAddress)")
-              .font(.system(.subheadline, design: .monospaced))
-          }
-          Spacer()
-          Label(session.isRunning ? "Aktywna" : "Wyłączona", systemImage: statusIcon)
-            .font(.caption.bold())
-            .foregroundStyle(session.isRunning ? .green : .secondary)
-        }
-
-        if !session.isRunning {
-          Button("Uruchom maszynę") {
-            LabEngine.start(session: &session)
-            startedAt = Date()
-          }
-          .buttonStyle(.borderedProminent)
-        }
-      }
-
       if mode == .guided {
         Section("Cele") {
           DevLocationLabel(location: .labObjectives)
@@ -101,27 +78,6 @@ struct LabTerminalView: View {
       Section("Terminal") {
         DevLocationLabel(location: .labTerminal)
         terminalOutput
-
-        HStack(alignment: .bottom) {
-          TextField("Wpisz polecenie", text: $commandInput, axis: .vertical)
-            .font(.system(.body, design: .monospaced))
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled()
-            .onSubmit(runCommand)
-
-          Button(action: runCommand) {
-            Image(systemName: "arrow.up.circle.fill")
-              .font(.title2)
-          }
-          .disabled(!session.isRunning || commandInput.trimmingCharacters(in: .whitespaces).isEmpty)
-          .accessibilityLabel("Wykonaj polecenie")
-        }
-
-        if let feedback {
-          Label(feedback, systemImage: "exclamationmark.shield.fill")
-            .font(.footnote)
-            .foregroundStyle(.orange)
-        }
 
         if distribution == .developer || revealCommands {
           ScrollView(.horizontal, showsIndicators: false) {
@@ -239,34 +195,87 @@ struct LabTerminalView: View {
   }
 
   private var terminalOutput: some View {
-    ScrollView {
-      LazyVStack(alignment: .leading, spacing: 10) {
-        Text(session.isRunning ? "$ Wirtualny host uruchomiony. Wpisz help." : "$ Oczekiwanie na uruchomienie maszyny…")
-          .foregroundStyle(.green)
+    VStack(alignment: .leading, spacing: 10) {
+      ScrollView {
+        LazyVStack(alignment: .leading, spacing: 10) {
+          if session.isRunning {
+            Text("Jeśli chcesz uzyskać pomoc, wpisz krg -help.")
+              .foregroundStyle(.green)
+          } else {
+            Text("Wpisz run, aby uruchomić powłokę krg.")
+              .foregroundStyle(.green)
+          }
 
-        ForEach(Array(session.history.enumerated()), id: \.offset) { _, entry in
-          VStack(alignment: .leading, spacing: 3) {
-            Text("$ \(entry.command)").foregroundStyle(.cyan)
-            Text(entry.output).foregroundStyle(.white)
+          ForEach(Array(session.history.enumerated()), id: \.offset) { _, entry in
+            VStack(alignment: .leading, spacing: 3) {
+              Text("╭─ krg  \(terminalPath)").foregroundStyle(.cyan)
+              Text("╰─[\(entry.command)] ❯").foregroundStyle(.cyan)
+              Text(entry.output).foregroundStyle(.white)
+            }
+          }
+
+          if let feedback {
+            Text(feedback)
+              .foregroundStyle(.orange)
           }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
       }
-      .frame(maxWidth: .infinity, alignment: .leading)
+
+      Divider().overlay(Color.white.opacity(0.25))
+
+      if session.isRunning {
+        Text("╭─ krg  \(terminalPath)")
+          .foregroundStyle(.cyan)
+        HStack(spacing: 0) {
+          Text("╰─[").foregroundStyle(.cyan)
+          commandField
+          Text("] ❯").foregroundStyle(.cyan)
+          executeButton
+        }
+      } else {
+        HStack(spacing: 0) {
+          Text("$ [").foregroundStyle(.cyan)
+          commandField
+          Text("] ❯").foregroundStyle(.cyan)
+          executeButton
+        }
+      }
     }
     .frame(minHeight: 180, maxHeight: 300)
     .padding(12)
     .font(.system(.caption, design: .monospaced))
     .background(Color.black, in: RoundedRectangle(cornerRadius: 12))
-    .accessibilityLabel("Historia terminala")
-  }
-
-  private var statusIcon: String {
-    session.isRunning ? "bolt.horizontal.circle.fill" : "stop.circle"
+    .accessibilityElement(children: .contain)
   }
 
   private var purchaseDialogTitle: String {
     guard let pendingPurchase else { return "Odblokować pomoc?" }
     return pendingPurchase == .hint ? "Odblokować podpowiedź?" : "Odblokować rozwiązanie?"
+  }
+
+  private var terminalPath: String {
+    session.currentDirectory == "/" ? "~" : "~\(session.currentDirectory)"
+  }
+
+  private var commandField: some View {
+    TextField(session.isRunning ? "polecenie" : "run", text: $commandInput)
+      .foregroundStyle(.white)
+      .textInputAutocapitalization(.never)
+      .autocorrectionDisabled()
+      .submitLabel(.send)
+      .onSubmit(runCommand)
+      .accessibilityLabel("Polecenie terminala")
+  }
+
+  private var executeButton: some View {
+    Button(action: runCommand) {
+      Image(systemName: "arrow.up.circle.fill")
+        .font(.title3)
+        .padding(.leading, 8)
+    }
+    .disabled(commandInput.trimmingCharacters(in: .whitespaces).isEmpty)
+    .accessibilityLabel("Wykonaj polecenie")
   }
 
   private var purchaseConfirmationPresented: Binding<Bool> {
@@ -296,7 +305,11 @@ struct LabTerminalView: View {
   private func runCommand() {
     let input = commandInput.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !input.isEmpty else { return }
+    let wasRunning = session.isRunning
     let result = LabEngine.execute(input, definition: definition, session: &session)
+    if !wasRunning && session.isRunning {
+      startedAt = Date()
+    }
     feedback = result.status == .success ? nil : result.output
     if result.status == .success {
       if let revealedAnswer = result.revealedAnswer {

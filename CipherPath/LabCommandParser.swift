@@ -2,6 +2,8 @@ import Foundation
 
 enum LabCommand: Equatable, Sendable {
   case help
+  case run
+  case ip
   case clear
   case ping(target: String)
   case nmap(options: [String], target: String)
@@ -10,6 +12,7 @@ enum LabCommand: Equatable, Sendable {
   case smbclient(arguments: [String])
   case ssh(destination: String)
   case ls(path: String?)
+  case lsAll(path: String?)
   case cd(path: String)
   case cat(path: String)
   case sha256sum(path: String)
@@ -39,13 +42,17 @@ enum LabCommandParser {
 
     let tokens = input.split(whereSeparator: \Character.isWhitespace).map(String.init)
     guard let program = tokens.first else {
-      return .rejected("Wpisz polecenie lub użyj help.")
+      return .rejected("Wpisz polecenie. Po uruchomieniu użyj krg -help.")
     }
 
     let arguments = Array(tokens.dropFirst())
     switch program.lowercased() {
-    case "help" where arguments.isEmpty:
+    case "krg" where arguments == ["-help"]:
       return .command(.help)
+    case "run" where arguments.isEmpty:
+      return .command(.run)
+    case "ip" where arguments.isEmpty:
+      return .command(.ip)
     case "clear" where arguments.isEmpty:
       return .command(.clear)
     case "ping" where arguments.count == 1:
@@ -60,6 +67,8 @@ enum LabCommandParser {
       return .command(.smbclient(arguments: arguments))
     case "ssh" where arguments.count == 1:
       return .command(.ssh(destination: arguments[0]))
+    case "ls" where arguments.first == "-la" && arguments.count <= 2:
+      return .command(.lsAll(path: arguments.count == 2 ? arguments[1] : nil))
     case "ls" where arguments.count <= 1:
       return .command(.ls(path: arguments.first))
     case "cd" where arguments.count == 1:

@@ -202,6 +202,11 @@ enum StarterLabs {
     allowedPrograms: ["ls", "cd", "cat"],
     rules: [
       LabRule(
+        command: .ls(path: "/"),
+        output: "training/",
+        discovery: "Odnaleziono katalog training"
+      ),
+      LabRule(
         command: .ls(path: "/training"),
         output: "briefing.txt\nevidence/",
         discovery: "Katalog szkoleniowy zawiera instrukcję i materiał do analizy",
@@ -214,7 +219,7 @@ enum StarterLabs {
         objectiveID: "navigate"
       ),
       LabRule(
-        command: .cat(path: "briefing.txt"),
+        command: .cat(path: "/training/briefing.txt"),
         output: "ls=list files\ncd=change directory\ncat=read file\nCIPHER{READ_BEFORE_ACTION}",
         discovery: "Odczytano znaczenie trzech podstawowych poleceń",
         objectiveID: "read"
@@ -232,7 +237,7 @@ enum StarterLabs {
         requiredObjectiveIDs: ["list", "navigate", "read"]
       )
     ],
-    suggestedCommands: ["ls /training", "cd /training", "cat briefing.txt"],
+    suggestedCommands: ["ls", "cd training", "ls", "cat briefing.txt"],
     defenseSummary: "Przed wykonaniem polecenia sprawdź katalog i pliki. Rozpoczynaj od operacji tylko do odczytu i unikaj pracy na sekretach."
   )
 
@@ -240,11 +245,32 @@ enum StarterLabs {
     id: "security-evidence",
     title: "Dowody i notatki",
     targetAddress: "192.0.2.14",
-    allowedPrograms: ["find", "cat", "sha256sum"],
+    allowedPrograms: ["find", "ls", "cat", "sha256sum"],
     rules: [
       LabRule(
+        command: .ls(path: "/case"),
+        output: "notes\nsource",
+        discovery: "Odnaleziono katalogi notes i source"
+      ),
+      LabRule(
+        command: .ls(path: "/case/source"),
+        output: "auth.log",
+        discovery: "Odnaleziono źródłowy plik auth.log"
+      ),
+      LabRule(
+        command: .ls(path: "/case/notes"),
+        output: "(brak widocznych plików)",
+        discovery: "Zwykłe listowanie nie pokazało zawartości katalogu notes"
+      ),
+      LabRule(
+        command: .lsAll(path: "/case/notes"),
+        output: ".\n..\n.template.txt",
+        discovery: "Odnaleziono ukryty szablon notatki",
+        objectiveID: "inventory"
+      ),
+      LabRule(
         command: .find(arguments: ["/case", "-type", "f"]),
-        output: "/case/source/auth.log\n/case/notes/template.txt",
+        output: "/case/source/auth.log\n/case/notes/.template.txt",
         discovery: "Odnaleziono oryginalny log i pusty szablon notatki",
         objectiveID: "inventory"
       ),
@@ -255,7 +281,7 @@ enum StarterLabs {
         objectiveID: "integrity"
       ),
       LabRule(
-        command: .cat(path: "/case/notes/template.txt"),
+        command: .cat(path: "/case/notes/.template.txt"),
         output: "time=11:42\nsource=auth.log\nobservation=failed login burst\nsecrets=do not copy\nCIPHER{NOTE_FACTS_NOT_SECRETS}",
         discovery: "Notatka zawiera fakty i odwołanie do dowodu, ale nie sekrety",
         objectiveID: "notes"
@@ -274,9 +300,12 @@ enum StarterLabs {
       )
     ],
     suggestedCommands: [
-      "find /case -type f",
+      "ls /case",
+      "ls /case/source",
+      "ls /case/notes",
+      "ls -la /case/notes",
       "sha256sum /case/source/auth.log",
-      "cat /case/notes/template.txt",
+      "cat /case/notes/.template.txt",
     ],
     defenseSummary: "Zachowuj oryginał dowodu, zapisuj jego sumę kontrolną i dokumentuj fakty. Nie kopiuj haseł, tokenów ani kluczy do notatek."
   )
