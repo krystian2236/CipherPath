@@ -15,6 +15,14 @@ enum AppDistributionMode: CaseIterable, Equatable, Sendable {
   var showsAdventureMode: Bool {
     self == .developer
   }
+
+  var showsMissionsTab: Bool {
+    self == .developer
+  }
+
+  var showsFutureStore: Bool {
+    self == .developer
+  }
 }
 
 enum LearningPath: String, CaseIterable, Codable, Hashable, Sendable {
