@@ -230,4 +230,87 @@ struct StarterLabsTests {
       }
     }
   }
+
+  @Test("Filesystem missions expose their first path without hints")
+  func filesystemMissionsExposeNoHintEntryPath() throws {
+    let expectedEntries = [
+      "fundamentals-network-addresses": "network/",
+      "fundamentals-security-evidence": "case/",
+      "blue-team-find-log-event": "logs/",
+      "blue-team-suspicious-login": "incident/",
+      "blue-team-file-integrity": "evidence/",
+      "blue-team-network-baseline": "traffic/",
+      "blue-team-incident-notes": "incident/",
+      "red-team-risk-chain": "notes/",
+      "red-team-defensive-report": "report/",
+      "web-spot-input-risk": "request.txt",
+      "mobile-review-permissions": "app/",
+      "mobile-protect-local-data": "mobile-request.txt",
+      "mobile-transport-security": "app/",
+      "mobile-app-privacy": "privacy/",
+      "mobile-release-review": "release/",
+    ]
+
+    for (lessonID, expectedEntry) in expectedEntries {
+      let definition = try #require(StarterLabs.definition(for: lessonID))
+      var session = LabSession(definitionID: definition.id)
+      LabEngine.start(session: &session)
+
+      let listing = LabEngine.execute("ls", definition: definition, session: &session)
+
+      #expect(listing.status == .success, "Misja: \(definition.id)")
+      #expect(listing.output.split(separator: "\n").contains(Substring(expectedEntry)))
+      #expect(listing.revealedAnswer == nil)
+      #expect(session.completedObjectiveIDs.isEmpty)
+    }
+  }
+
+  @Test("Tool missions reveal every non-obvious next argument")
+  func toolMissionsRevealNoHintHandoffs() throws {
+    let permission = try #require(StarterLabs.definition(for: "red-team-threat-thinking"))
+    let report = try #require(StarterLabs.definition(for: "red-team-defensive-report"))
+    let hiddenWeb = try #require(StarterLabs.definition(for: "web-http-anatomy"))
+    let unsafeAPI = try #require(StarterLabs.definition(for: "web-spot-input-risk"))
+    let sessionReview = try #require(StarterLabs.definition(for: "web-session-basics"))
+    let access = try #require(StarterLabs.definition(for: "web-access-control"))
+    let headers = try #require(StarterLabs.definition(for: "web-security-headers"))
+    let mobile = try #require(StarterLabs.definition(for: "mobile-protect-local-data"))
+    let transport = try #require(StarterLabs.definition(for: "mobile-transport-security"))
+
+    #expect(permission.rules.contains {
+      $0.command == .ssh(destination: permission.targetAddress)
+        && $0.output.contains("trainee@\(permission.targetAddress)")
+    })
+    #expect(report.rules.contains {
+      $0.command == .curl(url: "http://\(report.targetAddress):8080")
+        && $0.output.contains("/status")
+    })
+    #expect(hiddenWeb.rules.first(where: {
+      $0.command == .curl(url: "http://\(hiddenWeb.targetAddress)")
+    })?.output.contains("/robots.txt") == true)
+    #expect(hiddenWeb.rules.first(where: {
+      $0.command == .curl(url: "http://\(hiddenWeb.targetAddress)/backup/")
+    })?.output.contains("note.txt") == true)
+    #expect(unsafeAPI.rules.first(where: {
+      $0.command == .curl(url: "http://\(unsafeAPI.targetAddress)/api/profile")
+    })?.output.contains("/api/debug") == true)
+    #expect(sessionReview.rules.contains {
+      $0.command == .curl(url: "http://\(sessionReview.targetAddress)")
+        && $0.output.contains("/login")
+        && $0.output.contains("/security-review")
+    })
+    #expect(access.rules.contains {
+      $0.command == .curl(url: "http://\(access.targetAddress)")
+        && $0.output.contains("/access-matrix")
+    })
+    #expect(headers.rules.first(where: {
+      $0.command == .curl(url: "http://\(headers.targetAddress)")
+    })?.output.contains("/security-policy") == true)
+    #expect(mobile.rules.first(where: {
+      $0.command == .nmap(options: ["-sC", "-sV"], target: mobile.targetAddress)
+    })?.output.contains("/security-note") == true)
+    #expect(transport.rules.first(where: {
+      $0.command == .cat(path: "/app/Info.plist")
+    })?.output.contains("/profile") == true)
+  }
 }

@@ -566,6 +566,11 @@ enum StarterLabs {
     allowedPrograms: ["ssh", "whoami", "id", "sudo", "cat"],
     rules: [
       LabRule(
+        command: .ssh(destination: "192.0.2.31"),
+        output: "Konto szkoleniowe: trainee@192.0.2.31\nPołącz się ponownie z podaną nazwą użytkownika.",
+        discovery: "Odnaleziono nazwę kontrolowanego konta szkoleniowego"
+      ),
+      LabRule(
         command: .ssh(destination: "trainee@192.0.2.31"),
         output: "Connected to permission-lab as trainee.",
         discovery: "Sesja użytkownika trainee jest aktywna",
@@ -726,6 +731,11 @@ enum StarterLabs {
         objectiveID: "evidence"
       ),
       LabRule(
+        command: .curl(url: "http://192.0.2.34:8080"),
+        output: "HTTP/1.1 200 OK\nTrainingConsole\nstatus=/status",
+        discovery: "Konsola wskazuje ścieżkę statusu"
+      ),
+      LabRule(
         command: .curl(url: "http://192.0.2.34:8080/status"),
         output: "HTTP/1.1 200 OK\nauth=disabled\ndata=deployment-status",
         discovery: "Status wdrożenia jest dostępny bez uwierzytelnienia",
@@ -772,7 +782,7 @@ enum StarterLabs {
       ),
       LabRule(
         command: .curl(url: "http://192.0.2.40"),
-        output: "HTTP/1.1 200 OK\nServer: Lantern/2.4\n\nWelcome. Well-behaved robots read the rules.",
+        output: "HTTP/1.1 200 OK\nServer: Lantern/2.4\n\nWelcome. Robot rules: /robots.txt",
         discovery: "Strona sugeruje sprawdzenie reguł dla robotów"
       ),
       LabRule(
@@ -780,6 +790,11 @@ enum StarterLabs {
         output: "User-agent: *\nDisallow: /backup/",
         discovery: "Plik robots.txt ujawnia katalog /backup/",
         objectiveID: "clue"
+      ),
+      LabRule(
+        command: .curl(url: "http://192.0.2.40/backup/"),
+        output: "Index of /backup/\nnote.txt",
+        discovery: "Katalog kopii zapasowej ujawnia plik note.txt"
       ),
       LabRule(
         command: .curl(url: "http://192.0.2.40/backup/note.txt"),
@@ -823,7 +838,7 @@ enum StarterLabs {
       ),
       LabRule(
         command: .curl(url: "http://192.0.2.41/api/profile"),
-        output: "HTTP/1.1 200 OK\nAccess-Control-Allow-Origin: *\nX-Debug-Mode: enabled",
+        output: "HTTP/1.1 200 OK\nAccess-Control-Allow-Origin: *\nX-Debug-Mode: enabled\nDebug endpoint: /api/debug",
         discovery: "API ujawnia tryb debugowania i zbyt szeroki CORS",
         objectiveID: "headers"
       ),
@@ -856,6 +871,11 @@ enum StarterLabs {
     targetAddress: "192.0.2.42",
     allowedPrograms: ["curl"],
     rules: [
+      LabRule(
+        command: .curl(url: "http://192.0.2.42"),
+        output: "Training Session API\nEndpoints: /login, /security-review",
+        discovery: "Strona startowa wskazuje endpointy sesji"
+      ),
       LabRule(
         command: .curl(url: "http://192.0.2.42/login"),
         output: "HTTP/1.1 200 OK\nSet-Cookie: session=training; Path=/\n\nLogin accepted",
@@ -893,6 +913,11 @@ enum StarterLabs {
     targetAddress: "192.0.2.43",
     allowedPrograms: ["curl"],
     rules: [
+      LabRule(
+        command: .curl(url: "http://192.0.2.43"),
+        output: "Access Lab\nEndpoints: /access-matrix, /as-viewer/records/admin, /security-review",
+        discovery: "Strona startowa wskazuje zasoby kontroli dostępu"
+      ),
       LabRule(
         command: .curl(url: "http://192.0.2.43/access-matrix"),
         output: "resource=/records/admin\nadmin=allow\nviewer=deny",
@@ -940,7 +965,7 @@ enum StarterLabs {
     rules: [
       LabRule(
         command: .curl(url: "http://192.0.2.44"),
-        output: "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Security-Policy: missing\nStrict-Transport-Security: missing\nX-Content-Type-Options: missing",
+        output: "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Security-Policy: missing\nStrict-Transport-Security: missing\nX-Content-Type-Options: missing\nReview paths: /security-policy, /security-review",
         discovery: "Odpowiedź nie zawiera trzech oczekiwanych nagłówków ochronnych",
         objectiveID: "inspect"
       ),
@@ -1032,7 +1057,7 @@ enum StarterLabs {
       ),
       LabRule(
         command: .nmap(options: ["-sC", "-sV"], target: "192.0.2.51"),
-        output: "80/tcp open http TrainingAPI 1.0\n443/tcp closed https",
+        output: "80/tcp open http TrainingAPI 1.0\n443/tcp closed https\nDocumentation: /security-note",
         discovery: "API nie udostępnia TLS",
         objectiveID: "transport"
       ),
@@ -1067,7 +1092,7 @@ enum StarterLabs {
     rules: [
       LabRule(
         command: .cat(path: "/app/Info.plist"),
-        output: "NSAppTransportSecurity\nNSAllowsArbitraryLoads=true",
+        output: "NSAppTransportSecurity\nNSAllowsArbitraryLoads=true\nprofile_endpoint=http://192.0.2.52/profile",
         discovery: "Aplikacja zezwala na dowolne nieszyfrowane połączenia",
         objectiveID: "configuration"
       ),

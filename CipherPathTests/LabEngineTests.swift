@@ -214,9 +214,92 @@ struct LabEngineTests {
     #expect(help.status == .success)
     #expect(help.output.contains("krg -help —"))
     #expect(help.output.contains("ip —"))
+    #expect(help.output.contains("ping <IP>"))
+    #expect(help.output.contains("nmap -sV <IP>"))
     #expect(help.output.contains("Programy misji: nmap, ping"))
     #expect(clear.status == .success)
     #expect(session.history.isEmpty)
+  }
+
+  @Test("Discovers the virtual filesystem without mission hints")
+  func discoversVirtualFilesystemWithoutHints() {
+    let filesystemDefinition = LabDefinition(
+      id: "filesystem",
+      title: "Filesystem",
+      targetAddress: "192.0.2.22",
+      allowedPrograms: ["find", "cat", "sha256sum"],
+      rules: [
+        LabRule(
+          command: .find(arguments: ["/evidence", "-type", "f"]),
+          output: "/evidence/manifest.txt\n/evidence/app.bin",
+          objectiveID: "locate"
+        ),
+        LabRule(
+          command: .cat(path: "/evidence/manifest.txt"),
+          output: "expected hash"
+        ),
+        LabRule(
+          command: .sha256sum(path: "/evidence/app.bin"),
+          output: "actual hash"
+        ),
+      ],
+      objectives: [LabObjective(id: "locate", title: "Znajdź pliki")],
+      flags: [],
+      suggestedCommands: [],
+      defenseSummary: ""
+    )
+    var session = LabSession(definitionID: filesystemDefinition.id)
+    LabEngine.start(session: &session)
+
+    let help = LabEngine.execute(
+      "krg -help", definition: filesystemDefinition, session: &session
+    )
+    let root = LabEngine.execute("ls", definition: filesystemDefinition, session: &session)
+    let changeDirectory = LabEngine.execute(
+      "cd evidence", definition: filesystemDefinition, session: &session
+    )
+    let evidence = LabEngine.execute("ls", definition: filesystemDefinition, session: &session)
+    let relativeFind = LabEngine.execute(
+      "find . -type f", definition: filesystemDefinition, session: &session
+    )
+
+    #expect(help.output.contains("ls [ścieżka]"))
+    #expect(help.output.contains("cd <katalog>"))
+    #expect(root.status == .success)
+    #expect(root.output == "evidence/")
+    #expect(changeDirectory.status == .success)
+    #expect(session.currentDirectory == "/evidence")
+    #expect(evidence.output == "app.bin\nmanifest.txt")
+    #expect(relativeFind.status == .success)
+    #expect(relativeFind.output == "/evidence/manifest.txt\n/evidence/app.bin")
+    #expect(session.completedObjectiveIDs == ["locate"])
+  }
+
+  @Test("Plain listing hides dotfiles until ls all is used")
+  func hidesDotfilesFromPlainListing() {
+    let hiddenDefinition = LabDefinition(
+      id: "hidden-files",
+      title: "Hidden files",
+      targetAddress: "192.0.2.14",
+      allowedPrograms: ["cat"],
+      rules: [
+        LabRule(command: .cat(path: "/case/notes/readme.txt"), output: "visible"),
+        LabRule(command: .cat(path: "/case/notes/.template.txt"), output: "hidden"),
+      ],
+      objectives: [],
+      flags: [],
+      suggestedCommands: [],
+      defenseSummary: ""
+    )
+    var session = LabSession(definitionID: hiddenDefinition.id)
+    LabEngine.start(session: &session)
+
+    _ = LabEngine.execute("cd /case/notes", definition: hiddenDefinition, session: &session)
+    let visible = LabEngine.execute("ls", definition: hiddenDefinition, session: &session)
+    let all = LabEngine.execute("ls -la", definition: hiddenDefinition, session: &session)
+
+    #expect(visible.output == "readme.txt")
+    #expect(all.output == ".\n..\n.template.txt\nreadme.txt")
   }
 
   @Test("Assistance purchase messages explain charges and missing points")

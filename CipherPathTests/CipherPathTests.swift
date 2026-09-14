@@ -227,6 +227,19 @@ struct LearningProgressTests {
     return UserDefaults(suiteName: suiteName)!
   }
 
+  private func comingSoonLessonFixture() -> LearningLesson {
+    LearningLesson(
+      id: "coming-soon-test",
+      path: .fundamentals,
+      order: 99,
+      title: "Wkrótce",
+      summary: "Kontrolowana lekcja testowa",
+      environment: .offlineSimulation,
+      availability: .comingSoon,
+      stages: []
+    )
+  }
+
   @Test("A lesson advances through stages in the required order")
   @MainActor
   func advancesInRequiredOrder() {
@@ -283,7 +296,7 @@ struct LearningProgressTests {
   @Test("Coming soon lessons cannot be started")
   @MainActor
   func rejectsComingSoonLesson() {
-    let lesson = StarterCurriculum.lessons.first { $0.availability == .comingSoon }!
+    let lesson = comingSoonLessonFixture()
     let store = LearningProgressStore(defaults: isolatedDefaults())
 
     #expect(!store.canStart(lesson))
@@ -335,9 +348,22 @@ struct LessonMissionContentTests {
 
   @Test("Coming soon lessons do not expose mission material")
   func comingSoonLessonsHaveNoMaterial() {
-    let lesson = StarterCurriculum.lessons.first { $0.availability == .comingSoon }!
+    let lesson = comingSoonLessonFixture()
 
     #expect(LessonMissionContent.availableContent(for: lesson) == nil)
+  }
+
+  private func comingSoonLessonFixture() -> LearningLesson {
+    LearningLesson(
+      id: "coming-soon-test",
+      path: .fundamentals,
+      order: 99,
+      title: "Wkrótce",
+      summary: "Kontrolowana lekcja testowa",
+      environment: .offlineSimulation,
+      availability: .comingSoon,
+      stages: []
+    )
   }
 }
 

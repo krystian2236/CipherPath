@@ -45,11 +45,17 @@ enum LabEngine {
     }
 
     if command == .help {
+      let programHelp = definition.allowedPrograms.sorted().compactMap(programUsage).joined(separator: "\n")
       let output = """
       krg -help — pokazuje dostępne polecenia
       ip — pokazuje adres celu w symulacji
       clear — czyści historię terminala
+      ls [ścieżka] — pokazuje widoczne pliki i katalogi
+      ls -la [ścieżka] — pokazuje także ukryte elementy
+      cd <katalog> — zmienia katalog roboczy
       Programy misji: \(definition.allowedPrograms.sorted().joined(separator: ", "))
+      Składnia programów:
+      \(programHelp)
       """
       session.history.append(LabTerminalEntry(command: input, output: output))
       return LabExecutionResult(status: .success, output: output)
@@ -66,7 +72,8 @@ enum LabEngine {
       return LabExecutionResult(status: .success, output: "")
     }
 
-    guard definition.allowedPrograms.contains(command.program) else {
+    let isNavigationCommand = command.isNavigationCommand
+    guard isNavigationCommand || definition.allowedPrograms.contains(command.program) else {
       return LabExecutionResult(
         status: .programRejected,
         output: "To polecenie nie jest dostępne w tej misji."
@@ -81,17 +88,35 @@ enum LabEngine {
     }
 
     let resolvedCommand = resolve(command, from: session.currentDirectory)
-    guard let rule = definition.rules.first(where: {
+    if let rule = definition.rules.first(where: {
       $0.command == command || $0.command == resolvedCommand
-    }) else {
-      return LabExecutionResult(
-        status: .noMatchingRule,
-        output: "Ta składnia nie prowadzi dalej. Użyj krg -help lub sprawdź cel misji."
-      )
+    }) {
+      return execute(rule, input: input, definition: definition, session: &session)
     }
 
+    if let navigationResult = executeNavigation(
+      resolvedCommand,
+      input: input,
+      definition: definition,
+      session: &session
+    ) {
+      return navigationResult
+    }
+
+    return LabExecutionResult(
+      status: .noMatchingRule,
+      output: "Ta składnia nie prowadzi dalej. Użyj krg -help lub sprawdź cel misji."
+    )
+  }
+
+  private static func execute(
+    _ rule: LabRule,
+    input: String,
+    definition: LabDefinition,
+    session: inout LabSession
+  ) -> LabExecutionResult {
     if case .cd(let path) = rule.command {
-      session.currentDirectory = path
+      session.currentDirectory = normalized(path)
     }
 
     let revealedFlag = definition.flags.first { rule.output.contains($0.value) }
@@ -113,6 +138,140 @@ enum LabEngine {
       output: readableOutput,
       revealedAnswer: revealedFlag?.answer
     )
+  }
+
+  private static func programUsage(_ program: String) -> String? {
+    switch program {
+    case "ping": "ping <IP>"
+    case "nmap": "nmap -sV <IP> lub nmap -sC -sV <IP>"
+    case "curl": "curl http://<IP>[:port][/ścieżka]"
+    case "ftp": "ftp <IP>"
+    case "smbclient": "smbclient -L //<IP> -N"
+    case "ssh": "ssh [użytkownik@]<IP>"
+    case "cat": "cat <plik>"
+    case "sha256sum": "sha256sum <plik>"
+    case "find": "find <katalog> -type f lub find <katalog> -name *.log"
+    case "id": "id"
+    case "whoami": "whoami"
+    case "sudo": "sudo -l"
+    case "ls", "cd": nil
+    default: nil
+    }
+  }
+
+  private static func executeNavigation(
+    _ command: LabCommand,
+    input: String,
+    definition: LabDefinition,
+    session: inout LabSession
+  ) -> LabExecutionResult? {
+    let filesystem = VirtualFilesystem(definition: definition)
+    let output: String
+
+    switch command {
+    case .ls(let path):
+      guard let listing = filesystem.list(path: path ?? session.currentDirectory, includeHidden: false) else {
+        return LabExecutionResult(status: .noMatchingRule, output: "Nie znaleziono takiego katalogu w laboratorium.")
+      }
+      output = listing
+    case .lsAll(let path):
+      guard let listing = filesystem.list(path: path ?? session.currentDirectory, includeHidden: true) else {
+        return LabExecutionResult(status: .noMatchingRule, output: "Nie znaleziono takiego katalogu w laboratorium.")
+      }
+      output = listing
+    case .cd(let path):
+      guard filesystem.directories.contains(path) else {
+        return LabExecutionResult(status: .noMatchingRule, output: "Nie znaleziono takiego katalogu w laboratorium.")
+      }
+      session.currentDirectory = path
+      output = "Current directory: \(path)"
+    default:
+      return nil
+    }
+
+    session.history.append(LabTerminalEntry(command: input, output: output))
+    return LabExecutionResult(status: .success, output: output)
+  }
+
+  private struct VirtualFilesystem {
+    var directories: Set<String> = ["/"]
+    var files: Set<String> = []
+
+    init(definition: LabDefinition) {
+      for rule in definition.rules {
+        switch rule.command {
+        case .cat(let path), .sha256sum(let path):
+          addFile(path)
+        case .find(let arguments):
+          if let path = arguments.first { addDirectory(path) }
+        case .ls(let path), .lsAll(let path):
+          if let path { addDirectory(path) }
+        case .cd(let path):
+          addDirectory(path)
+        default:
+          break
+        }
+      }
+    }
+
+    mutating func addFile(_ rawPath: String) {
+      let path = LabEngine.absolute(rawPath, from: "/")
+      files.insert(path)
+      addDirectory(LabEngine.parent(of: path))
+    }
+
+    mutating func addDirectory(_ rawPath: String) {
+      var path = LabEngine.absolute(rawPath, from: "/")
+      while directories.insert(path).inserted, path != "/" {
+        path = LabEngine.parent(of: path)
+      }
+    }
+
+    func list(path rawPath: String, includeHidden: Bool) -> String? {
+      let path = LabEngine.normalized(rawPath)
+      guard directories.contains(path) else { return nil }
+
+      var entries: [String] = []
+      for directory in directories where directory != path && LabEngine.parent(of: directory) == path {
+        let name = LabEngine.name(of: directory)
+        if includeHidden || !name.hasPrefix(".") { entries.append("\(name)/") }
+      }
+      for file in files where LabEngine.parent(of: file) == path {
+        let name = LabEngine.name(of: file)
+        if includeHidden || !name.hasPrefix(".") { entries.append(name) }
+      }
+      entries.sort()
+
+      if includeHidden {
+        entries.insert(contentsOf: [".", ".."], at: 0)
+      }
+      return entries.isEmpty ? "(brak widocznych plików)" : entries.joined(separator: "\n")
+    }
+  }
+
+  private static func parent(of rawPath: String) -> String {
+    let components = normalized(rawPath).split(separator: "/")
+    guard components.count > 1 else { return "/" }
+    return "/" + components.dropLast().joined(separator: "/")
+  }
+
+  private static func name(of rawPath: String) -> String {
+    normalized(rawPath).split(separator: "/").last.map(String.init) ?? "/"
+  }
+
+  private static func normalized(_ rawPath: String) -> String {
+    var components: [Substring] = []
+    for component in rawPath.split(separator: "/", omittingEmptySubsequences: true) {
+      switch component {
+      case ".":
+        continue
+      case "..":
+        if !components.isEmpty { components.removeLast() }
+      default:
+        components.append(component)
+      }
+    }
+    return components.isEmpty ? "/" : "/" + components.joined(separator: "/")
   }
 
   static func submit(
@@ -156,6 +315,9 @@ enum LabEngine {
       return .cat(path: absolute(path, from: currentDirectory))
     case .sha256sum(let path):
       return .sha256sum(path: absolute(path, from: currentDirectory))
+    case .find(let arguments):
+      guard let path = arguments.first else { return command }
+      return .find(arguments: [absolute(path, from: currentDirectory)] + arguments.dropFirst())
     default:
       return command
     }
@@ -163,7 +325,18 @@ enum LabEngine {
 
   private static func absolute(_ path: String?, from currentDirectory: String) -> String {
     guard let path, !path.isEmpty else { return currentDirectory }
-    if path.hasPrefix("/") { return path }
-    return currentDirectory == "/" ? "/\(path)" : "\(currentDirectory)/\(path)"
+    if path.hasPrefix("/") { return normalized(path) }
+    return normalized(currentDirectory == "/" ? "/\(path)" : "\(currentDirectory)/\(path)")
+  }
+}
+
+private extension LabCommand {
+  var isNavigationCommand: Bool {
+    switch self {
+    case .ls, .lsAll, .cd:
+      true
+    default:
+      false
+    }
   }
 }

@@ -17,8 +17,10 @@ struct LabTerminalView: View {
   @State private var completionSummary: LabCompletionSummary?
   @State private var pendingPurchase: PointsPurchase?
   @State private var purchaseMessage: String?
+  @FocusState private var isCommandFieldFocused: Bool
 
   private let distribution = AppDistributionMode.currentBuild
+  private let terminalBottomID = "terminal-bottom"
 
   init(
     definition: LabDefinition,
@@ -196,30 +198,45 @@ struct LabTerminalView: View {
 
   private var terminalOutput: some View {
     VStack(alignment: .leading, spacing: 10) {
-      ScrollView {
-        LazyVStack(alignment: .leading, spacing: 10) {
-          if session.isRunning {
-            Text("Jeśli chcesz uzyskać pomoc, wpisz krg -help.")
-              .foregroundStyle(.green)
-          } else {
-            Text("Wpisz run, aby uruchomić powłokę krg.")
-              .foregroundStyle(.green)
-          }
-
-          ForEach(Array(session.history.enumerated()), id: \.offset) { _, entry in
-            VStack(alignment: .leading, spacing: 3) {
-              Text("╭─ krg  \(terminalPath)").foregroundStyle(.cyan)
-              Text("╰─[\(entry.command)] ❯").foregroundStyle(.cyan)
-              Text(entry.output).foregroundStyle(.white)
+      ScrollViewReader { proxy in
+        ScrollView {
+          LazyVStack(alignment: .leading, spacing: 10) {
+            if session.isRunning {
+              Text("Jeśli chcesz uzyskać pomoc, wpisz krg -help.")
+                .foregroundStyle(.green)
+            } else {
+              Text("Wpisz run, aby uruchomić powłokę krg.")
+                .foregroundStyle(.green)
             }
-          }
 
-          if let feedback {
-            Text(feedback)
-              .foregroundStyle(.orange)
+            ForEach(Array(session.history.enumerated()), id: \.offset) { _, entry in
+              VStack(alignment: .leading, spacing: 3) {
+                Text("╭─ krg  \(terminalPath)").foregroundStyle(.cyan)
+                Text("╰─[\(entry.command)] ❯").foregroundStyle(.cyan)
+                Text(entry.output).foregroundStyle(.white)
+              }
+            }
+
+            if let feedback {
+              Text(feedback)
+                .foregroundStyle(.orange)
+            }
+
+            Color.clear
+              .frame(height: 1)
+              .id(terminalBottomID)
           }
+          .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .onChange(of: session.isRunning) { _, _ in
+          scrollTerminalToBottom(proxy)
+        }
+        .onChange(of: session.history.count) { _, _ in
+          scrollTerminalToBottom(proxy)
+        }
+        .onChange(of: feedback) { _, _ in
+          scrollTerminalToBottom(proxy)
+        }
       }
 
       Divider().overlay(Color.white.opacity(0.25))
@@ -264,6 +281,7 @@ struct LabTerminalView: View {
       .textInputAutocapitalization(.never)
       .autocorrectionDisabled()
       .submitLabel(.send)
+      .focused($isCommandFieldFocused)
       .onSubmit(runCommand)
       .accessibilityLabel("Polecenie terminala")
   }
@@ -276,6 +294,15 @@ struct LabTerminalView: View {
     }
     .disabled(commandInput.trimmingCharacters(in: .whitespaces).isEmpty)
     .accessibilityLabel("Wykonaj polecenie")
+  }
+
+  private func scrollTerminalToBottom(_ proxy: ScrollViewProxy) {
+    Task { @MainActor in
+      await Task.yield()
+      withAnimation(.easeOut(duration: 0.2)) {
+        proxy.scrollTo(terminalBottomID, anchor: .bottom)
+      }
+    }
   }
 
   private var purchaseConfirmationPresented: Binding<Bool> {
@@ -323,6 +350,9 @@ struct LabTerminalView: View {
       _ = progressStore.saveCheckpoint(lessonID: lesson.id, mode: mode, session: session)
     }
     commandInput = ""
+    Task { @MainActor in
+      isCommandFieldFocused = true
+    }
   }
 
   private func submitAnswer() {
