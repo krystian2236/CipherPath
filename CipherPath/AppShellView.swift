@@ -62,7 +62,12 @@ struct AppShellView: View {
 
   var body: some View {
     TabView(selection: selectedTab) {
-      DashboardView(selectedTab: selectedTab, progressStore: learningProgressStore)
+      DashboardView(
+        selectedTab: selectedTab,
+        progressStore: learningProgressStore,
+        scanner: scanner,
+        knownDeviceStore: knownDeviceStore
+      )
         .tabItem { Label("Start", systemImage: "house.fill") }.tag(AppTab.start)
       LearningPathListView(progressStore: learningProgressStore, accessPolicy: .current)
         .tabItem { Label("Ścieżki", systemImage: "safari.fill") }.tag(AppTab.paths)

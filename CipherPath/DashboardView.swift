@@ -30,6 +30,8 @@ enum FutureFeatureCatalog {
 struct DashboardView: View {
   @Binding var selectedTab: AppTab
   @ObservedObject var progressStore: LearningProgressStore
+  @ObservedObject var scanner: NetworkScanner
+  @ObservedObject var knownDeviceStore: KnownDeviceStore
 
   private let featuredLesson = StarterCurriculum.lessons.first {
     $0.id == "blue-team-suspicious-login"
@@ -43,6 +45,7 @@ struct DashboardView: View {
           header
           missionCard
           missionStages
+          networkSnapshot
           achievementSection
           futureFeaturesSection
           footer
@@ -54,6 +57,48 @@ struct DashboardView: View {
       .toolbar(.hidden, for: .navigationBar)
     }
     .preferredColorScheme(.dark)
+  }
+
+  private var openPortCount: Int {
+    scanner.devices.reduce(0) { $0 + $1.openPorts.count }
+  }
+
+  private var reviewCount: Int {
+    guard let networkID = scanner.networkID else { return 0 }
+    let statuses = scanner.devices.map { device in
+      let key = KnownDeviceKey(networkID: networkID, address: device.address)
+      return DeviceRegistryStatus(
+        record: knownDeviceStore.record(for: key),
+        isNew: scanner.newDeviceKeys.contains(key)
+      )
+    }
+    return DeviceRegistryStatus.reviewCount(in: statuses)
+  }
+
+  private var networkSnapshot: some View {
+    VStack(alignment: .leading, spacing: 12) {
+      sectionHeader("Stan sieci", destination: .practice)
+      LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
+        MetricCard(title: "Urządzenia", value: "\(scanner.devices.count)", icon: "desktopcomputer")
+        MetricCard(title: "Otwarte porty", value: "\(openPortCount)", icon: "door.left.hand.open")
+        MetricCard(title: "Bonjour", value: "\(scanner.bonjourDiscovery.services.count)", icon: "bonjour", tint: .indigo)
+        MetricCard(
+          title: "Nowe / nieznane",
+          value: "\(reviewCount)",
+          icon: "questionmark.circle",
+          tint: reviewCount > 0 ? .orange : .green
+        )
+      }
+      if let context = scanner.context {
+        Label("\(context.address) • \(context.scanRangeDescription)", systemImage: "network")
+          .font(.caption2.monospaced())
+          .foregroundStyle(.secondary)
+      } else {
+        Text("Połącz iPhone’a z Wi‑Fi, aby zobaczyć stan sieci.")
+          .font(.caption)
+          .foregroundStyle(.secondary)
+      }
+    }
   }
 
   private var header: some View {
