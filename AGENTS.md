@@ -30,7 +30,7 @@ Te instrukcje obowiązują Codex, ChatGPT oraz GitHub Copilot podczas pracy w ty
 
 ## Simulator iOS
 
-- Domyślnym urządzeniem projektu jest `CipherPath — iPhone 17` o UDID `9C2648ED-A53E-4B37-BD28-AEB21233D180` z iOS 27.0. Przy poleceniach `xcodebuild` i `simctl` zawsze wskazuj ten UDID jawnie.
+- Domyślnym symulatorem projektu CipherPath jest `SEC` o UDID `41BEDD50-02F4-43E9-B643-07FE9B56E535` z iOS 26.5. Przy poleceniach `xcodebuild` i `simctl` używaj tego urządzenia, jeśli zadanie dotyczy iPhone'a.
 - Po zmianach restartuj tylko aplikację. Nie wyłączaj, nie restartuj ani nie wymazuj całego Simulatora bez osobnego polecenia użytkownika.
 - Do kontroli innych rozmiarów używaj trybu zmiany rozmiaru ekranu w Device Hub zamiast tworzenia lub przełączania Simulatora.
 
