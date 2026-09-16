@@ -54,10 +54,15 @@ private struct LessonRow: View {
         Text(lesson.summary).font(.caption).foregroundStyle(.secondary)
       }
       Spacer()
-      if access == .comingSoon {
+      switch access {
+      case .comingSoon:
         Text("Wkrótce").font(.caption2.bold()).foregroundStyle(.secondary)
-      } else if access == .requiresPro {
+      case .requiresPro:
         Text("PRO").font(.caption2.bold()).foregroundStyle(path.tint)
+      case .requiresSubscription:
+        Text("SUB").font(.caption2.bold()).foregroundStyle(path.tint)
+      case .included:
+        EmptyView()
       }
     }
     .padding(.vertical, 5)
