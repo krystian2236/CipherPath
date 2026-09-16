@@ -43,7 +43,9 @@ struct PointsView: View {
   @ObservedObject var progressStore: LearningProgressStore
   let distribution: AppDistributionMode
 
-  @State private var developerAction: DeveloperPointsAction?
+  #if CIPHERPATH_DEVELOPER
+    @State private var developerAction: DeveloperPointsAction?
+  #endif
 
   init(
     progressStore: LearningProgressStore,
@@ -92,7 +94,7 @@ struct PointsView: View {
         }
       }
 
-      #if DEBUG
+      #if CIPHERPATH_DEVELOPER
         if distribution == .developer {
           Section("Narzędzia Dev") {
             Button("Dodaj 100 pkt") { developerAction = .add }
@@ -103,35 +105,40 @@ struct PointsView: View {
     }
     .navigationTitle("Punkty")
     .navigationBarTitleDisplayMode(.inline)
-    .confirmationDialog(
-      "Potwierdź operację Dev",
-      isPresented: developerActionPresented,
-      titleVisibility: .visible
-    ) {
-      if let developerAction {
-        Button(developerAction.buttonTitle, role: developerAction == .reset ? .destructive : nil) {
-          perform(developerAction)
+    #if CIPHERPATH_DEVELOPER
+      .confirmationDialog(
+        "Potwierdź operację Dev",
+        isPresented: developerActionPresented,
+        titleVisibility: .visible
+      ) {
+        if let developerAction {
+          Button(developerAction.buttonTitle, role: developerAction == .reset ? .destructive : nil) {
+            perform(developerAction)
+          }
         }
+        Button("Anuluj", role: .cancel) {}
       }
-      Button("Anuluj", role: .cancel) {}
-    }
+    #endif
   }
 
-  private var developerActionPresented: Binding<Bool> {
-    Binding(
-      get: { developerAction != nil },
-      set: { if !$0 { developerAction = nil } }
-    )
-  }
-
-  private func perform(_ action: DeveloperPointsAction) {
-    switch action {
-    case .add: progressStore.addPointsForDevelopment(100)
-    case .reset: progressStore.resetPointsForDevelopment()
+  #if CIPHERPATH_DEVELOPER
+    private var developerActionPresented: Binding<Bool> {
+      Binding(
+        get: { developerAction != nil },
+        set: { if !$0 { developerAction = nil } }
+      )
     }
-  }
+
+    private func perform(_ action: DeveloperPointsAction) {
+      switch action {
+      case .add: progressStore.addPointsForDevelopment(100)
+      case .reset: progressStore.resetPointsForDevelopment()
+      }
+    }
+  #endif
 }
 
+#if CIPHERPATH_DEVELOPER
 private enum DeveloperPointsAction: Equatable {
   case add
   case reset
@@ -143,3 +150,4 @@ private enum DeveloperPointsAction: Equatable {
     }
   }
 }
+#endif

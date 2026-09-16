@@ -5,7 +5,7 @@ enum AppDistributionMode: CaseIterable, Equatable, Sendable {
   case developer
 
   static var currentBuild: Self {
-    #if DEBUG
+    #if CIPHERPATH_DEVELOPER
       .developer
     #else
       .appStore
