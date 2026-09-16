@@ -1,5 +1,17 @@
 import SwiftUI
 
+// Temporary compatibility for the pre-CP-01 test suite. Runtime access uses
+// ContentAccessPolicy.current and is no longer selected from build distribution.
+extension ContentAccessPolicy {
+  @available(*, deprecated, message: "Distribution and paid entitlements are independent; inject a tier instead.")
+  static func forDistribution(_ distribution: AppDistributionMode) -> Self {
+    switch distribution {
+    case .developer: ContentAccessPolicy(tier: .pro)
+    case .appStore: ContentAccessPolicy(tier: .free)
+    }
+  }
+}
+
 struct LearningPathDetailView: View {
   let path: LearningPath
   @ObservedObject var progressStore: LearningProgressStore
