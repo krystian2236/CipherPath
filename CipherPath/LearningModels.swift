@@ -174,6 +174,7 @@ final class StoreEntitlementStore: ObservableObject {
   @Published private(set) var lastError: String?
 
   private let productIDs: StoreProductIdentifiers
+  private var transactionUpdatesTask: Task<Void, Never>?
 
   init(
     productIDs: StoreProductIdentifiers,
@@ -189,6 +190,21 @@ final class StoreEntitlementStore: ObservableObject {
 
   var isConfigured: Bool {
     productIDs.isConfigured
+  }
+
+  func startObservingTransactions() {
+    guard productIDs.isConfigured, transactionUpdatesTask == nil else { return }
+
+    transactionUpdatesTask = Task { [weak self] in
+      for await verification in StoreKit.Transaction.updates {
+        guard !Task.isCancelled else { return }
+        guard case .verified(let transaction) = verification else { continue }
+        guard let self, self.productIDs.all.contains(transaction.productID) else { continue }
+
+        await transaction.finish()
+        await self.refresh()
+      }
+    }
   }
 
   func refresh() async {
@@ -263,6 +279,10 @@ final class StoreEntitlementStore: ObservableObject {
       lastError = "Nie udało się przywrócić zakupów."
       return false
     }
+  }
+
+  deinit {
+    transactionUpdatesTask?.cancel()
   }
 }
 
