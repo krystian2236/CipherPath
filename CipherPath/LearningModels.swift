@@ -66,6 +66,14 @@ struct StoreProductIdentifiers: Equatable, Sendable {
   var isConfigured: Bool {
     lifetimePro?.isEmpty == false || !subscriptions.isEmpty
   }
+
+  var all: Set<String> {
+    var identifiers = subscriptions
+    if let lifetimePro, !lifetimePro.isEmpty {
+      identifiers.insert(lifetimePro)
+    }
+    return identifiers
+  }
 }
 
 struct StoreEntitlementSnapshot: Equatable, Sendable {
@@ -114,9 +122,22 @@ enum StoreKitEntitlementResolver {
   }
 }
 
+enum StorePurchaseOutcome: Equatable, Sendable {
+  case purchased
+  case pending
+  case cancelled
+  case unverified
+  case productUnavailable
+  case failed
+}
+
 @MainActor
 final class StoreEntitlementStore: ObservableObject {
   @Published private(set) var snapshot: StoreEntitlementSnapshot
+  @Published private(set) var products: [Product] = []
+  @Published private(set) var isLoadingProducts = false
+  @Published private(set) var isPurchasing = false
+  @Published private(set) var lastError: String?
 
   private let productIDs: StoreProductIdentifiers
 
@@ -136,6 +157,61 @@ final class StoreEntitlementStore: ObservableObject {
     snapshot = await StoreKitEntitlementResolver.currentSnapshot(
       productIDs: productIDs
     )
+  }
+
+  func loadProducts() async {
+    guard productIDs.isConfigured else {
+      products = []
+      lastError = nil
+      return
+    }
+
+    isLoadingProducts = true
+    lastError = nil
+    defer { isLoadingProducts = false }
+
+    do {
+      let loaded = try await Product.products(for: Array(productIDs.all))
+      products = loaded.sorted { $0.id < $1.id }
+    } catch {
+      products = []
+      lastError = "Nie udało się pobrać produktów ze StoreKit."
+    }
+  }
+
+  func purchase(productID: String) async -> StorePurchaseOutcome {
+    guard let product = products.first(where: { $0.id == productID }) else {
+      return .productUnavailable
+    }
+
+    isPurchasing = true
+    lastError = nil
+    defer { isPurchasing = false }
+
+    do {
+      switch try await product.purchase() {
+      case .success(let verification):
+        guard case .verified(let transaction) = verification else {
+          return .unverified
+        }
+
+        await transaction.finish()
+        await refresh()
+        return .purchased
+
+      case .pending:
+        return .pending
+
+      case .userCancelled:
+        return .cancelled
+
+      @unknown default:
+        return .failed
+      }
+    } catch {
+      lastError = "Zakup nie został zakończony."
+      return .failed
+    }
   }
 }
 
