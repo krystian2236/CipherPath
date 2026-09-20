@@ -214,6 +214,39 @@ struct ContentAccessTests {
     #expect(store.accessPolicy.tier == .free)
   }
 
+  @Test("Store product identifiers expose a deduplicated configured set")
+  func storeProductIdentifiersExposeAllProducts() {
+    let ids = StoreProductIdentifiers(
+      lifetimePro: "pro",
+      subscriptions: ["monthly", "yearly", "monthly"]
+    )
+
+    #expect(ids.all == Set(["pro", "monthly", "yearly"]))
+  }
+
+  @Test("Unconfigured product loading does not contact StoreKit")
+  @MainActor
+  func unconfiguredProductLoadingStaysEmpty() async {
+    let store = StoreEntitlementStore(productIDs: StoreProductIdentifiers())
+
+    await store.loadProducts()
+
+    #expect(store.products.isEmpty)
+    #expect(!store.isLoadingProducts)
+    #expect(store.lastError == nil)
+  }
+
+  @Test("Purchase rejects a product that was not loaded")
+  @MainActor
+  func purchaseRejectsUnavailableProduct() async {
+    let store = StoreEntitlementStore(productIDs: StoreProductIdentifiers())
+
+    let outcome = await store.purchase(productID: "missing")
+
+    #expect(outcome == .productUnavailable)
+    #expect(!store.isPurchasing)
+  }
+
   @Test("TestFlight demo keeps ten missions while new lessons require Pro")
   func testFlightDemoOpensCurrentCatalog() {
     let policy = ContentAccessPolicy(tier: .testFlightDemo)
