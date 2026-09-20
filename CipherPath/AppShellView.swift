@@ -60,13 +60,19 @@ struct AppShellView: View {
     _scanner = StateObject(wrappedValue: NetworkScanner(knownDeviceStore: store))
     _learningProgressStore = StateObject(wrappedValue: LearningProgressStore())
     _entitlementStore = StateObject(
-      wrappedValue: StoreEntitlementStore(productIDs: StoreProductIdentifiers())
+      wrappedValue: StoreEntitlementStore(
+        productIDs: StoreProductIdentifiers.appConfiguration()
+      )
     )
   }
 
   var body: some View {
     TabView(selection: selectedTab) {
-      DashboardView(selectedTab: selectedTab, progressStore: learningProgressStore)
+      DashboardView(
+        selectedTab: selectedTab,
+        progressStore: learningProgressStore,
+        entitlementStore: entitlementStore
+      )
         .tabItem { Label("Start", systemImage: "house.fill") }.tag(AppTab.start)
       LearningPathListView(progressStore: learningProgressStore, accessPolicy: entitlementStore.accessPolicy)
         .tabItem { Label("Ścieżki", systemImage: "safari.fill") }.tag(AppTab.paths)
@@ -93,6 +99,7 @@ struct AppShellView: View {
     .task {
       scanner.refreshContext()
       tools.refreshLocalContext()
+      await entitlementStore.loadProducts()
       await entitlementStore.refresh()
     }
   }
