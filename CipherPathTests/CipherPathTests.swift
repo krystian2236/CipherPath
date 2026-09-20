@@ -1091,3 +1091,19 @@ struct StoreEntitlementTests {
     #expect(snapshot.accessPolicy().tier == .free)
   }
 }
+
+
+@Suite("StoreKit entitlement store")
+struct StoreEntitlementStoreTests {
+  @Test("Store starts without verified entitlements")
+  func startsWithoutEntitlements() async {
+    let store = StoreEntitlementStore()
+    let initial = await store.currentSnapshot
+
+    #expect(!initial.grantsPro)
+
+    await store.refresh()
+    let refreshed = await store.currentSnapshot
+    #expect(!refreshed.grantsPro)
+  }
+}
