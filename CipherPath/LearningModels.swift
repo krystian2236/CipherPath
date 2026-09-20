@@ -1,5 +1,6 @@
 import Foundation
 import StoreKit
+import Combine
 
 enum AppDistributionMode: CaseIterable, Equatable, Sendable {
   case appStore
@@ -109,6 +110,31 @@ enum StoreKitEntitlementResolver {
     return StoreEntitlementSnapshot(
       hasLifetimePro: hasLifetimePro,
       hasActiveSubscription: hasActiveSubscription
+    )
+  }
+}
+
+@MainActor
+final class StoreEntitlementStore: ObservableObject {
+  @Published private(set) var snapshot: StoreEntitlementSnapshot
+
+  private let productIDs: StoreProductIdentifiers
+
+  init(
+    productIDs: StoreProductIdentifiers,
+    initialSnapshot: StoreEntitlementSnapshot = .free
+  ) {
+    self.productIDs = productIDs
+    snapshot = initialSnapshot
+  }
+
+  var accessPolicy: ContentAccessPolicy {
+    ContentAccessPolicy(entitlements: snapshot)
+  }
+
+  func refresh() async {
+    snapshot = await StoreKitEntitlementResolver.currentSnapshot(
+      productIDs: productIDs
     )
   }
 }
