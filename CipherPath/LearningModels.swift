@@ -251,6 +251,19 @@ final class StoreEntitlementStore: ObservableObject {
       return .failed
     }
   }
+
+  func restorePurchases() async -> Bool {
+    lastError = nil
+
+    do {
+      try await AppStore.sync()
+      await refresh()
+      return true
+    } catch {
+      lastError = "Nie udało się przywrócić zakupów."
+      return false
+    }
+  }
 }
 
 enum LessonAccess: Equatable, Sendable {
