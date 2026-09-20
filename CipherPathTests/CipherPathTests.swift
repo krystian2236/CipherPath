@@ -144,6 +144,45 @@ struct ContentAccessTests {
     #expect(ContentAccessPolicy(tier: .subscription).tier == .subscription)
   }
 
+  @Test("Store entitlement snapshot maps to independent access tiers")
+  func storeEntitlementsMapToAccessTiers() {
+    #expect(ContentAccessPolicy(entitlements: .free).tier == .free)
+    #expect(
+      ContentAccessPolicy(
+        entitlements: StoreEntitlementSnapshot(
+          hasLifetimePro: true,
+          hasActiveSubscription: false
+        )
+      ).tier == .pro
+    )
+    #expect(
+      ContentAccessPolicy(
+        entitlements: StoreEntitlementSnapshot(
+          hasLifetimePro: false,
+          hasActiveSubscription: true
+        )
+      ).tier == .subscription
+    )
+  }
+
+  @Test("Active subscription takes precedence while lifetime Pro is preserved")
+  func subscriptionTakesAccessPrecedenceOverLifetimePro() {
+    let snapshot = StoreEntitlementSnapshot(
+      hasLifetimePro: true,
+      hasActiveSubscription: true
+    )
+
+    #expect(snapshot.contentTier == .subscription)
+    #expect(snapshot.hasLifetimePro)
+  }
+
+  @Test("Unconfigured StoreKit product identifiers are explicitly inactive")
+  func storeProductIdentifiersRequireConfiguration() {
+    #expect(!StoreProductIdentifiers().isConfigured)
+    #expect(StoreProductIdentifiers(lifetimePro: "pro").isConfigured)
+    #expect(StoreProductIdentifiers(subscriptions: ["monthly"]).isConfigured)
+  }
+
   @Test("TestFlight demo keeps ten missions while new lessons require Pro")
   func testFlightDemoOpensCurrentCatalog() {
     let policy = ContentAccessPolicy(tier: .testFlightDemo)
