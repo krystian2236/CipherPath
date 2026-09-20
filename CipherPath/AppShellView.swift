@@ -50,6 +50,7 @@ struct AppShellView: View {
   @StateObject private var scanner: NetworkScanner
   @StateObject private var tools = NetworkToolsModel()
   @StateObject private var learningProgressStore: LearningProgressStore
+  @StateObject private var entitlementStore: StoreEntitlementStore
   @SceneStorage("CipherPath.selectedTab") private var selectedTabRaw = AppTab.start.rawValue
   @SceneStorage("CipherPath.ishWorkspaceRoute") private var ishWorkspaceRouteRaw = ""
 
@@ -58,15 +59,18 @@ struct AppShellView: View {
     _knownDeviceStore = StateObject(wrappedValue: store)
     _scanner = StateObject(wrappedValue: NetworkScanner(knownDeviceStore: store))
     _learningProgressStore = StateObject(wrappedValue: LearningProgressStore())
+    _entitlementStore = StateObject(
+      wrappedValue: StoreEntitlementStore(productIDs: StoreProductIdentifiers())
+    )
   }
 
   var body: some View {
     TabView(selection: selectedTab) {
       DashboardView(selectedTab: selectedTab, progressStore: learningProgressStore)
         .tabItem { Label("Start", systemImage: "house.fill") }.tag(AppTab.start)
-      LearningPathListView(progressStore: learningProgressStore, accessPolicy: .current)
+      LearningPathListView(progressStore: learningProgressStore, accessPolicy: entitlementStore.accessPolicy)
         .tabItem { Label("Ścieżki", systemImage: "safari.fill") }.tag(AppTab.paths)
-      MissionsView(progressStore: learningProgressStore, accessPolicy: .current)
+      MissionsView(progressStore: learningProgressStore, accessPolicy: entitlementStore.accessPolicy)
         .tabItem { Label("Misje", systemImage: "target") }.tag(AppTab.missions)
       PracticeHubView(
         scanner: scanner,
@@ -86,7 +90,11 @@ struct AppShellView: View {
     } message: {
       Text(knownDeviceStore.errorMessage ?? "Nieznany błąd zapisu.")
     }
-    .task { scanner.refreshContext(); tools.refreshLocalContext() }
+    .task {
+      scanner.refreshContext()
+      tools.refreshLocalContext()
+      await entitlementStore.refresh()
+    }
   }
 
   private var selectedTab: Binding<AppTab> {
