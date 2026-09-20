@@ -1,4 +1,5 @@
 import Foundation
+import StoreKit
 
 enum AppDistributionMode: CaseIterable, Equatable, Sendable {
   case appStore
@@ -52,6 +53,66 @@ enum ContentAccessTier: String, Codable, Equatable, Sendable {
   case subscription
 }
 
+struct StoreProductIdentifiers: Equatable, Sendable {
+  let lifetimePro: String?
+  let subscriptions: Set<String>
+
+  init(lifetimePro: String? = nil, subscriptions: Set<String> = []) {
+    self.lifetimePro = lifetimePro
+    self.subscriptions = subscriptions
+  }
+
+  var isConfigured: Bool {
+    lifetimePro?.isEmpty == false || !subscriptions.isEmpty
+  }
+}
+
+struct StoreEntitlementSnapshot: Equatable, Sendable {
+  static let free = StoreEntitlementSnapshot(
+    hasLifetimePro: false,
+    hasActiveSubscription: false
+  )
+
+  let hasLifetimePro: Bool
+  let hasActiveSubscription: Bool
+
+  var contentTier: ContentAccessTier {
+    if hasActiveSubscription { return .subscription }
+    if hasLifetimePro { return .pro }
+    return .free
+  }
+}
+
+enum StoreKitEntitlementResolver {
+  static func currentSnapshot(
+    productIDs: StoreProductIdentifiers
+  ) async -> StoreEntitlementSnapshot {
+    guard productIDs.isConfigured else { return .free }
+
+    var hasLifetimePro = false
+    var hasActiveSubscription = false
+
+    for await verification in StoreKit.Transaction.currentEntitlements {
+      guard case .verified(let transaction) = verification else { continue }
+      guard transaction.revocationDate == nil else { continue }
+
+      if let lifetimePro = productIDs.lifetimePro,
+         transaction.productID == lifetimePro {
+        hasLifetimePro = true
+      }
+
+      if productIDs.subscriptions.contains(transaction.productID) {
+        hasActiveSubscription = true
+      }
+    }
+
+    return StoreEntitlementSnapshot(
+      hasLifetimePro: hasLifetimePro,
+      hasActiveSubscription: hasActiveSubscription
+    )
+  }
+}
+
 enum LessonAccess: Equatable, Sendable {
   case included
   case requiresPro
@@ -63,6 +124,14 @@ struct ContentAccessPolicy: Equatable, Sendable {
   static let current = ContentAccessPolicy(tier: .free)
 
   let tier: ContentAccessTier
+
+  init(tier: ContentAccessTier) {
+    self.tier = tier
+  }
+
+  init(entitlements: StoreEntitlementSnapshot) {
+    tier = entitlements.contentTier
+  }
 
   func access(for lesson: LearningLesson) -> LessonAccess {
     guard lesson.availability == .available else { return .comingSoon }
