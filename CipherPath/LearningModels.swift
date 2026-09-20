@@ -1,4 +1,6 @@
 import Foundation
+import StoreKit
+import Combine
 
 enum AppDistributionMode: CaseIterable, Equatable, Sendable {
   case appStore
@@ -52,6 +54,238 @@ enum ContentAccessTier: String, Codable, Equatable, Sendable {
   case subscription
 }
 
+struct StoreProductIdentifiers: Equatable, Sendable {
+  let lifetimePro: String?
+  let subscriptions: Set<String>
+
+  init(lifetimePro: String? = nil, subscriptions: Set<String> = []) {
+    self.lifetimePro = lifetimePro
+    self.subscriptions = subscriptions
+  }
+
+  static func appConfiguration(bundle: Bundle = .main) -> Self {
+    let lifetimePro = (bundle.object(
+      forInfoDictionaryKey: "CipherPathProProductID"
+    ) as? String)?
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+
+    let rawSubscriptions = bundle.object(
+      forInfoDictionaryKey: "CipherPathSubscriptionProductIDs"
+    )
+
+    let subscriptions: Set<String>
+    if let values = rawSubscriptions as? [String] {
+      subscriptions = Set(
+        values
+          .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+          .filter { !$0.isEmpty }
+      )
+    } else if let csv = rawSubscriptions as? String {
+      subscriptions = Set(
+        csv
+          .split(separator: ",")
+          .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+          .filter { !$0.isEmpty }
+      )
+    } else {
+      subscriptions = []
+    }
+
+    return StoreProductIdentifiers(
+      lifetimePro: lifetimePro?.isEmpty == false ? lifetimePro : nil,
+      subscriptions: subscriptions
+    )
+  }
+
+  var isConfigured: Bool {
+    lifetimePro?.isEmpty == false || !subscriptions.isEmpty
+  }
+
+  var all: Set<String> {
+    var identifiers = subscriptions
+    if let lifetimePro, !lifetimePro.isEmpty {
+      identifiers.insert(lifetimePro)
+    }
+    return identifiers
+  }
+}
+
+struct StoreEntitlementSnapshot: Equatable, Sendable {
+  static let free = StoreEntitlementSnapshot(
+    hasLifetimePro: false,
+    hasActiveSubscription: false
+  )
+
+  let hasLifetimePro: Bool
+  let hasActiveSubscription: Bool
+
+  var contentTier: ContentAccessTier {
+    if hasActiveSubscription { return .subscription }
+    if hasLifetimePro { return .pro }
+    return .free
+  }
+}
+
+enum StoreKitEntitlementResolver {
+  static func currentSnapshot(
+    productIDs: StoreProductIdentifiers
+  ) async -> StoreEntitlementSnapshot {
+    guard productIDs.isConfigured else { return .free }
+
+    var hasLifetimePro = false
+    var hasActiveSubscription = false
+
+    for await verification in StoreKit.Transaction.currentEntitlements {
+      guard case .verified(let transaction) = verification else { continue }
+      guard transaction.revocationDate == nil else { continue }
+
+      if let lifetimePro = productIDs.lifetimePro,
+         transaction.productID == lifetimePro {
+        hasLifetimePro = true
+      }
+
+      if productIDs.subscriptions.contains(transaction.productID) {
+        hasActiveSubscription = true
+      }
+    }
+
+    return StoreEntitlementSnapshot(
+      hasLifetimePro: hasLifetimePro,
+      hasActiveSubscription: hasActiveSubscription
+    )
+  }
+}
+
+enum StorePurchaseOutcome: Equatable, Sendable {
+  case purchased
+  case pending
+  case cancelled
+  case unverified
+  case productUnavailable
+  case failed
+}
+
+@MainActor
+final class StoreEntitlementStore: ObservableObject {
+  @Published private(set) var snapshot: StoreEntitlementSnapshot
+  @Published private(set) var products: [Product] = []
+  @Published private(set) var isLoadingProducts = false
+  @Published private(set) var isPurchasing = false
+  @Published private(set) var lastError: String?
+
+  private let productIDs: StoreProductIdentifiers
+  private var transactionUpdatesTask: Task<Void, Never>?
+
+  init(
+    productIDs: StoreProductIdentifiers,
+    initialSnapshot: StoreEntitlementSnapshot = .free
+  ) {
+    self.productIDs = productIDs
+    snapshot = initialSnapshot
+  }
+
+  var accessPolicy: ContentAccessPolicy {
+    ContentAccessPolicy(entitlements: snapshot)
+  }
+
+  var isConfigured: Bool {
+    productIDs.isConfigured
+  }
+
+  func startObservingTransactions() {
+    guard productIDs.isConfigured, transactionUpdatesTask == nil else { return }
+
+    transactionUpdatesTask = Task { [weak self] in
+      for await verification in StoreKit.Transaction.updates {
+        guard !Task.isCancelled else { return }
+        guard case .verified(let transaction) = verification else { continue }
+        guard let self, self.productIDs.all.contains(transaction.productID) else { continue }
+
+        await transaction.finish()
+        await self.refresh()
+      }
+    }
+  }
+
+  func refresh() async {
+    snapshot = await StoreKitEntitlementResolver.currentSnapshot(
+      productIDs: productIDs
+    )
+  }
+
+  func loadProducts() async {
+    guard productIDs.isConfigured else {
+      products = []
+      lastError = nil
+      return
+    }
+
+    isLoadingProducts = true
+    lastError = nil
+    defer { isLoadingProducts = false }
+
+    do {
+      let loaded = try await Product.products(for: Array(productIDs.all))
+      products = loaded.sorted { $0.id < $1.id }
+    } catch {
+      products = []
+      lastError = "Nie udało się pobrać produktów ze StoreKit."
+    }
+  }
+
+  func purchase(productID: String) async -> StorePurchaseOutcome {
+    guard let product = products.first(where: { $0.id == productID }) else {
+      return .productUnavailable
+    }
+
+    isPurchasing = true
+    lastError = nil
+    defer { isPurchasing = false }
+
+    do {
+      switch try await product.purchase() {
+      case .success(let verification):
+        guard case .verified(let transaction) = verification else {
+          return .unverified
+        }
+
+        await transaction.finish()
+        await refresh()
+        return .purchased
+
+      case .pending:
+        return .pending
+
+      case .userCancelled:
+        return .cancelled
+
+      @unknown default:
+        return .failed
+      }
+    } catch {
+      lastError = "Zakup nie został zakończony."
+      return .failed
+    }
+  }
+
+  func restorePurchases() async -> Bool {
+    lastError = nil
+
+    do {
+      try await AppStore.sync()
+      await refresh()
+      return true
+    } catch {
+      lastError = "Nie udało się przywrócić zakupów."
+      return false
+    }
+  }
+
+  deinit {
+    transactionUpdatesTask?.cancel()
+  }
+}
+
 enum LessonAccess: Equatable, Sendable {
   case included
   case requiresPro
@@ -63,6 +297,14 @@ struct ContentAccessPolicy: Equatable, Sendable {
   static let current = ContentAccessPolicy(tier: .free)
 
   let tier: ContentAccessTier
+
+  init(tier: ContentAccessTier) {
+    self.tier = tier
+  }
+
+  init(entitlements: StoreEntitlementSnapshot) {
+    tier = entitlements.contentTier
+  }
 
   func access(for lesson: LearningLesson) -> LessonAccess {
     guard lesson.availability == .available else { return .comingSoon }

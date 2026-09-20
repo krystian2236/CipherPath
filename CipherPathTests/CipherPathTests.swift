@@ -144,6 +144,109 @@ struct ContentAccessTests {
     #expect(ContentAccessPolicy(tier: .subscription).tier == .subscription)
   }
 
+  @Test("Store entitlement snapshot maps to independent access tiers")
+  func storeEntitlementsMapToAccessTiers() {
+    #expect(ContentAccessPolicy(entitlements: .free).tier == .free)
+    #expect(
+      ContentAccessPolicy(
+        entitlements: StoreEntitlementSnapshot(
+          hasLifetimePro: true,
+          hasActiveSubscription: false
+        )
+      ).tier == .pro
+    )
+    #expect(
+      ContentAccessPolicy(
+        entitlements: StoreEntitlementSnapshot(
+          hasLifetimePro: false,
+          hasActiveSubscription: true
+        )
+      ).tier == .subscription
+    )
+  }
+
+  @Test("Active subscription takes precedence while lifetime Pro is preserved")
+  func subscriptionTakesAccessPrecedenceOverLifetimePro() {
+    let snapshot = StoreEntitlementSnapshot(
+      hasLifetimePro: true,
+      hasActiveSubscription: true
+    )
+
+    #expect(snapshot.contentTier == .subscription)
+    #expect(snapshot.hasLifetimePro)
+  }
+
+  @Test("Unconfigured StoreKit product identifiers are explicitly inactive")
+  func storeProductIdentifiersRequireConfiguration() {
+    #expect(!StoreProductIdentifiers().isConfigured)
+    #expect(StoreProductIdentifiers(lifetimePro: "pro").isConfigured)
+    #expect(StoreProductIdentifiers(subscriptions: ["monthly"]).isConfigured)
+  }
+
+  @Test("Runtime entitlement store exposes policy from its current snapshot")
+  @MainActor
+  func runtimeEntitlementStoreUsesSnapshot() {
+    let store = StoreEntitlementStore(
+      productIDs: StoreProductIdentifiers(),
+      initialSnapshot: StoreEntitlementSnapshot(
+        hasLifetimePro: true,
+        hasActiveSubscription: false
+      )
+    )
+
+    #expect(store.accessPolicy.tier == .pro)
+  }
+
+  @Test("Unconfigured StoreKit refresh safely stays Free")
+  @MainActor
+  func unconfiguredStoreKitRefreshStaysFree() async {
+    let store = StoreEntitlementStore(
+      productIDs: StoreProductIdentifiers(),
+      initialSnapshot: StoreEntitlementSnapshot(
+        hasLifetimePro: true,
+        hasActiveSubscription: false
+      )
+    )
+
+    await store.refresh()
+
+    #expect(store.snapshot == .free)
+    #expect(store.accessPolicy.tier == .free)
+  }
+
+  @Test("Store product identifiers expose a deduplicated configured set")
+  func storeProductIdentifiersExposeAllProducts() {
+    let ids = StoreProductIdentifiers(
+      lifetimePro: "pro",
+      subscriptions: ["monthly", "yearly", "monthly"]
+    )
+
+    #expect(ids.all == Set(["pro", "monthly", "yearly"]))
+  }
+
+  @Test("Unconfigured product loading does not contact StoreKit")
+  @MainActor
+  func unconfiguredProductLoadingStaysEmpty() async {
+    let store = StoreEntitlementStore(productIDs: StoreProductIdentifiers())
+
+    await store.loadProducts()
+
+    #expect(store.products.isEmpty)
+    #expect(!store.isLoadingProducts)
+    #expect(store.lastError == nil)
+  }
+
+  @Test("Purchase rejects a product that was not loaded")
+  @MainActor
+  func purchaseRejectsUnavailableProduct() async {
+    let store = StoreEntitlementStore(productIDs: StoreProductIdentifiers())
+
+    let outcome = await store.purchase(productID: "missing")
+
+    #expect(outcome == .productUnavailable)
+    #expect(!store.isPurchasing)
+  }
+
   @Test("TestFlight demo keeps ten missions while new lessons require Pro")
   func testFlightDemoOpensCurrentCatalog() {
     let policy = ContentAccessPolicy(tier: .testFlightDemo)
