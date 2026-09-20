@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		082ED673303EE688004EB778 /* KnownDeviceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 082ED672303EE688004EB778 /* KnownDeviceStore.swift */; };
+		E00000000000000000000050 /* StoreEntitlementStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000050 /* StoreEntitlementStore.swift */; };\n		082ED673303EE688004EB778 /* KnownDeviceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 082ED672303EE688004EB778 /* KnownDeviceStore.swift */; };
 		E00000000000000000000001 /* CipherPathApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000001 /* CipherPathApp.swift */; };
 		E00000000000000000000002 /* AppShellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000002 /* AppShellView.swift */; };
 		E00000000000000000000003 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000003 /* Models.swift */; };
@@ -64,7 +64,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		082ED672303EE688004EB778 /* KnownDeviceStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnownDeviceStore.swift; sourceTree = "<group>"; };
+		F00000000000000000000050 /* StoreEntitlementStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreEntitlementStore.swift; sourceTree = "<group>"; };\n		F00000000000000000000051 /* StoreKitConfiguration.storekit */ = {isa = PBXFileReference; lastKnownFileType = text.storekit; path = StoreKitConfiguration.storekit; sourceTree = "<group>"; };\n		082ED672303EE688004EB778 /* KnownDeviceStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnownDeviceStore.swift; sourceTree = "<group>"; };
 		F00000000000000000000001 /* CipherPathApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CipherPathApp.swift; sourceTree = "<group>"; };
 		F00000000000000000000002 /* AppShellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppShellView.swift; sourceTree = "<group>"; };
 		F00000000000000000000003 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
@@ -143,6 +143,8 @@
 		A00000000000000000000004 /* CipherPath */ = {
 			isa = PBXGroup;
 			children = (
+				F00000000000000000000050 /* StoreEntitlementStore.swift */,
+				F00000000000000000000051 /* StoreKitConfiguration.storekit */,
 				F00000000000000000000001 /* CipherPathApp.swift */,
 				082ED672303EE688004EB778 /* KnownDeviceStore.swift */,
 				F00000000000000000000002 /* AppShellView.swift */,
@@ -309,6 +311,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E00000000000000000000001 /* CipherPathApp.swift in Sources */,
+				E00000000000000000000050 /* StoreEntitlementStore.swift in Sources */,
 				E00000000000000000000002 /* AppShellView.swift in Sources */,
 				E00000000000000000000003 /* Models.swift in Sources */,
 				E00000000000000000000004 /* LocalNetworkInfo.swift in Sources */,
