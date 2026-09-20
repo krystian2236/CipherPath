@@ -63,6 +63,40 @@ struct StoreProductIdentifiers: Equatable, Sendable {
     self.subscriptions = subscriptions
   }
 
+  static func appConfiguration(bundle: Bundle = .main) -> Self {
+    let lifetimePro = (bundle.object(
+      forInfoDictionaryKey: "CipherPathProProductID"
+    ) as? String)?
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+
+    let rawSubscriptions = bundle.object(
+      forInfoDictionaryKey: "CipherPathSubscriptionProductIDs"
+    )
+
+    let subscriptions: Set<String>
+    if let values = rawSubscriptions as? [String] {
+      subscriptions = Set(
+        values
+          .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+          .filter { !$0.isEmpty }
+      )
+    } else if let csv = rawSubscriptions as? String {
+      subscriptions = Set(
+        csv
+          .split(separator: ",")
+          .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+          .filter { !$0.isEmpty }
+      )
+    } else {
+      subscriptions = []
+    }
+
+    return StoreProductIdentifiers(
+      lifetimePro: lifetimePro?.isEmpty == false ? lifetimePro : nil,
+      subscriptions: subscriptions
+    )
+  }
+
   var isConfigured: Bool {
     lifetimePro?.isEmpty == false || !subscriptions.isEmpty
   }
@@ -151,6 +185,10 @@ final class StoreEntitlementStore: ObservableObject {
 
   var accessPolicy: ContentAccessPolicy {
     ContentAccessPolicy(entitlements: snapshot)
+  }
+
+  var isConfigured: Bool {
+    productIDs.isConfigured
   }
 
   func refresh() async {
