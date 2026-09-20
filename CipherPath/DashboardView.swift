@@ -179,6 +179,15 @@ struct DashboardView: View {
     AppDistributionMode.currentBuild == .developer || entitlementStore.isConfigured
   }
 
+  private var storeAccessBadge: String {
+    switch entitlementStore.accessPolicy.tier {
+    case .free: "FREE"
+    case .testFlightDemo: "DEMO"
+    case .pro: "PRO"
+    case .subscription: "SUB"
+    }
+  }
+
   private func futureFeatureCard(
     _ feature: FutureFeaturePreview,
     enabledOverride: Bool? = nil
@@ -191,9 +200,13 @@ struct DashboardView: View {
           .font(.title2)
           .foregroundStyle(isEnabled ? .cyan : .secondary)
         Spacer()
-        if isEnabled {
+        if isEnabled, feature.id == "points" {
           Text(AppDistributionMode.currentBuild == .developer ? "∞" : "\(progressStore.pointsBalance)")
             .font(.caption.bold())
+            .foregroundStyle(.cyan)
+        } else if isEnabled, feature.id == "store" {
+          Text(storeAccessBadge)
+            .font(.caption2.bold())
             .foregroundStyle(.cyan)
         } else {
           Label("Wkrótce", systemImage: "lock.fill")
@@ -308,8 +321,13 @@ private struct StoreView: View {
           }
         }
         .disabled(entitlementStore.isLoadingProducts || entitlementStore.isPurchasing)
+
+        Button("Przywróć zakupy") {
+          Task { _ = await entitlementStore.restorePurchases() }
+        }
+        .disabled(entitlementStore.isPurchasing)
       } footer: {
-        Text("Ceny i nazwy pochodzą bezpośrednio ze StoreKit. CipherPath nie wpisuje ich na stałe w kodzie.")
+        Text("Ceny i nazwy pochodzą bezpośrednio ze StoreKit. Przywracanie zakupów jest uruchamiane tylko po Twoim poleceniu.")
       }
     }
     .navigationTitle("CipherPath Pro")
