@@ -49,27 +49,20 @@ enum ContentAccessTier: String, Codable, Equatable, Sendable {
   case free
   case testFlightDemo
   case pro
+  case subscription
 }
 
 enum LessonAccess: Equatable, Sendable {
   case included
   case requiresPro
+  case requiresSubscription
   case comingSoon
 }
 
 struct ContentAccessPolicy: Equatable, Sendable {
-  static let current = forDistribution(.currentBuild)
+  static let current = ContentAccessPolicy(tier: .free)
 
   let tier: ContentAccessTier
-
-  static func forDistribution(_ distribution: AppDistributionMode) -> Self {
-    switch distribution {
-    case .developer:
-      ContentAccessPolicy(tier: .pro)
-    case .appStore:
-      ContentAccessPolicy(tier: .free)
-    }
-  }
 
   func access(for lesson: LearningLesson) -> LessonAccess {
     guard lesson.availability == .available else { return .comingSoon }
@@ -79,7 +72,7 @@ struct ContentAccessPolicy: Equatable, Sendable {
       return lesson.order == 1 ? .included : .requiresPro
     case .testFlightDemo:
       return lesson.order <= 2 ? .included : .requiresPro
-    case .pro:
+    case .pro, .subscription:
       return .included
     }
   }
