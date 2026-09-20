@@ -183,6 +183,37 @@ struct ContentAccessTests {
     #expect(StoreProductIdentifiers(subscriptions: ["monthly"]).isConfigured)
   }
 
+  @Test("Runtime entitlement store exposes policy from its current snapshot")
+  @MainActor
+  func runtimeEntitlementStoreUsesSnapshot() {
+    let store = StoreEntitlementStore(
+      productIDs: StoreProductIdentifiers(),
+      initialSnapshot: StoreEntitlementSnapshot(
+        hasLifetimePro: true,
+        hasActiveSubscription: false
+      )
+    )
+
+    #expect(store.accessPolicy.tier == .pro)
+  }
+
+  @Test("Unconfigured StoreKit refresh safely stays Free")
+  @MainActor
+  func unconfiguredStoreKitRefreshStaysFree() async {
+    let store = StoreEntitlementStore(
+      productIDs: StoreProductIdentifiers(),
+      initialSnapshot: StoreEntitlementSnapshot(
+        hasLifetimePro: true,
+        hasActiveSubscription: false
+      )
+    )
+
+    await store.refresh()
+
+    #expect(store.snapshot == .free)
+    #expect(store.accessPolicy.tier == .free)
+  }
+
   @Test("TestFlight demo keeps ten missions while new lessons require Pro")
   func testFlightDemoOpensCurrentCatalog() {
     let policy = ContentAccessPolicy(tier: .testFlightDemo)
