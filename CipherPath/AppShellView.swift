@@ -99,6 +99,7 @@ struct AppShellView: View {
     .task {
       scanner.refreshContext()
       tools.refreshLocalContext()
+      entitlementStore.startObservingTransactions()
       await entitlementStore.loadProducts()
       await entitlementStore.refresh()
     }
