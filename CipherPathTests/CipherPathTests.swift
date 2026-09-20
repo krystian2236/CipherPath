@@ -135,10 +135,13 @@ struct ContentAccessTests {
     #expect(rows.map(\.amountText) == ["−20 pkt", "+100 pkt"])
   }
 
-  @Test("Developer build has no paid lesson gate while App Store starts free")
-  func distributionSelectsIndependentAccessRules() {
-    #expect(ContentAccessPolicy.forDistribution(.developer).tier == .pro)
-    #expect(ContentAccessPolicy.forDistribution(.appStore).tier == .free)
+  @Test("Content access is explicit and independent from build distribution")
+  func contentAccessUsesExplicitTier() {
+    #expect(ContentAccessPolicy.current.tier == .free)
+    #expect(ContentAccessPolicy(tier: .free).tier == .free)
+    #expect(ContentAccessPolicy(tier: .testFlightDemo).tier == .testFlightDemo)
+    #expect(ContentAccessPolicy(tier: .pro).tier == .pro)
+    #expect(ContentAccessPolicy(tier: .subscription).tier == .subscription)
   }
 
   @Test("TestFlight demo keeps ten missions while new lessons require Pro")
@@ -166,6 +169,16 @@ struct ContentAccessTests {
   @Test("Pro tier opens every released mission")
   func proTierOpensReleasedCatalog() {
     let policy = ContentAccessPolicy(tier: .pro)
+
+    for lesson in StarterCurriculum.lessons {
+      let expected: LessonAccess = lesson.availability == .available ? .included : .comingSoon
+      #expect(policy.access(for: lesson) == expected)
+    }
+  }
+
+  @Test("Subscription tier includes the current released catalog")
+  func subscriptionTierOpensReleasedCatalog() {
+    let policy = ContentAccessPolicy(tier: .subscription)
 
     for lesson in StarterCurriculum.lessons {
       let expected: LessonAccess = lesson.availability == .available ? .included : .comingSoon
