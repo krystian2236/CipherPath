@@ -1057,3 +1057,37 @@ struct ScannerRegistryIntegrationTests {
     #expect(store.records.isEmpty)
   }
 }
+
+
+@Suite("StoreKit entitlement boundary")
+struct StoreEntitlementTests {
+  @Test("Known lifetime and subscription products grant Pro")
+  func knownProductsGrantPro() {
+    for product in CipherPathProductID.allCases {
+      let snapshot = StoreEntitlementSnapshot(activeProductIDs: [product.rawValue])
+      #expect(snapshot.grantsPro)
+      #expect(snapshot.accessPolicy().tier == .pro)
+    }
+  }
+
+  @Test("Unknown or empty products do not grant Pro")
+  func unknownProductsDoNotGrantPro() {
+    let snapshot = StoreEntitlementSnapshot(
+      activeProductIDs: ["pl.krystian.cipherpath.unknown"]
+    )
+
+    #expect(!snapshot.grantsPro)
+    #expect(snapshot.accessPolicy().tier == .free)
+    #expect(
+      snapshot.accessPolicy(fallback: .testFlightDemo).tier == .testFlightDemo
+    )
+  }
+
+  @Test("Entitlements remain independent from developer distribution")
+  func distributionDoesNotGrantPro() {
+    let snapshot = StoreEntitlementSnapshot(activeProductIDs: [])
+
+    #expect(AppDistributionMode.developer.showsAdventureMode)
+    #expect(snapshot.accessPolicy().tier == .free)
+  }
+}
