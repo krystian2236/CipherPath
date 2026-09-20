@@ -20,7 +20,7 @@ enum FutureFeatureCatalog {
     FutureFeaturePreview(
       id: "store",
       title: "Sklep",
-      subtitle: "Pakiety punktów i subskrypcja",
+      subtitle: "Pro i subskrypcja",
       icon: "cart.fill",
       isEnabled: false
     ),
@@ -30,6 +30,7 @@ enum FutureFeatureCatalog {
 struct DashboardView: View {
   @Binding var selectedTab: AppTab
   @ObservedObject var progressStore: LearningProgressStore
+  @ObservedObject var entitlementStore: StoreEntitlementStore
 
   private let featuredLesson = StarterCurriculum.lessons.first {
     $0.id == "blue-team-suspicious-login"
@@ -159,6 +160,13 @@ struct DashboardView: View {
               futureFeatureCard(feature)
             }
             .buttonStyle(.plain)
+          } else if feature.id == "store", storeIsAvailable {
+            NavigationLink {
+              StoreView(entitlementStore: entitlementStore)
+            } label: {
+              futureFeatureCard(feature, enabledOverride: true)
+            }
+            .buttonStyle(.plain)
           } else {
             futureFeatureCard(feature)
           }
@@ -167,16 +175,38 @@ struct DashboardView: View {
     }
   }
 
-  private func futureFeatureCard(_ feature: FutureFeaturePreview) -> some View {
-    VStack(alignment: .leading, spacing: 9) {
+  private var storeIsAvailable: Bool {
+    AppDistributionMode.currentBuild == .developer || entitlementStore.isConfigured
+  }
+
+  private var storeAccessBadge: String {
+    switch entitlementStore.accessPolicy.tier {
+    case .free: "FREE"
+    case .testFlightDemo: "DEMO"
+    case .pro: "PRO"
+    case .subscription: "SUB"
+    }
+  }
+
+  private func futureFeatureCard(
+    _ feature: FutureFeaturePreview,
+    enabledOverride: Bool? = nil
+  ) -> some View {
+    let isEnabled = enabledOverride ?? feature.isEnabled
+
+    return VStack(alignment: .leading, spacing: 9) {
       HStack {
         Image(systemName: feature.icon)
           .font(.title2)
-          .foregroundStyle(feature.isEnabled ? .cyan : .secondary)
+          .foregroundStyle(isEnabled ? .cyan : .secondary)
         Spacer()
-        if feature.isEnabled {
+        if isEnabled, feature.id == "points" {
           Text(AppDistributionMode.currentBuild == .developer ? "∞" : "\(progressStore.pointsBalance)")
             .font(.caption.bold())
+            .foregroundStyle(.cyan)
+        } else if isEnabled, feature.id == "store" {
+          Text(storeAccessBadge)
+            .font(.caption2.bold())
             .foregroundStyle(.cyan)
         } else {
           Label("Wkrótce", systemImage: "lock.fill")
@@ -195,7 +225,7 @@ struct DashboardView: View {
     .background(.white.opacity(0.035), in: RoundedRectangle(cornerRadius: 16))
     .overlay(RoundedRectangle(cornerRadius: 16).stroke(.white.opacity(0.08)))
     .accessibilityElement(children: .combine)
-    .accessibilityHint(feature.isEnabled ? "Otwiera historię punktów" : "Funkcja jeszcze niedostępna")
+    .accessibilityHint(isEnabled ? "Otwiera funkcję" : "Funkcja jeszcze niedostępna")
   }
 
   private func achievementCard(
@@ -239,6 +269,78 @@ struct DashboardView: View {
       .frame(maxWidth: .infinity, alignment: .leading)
       .padding(16)
       .background(.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 16))
+  }
+}
+
+private struct StoreView: View {
+  @ObservedObject var entitlementStore: StoreEntitlementStore
+
+  var body: some View {
+    List {
+      Section("Dostęp") {
+        LabeledContent("Aktualny poziom", value: accessTitle)
+        if entitlementStore.snapshot.hasLifetimePro {
+          Label("Pro — zakup bezterminowy aktywny", systemImage: "checkmark.seal.fill")
+        }
+        if entitlementStore.snapshot.hasActiveSubscription {
+          Label("Subskrypcja aktywna", systemImage: "checkmark.circle.fill")
+        }
+      }
+
+      Section("Produkty") {
+        if !entitlementStore.isConfigured {
+          Text("Product ID nie są jeszcze skonfigurowane. W buildzie Store sklep pozostaje nieaktywny.")
+            .foregroundStyle(.secondary)
+        } else if entitlementStore.isLoadingProducts {
+          ProgressView("Pobieranie produktów…")
+        } else if entitlementStore.products.isEmpty {
+          Text(entitlementStore.lastError ?? "Brak produktów zwróconych przez StoreKit.")
+            .foregroundStyle(.secondary)
+        } else {
+          ForEach(entitlementStore.products, id: \.id) { product in
+            HStack {
+              VStack(alignment: .leading, spacing: 3) {
+                Text(product.displayName).font(.headline)
+                Text(product.description).font(.caption).foregroundStyle(.secondary)
+              }
+              Spacer()
+              Button(product.displayPrice) {
+                Task { _ = await entitlementStore.purchase(productID: product.id) }
+              }
+              .disabled(entitlementStore.isPurchasing)
+            }
+          }
+        }
+      }
+
+      Section {
+        Button("Odśwież produkty i dostęp") {
+          Task {
+            await entitlementStore.loadProducts()
+            await entitlementStore.refresh()
+          }
+        }
+        .disabled(entitlementStore.isLoadingProducts || entitlementStore.isPurchasing)
+
+        Button("Przywróć zakupy") {
+          Task { _ = await entitlementStore.restorePurchases() }
+        }
+        .disabled(entitlementStore.isPurchasing)
+      } footer: {
+        Text("Ceny i nazwy pochodzą bezpośrednio ze StoreKit. Przywracanie zakupów jest uruchamiane tylko po Twoim poleceniu.")
+      }
+    }
+    .navigationTitle("CipherPath Pro")
+    .navigationBarTitleDisplayMode(.inline)
+  }
+
+  private var accessTitle: String {
+    switch entitlementStore.accessPolicy.tier {
+    case .free: "Free"
+    case .testFlightDemo: "TestFlight Demo"
+    case .pro: "Pro"
+    case .subscription: "Subskrypcja"
+    }
   }
 }
 
