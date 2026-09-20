@@ -1,0 +1,69 @@
+name: iOS CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'task/**'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: xcode-27
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check diff
+        shell: zsh {0}
+        run: |
+          set -euo pipefail
+          git fetch origin main --depth=1
+          git diff --check origin/main...HEAD
+
+      - name: Select iPhone Simulator
+        id: simulator
+        shell: zsh {0}
+        run: |
+          set -euo pipefail
+          simulator_id="$(xcrun simctl list devices available | sed -nE 's/.*iPhone[^\(]*\(([0-9A-Fa-f-]{36})\).*/\1/p' | head -n 1)"
+          test -n "$simulator_id"
+          print "id=$simulator_id" >> "$GITHUB_OUTPUT"
+
+      - name: Test Developer variant
+        shell: zsh {0}
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project CipherPath.xcodeproj \
+            -scheme 'CipherPath Dev' \
+            -configuration Debug \
+            -destination 'platform=iOS Simulator,id=${{ steps.simulator.outputs.id }}' \
+            -derivedDataPath "$RUNNER_TEMP/CipherPathDev" \
+            test
+
+      - name: Build App Store variant
+        shell: zsh {0}
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project CipherPath.xcodeproj \
+            -scheme 'CipherPath App Store' \
+            -configuration Release \
+            -destination 'platform=iOS Simulator,id=${{ steps.simulator.outputs.id }}' \
+            -derivedDataPath "$RUNNER_TEMP/CipherPathStore" \
+            build
