@@ -1,0 +1,29 @@
+{
+  "products" : [
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : false,
+      "id" : "pl.krystian.cipherpath.pro",
+      "name" : "CipherPath Pro",
+      "price" : 4.99,
+      "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "2.99",
+      "familyShareable" : false,
+      "id" : "pl.krystian.cipherpath.pro.subscription",
+      "name" : "CipherPath Pro Monthly",
+      "price" : 2.99,
+      "recurringPeriod" : "P1M",
+      "subscriptionGroup" : "CipherPath Pro",
+      "type" : "Auto-Renewable Subscription"
+    }
+  ],
+  "settings" : {
+    "approvalRequired" : false,
+    "billingGracePeriod" : "None",
+    "defaultLocale" : "pl_PL",
+    "failTransactionsEnabled" : false,
+    "locale" : "pl_PL"
+  }
+}
