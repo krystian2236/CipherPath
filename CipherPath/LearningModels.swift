@@ -310,3 +310,25 @@ enum StarterCurriculum {
     )
   }
 }
+
+
+// MARK: - StoreKit entitlement boundary
+
+enum CipherPathProductID: String, CaseIterable, Sendable {
+  // Product identifiers are kept in one place so the StoreKit adapter and tests
+  // cannot silently disagree about which products grant Pro access.
+  case proLifetime = "pl.krystian.cipherpath.pro"
+  case proSubscription = "pl.krystian.cipherpath.pro.subscription"
+}
+
+struct StoreEntitlementSnapshot: Equatable, Sendable {
+  let activeProductIDs: Set<String>
+
+  var grantsPro: Bool {
+    activeProductIDs.contains { CipherPathProductID(rawValue: $0) != nil }
+  }
+
+  func accessPolicy(fallback: ContentAccessTier = .free) -> ContentAccessPolicy {
+    ContentAccessPolicy(tier: grantsPro ? .pro : fallback)
+  }
+}
