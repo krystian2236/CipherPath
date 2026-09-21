@@ -474,10 +474,16 @@ struct ServicesView: View {
 }
 
 struct AboutView: View {
+  private let bundle = Bundle.main
+
   var body: some View {
     List {
       Section("Wersja") {
-        LabeledContent("CipherPath", value: "1.3")
+        LabeledContent("Nazwa", value: displayName)
+        LabeledContent("Wersja", value: version)
+        LabeledContent("Build", value: build)
+        LabeledContent("Bundle ID", value: bundleIdentifier)
+        LabeledContent("Tryb", value: distribution)
         Text("Natywny zestaw narzędzi do obserwacji własnej sieci na iOS.")
           .font(.caption)
           .foregroundStyle(.secondary)
@@ -525,6 +531,30 @@ struct AboutView: View {
     }
     .navigationTitle("O aplikacji")
     .navigationBarTitleDisplayMode(.inline)
+  }
+
+  private var displayName: String {
+    bundle.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ?? "CipherPath"
+  }
+
+  private var version: String {
+    bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
+  }
+
+  private var build: String {
+    bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "—"
+  }
+
+  private var bundleIdentifier: String {
+    bundle.bundleIdentifier ?? "—"
+  }
+
+  private var distribution: String {
+    #if CIPHERPATH_DEVELOPER
+    "Developer"
+    #else
+    "App Store"
+    #endif
   }
 }
 

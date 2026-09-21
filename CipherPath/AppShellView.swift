@@ -144,6 +144,9 @@ private struct PracticeHubView: View {
           }
         }
         Section("Informacje") {
+          NavigationLink("O aplikacji") {
+            AboutView()
+          }
           NavigationLink("Prywatność i bezpieczeństwo") {
             PrivacySecurityView(progressStore: learningProgressStore)
           }
