@@ -11,6 +11,17 @@ enum AppTab: Int, Hashable {
     .start, .paths, .missions, .practice, .achievements,
   ]
 
+  /// Publiczne nazwy obszarów; surowe wartości pozostają zgodne z `SceneStorage`.
+  var sectionTitle: String {
+    switch self {
+    case .start: "Start"
+    case .paths: "Learn"
+    case .missions: "Practice"
+    case .practice: "Security"
+    case .achievements: "Progress"
+    }
+  }
+
   static func restored(from rawValue: Int) -> AppTab {
     AppTab(rawValue: rawValue) ?? .start
   }
@@ -70,20 +81,32 @@ struct AppShellView: View {
       )
         .tabItem { Label("Start", systemImage: "house.fill") }.tag(AppTab.start)
       LearningPathListView(progressStore: learningProgressStore, accessPolicy: .current)
-        .tabItem { Label("Ścieżki", systemImage: "safari.fill") }.tag(AppTab.paths)
+        .tabItem { Label("Learn", systemImage: "book.fill") }.tag(AppTab.paths)
       MissionsView(progressStore: learningProgressStore, accessPolicy: .current)
-        .tabItem { Label("Misje", systemImage: "target") }.tag(AppTab.missions)
-      PracticeHubView(
-        scanner: scanner,
-        tools: tools,
-        knownDeviceStore: knownDeviceStore,
-        learningProgressStore: learningProgressStore,
-        selectedTab: selectedTab,
-        ishWorkspaceRouteRaw: $ishWorkspaceRouteRaw
-      )
-        .tabItem { Label("Praktyka", systemImage: "chart.bar.fill") }.tag(AppTab.practice)
+        .tabItem { Label("Practice", systemImage: "target") }.tag(AppTab.missions)
+      Group {
+        if AppDistributionMode.currentBuild == .developer {
+          PracticeHubView(
+            scanner: scanner,
+            tools: tools,
+            knownDeviceStore: knownDeviceStore,
+            learningProgressStore: learningProgressStore,
+            selectedTab: selectedTab,
+            ishWorkspaceRouteRaw: $ishWorkspaceRouteRaw
+          )
+        } else {
+          SecurityChecklistView(progressStore: learningProgressStore)
+        }
+      }
+        .tabItem {
+          Label(
+            "Security",
+            systemImage: AppDistributionMode.currentBuild == .developer ? "wrench.and.screwdriver.fill" : "lock.shield.fill"
+          )
+        }
+        .tag(AppTab.practice)
       AchievementsView(progressStore: learningProgressStore)
-        .tabItem { Label("Osiągnięcia", systemImage: "medal.fill") }.tag(AppTab.achievements)
+        .tabItem { Label("Progress", systemImage: "chart.bar.fill") }.tag(AppTab.achievements)
     }
     .tint(.cyan)
     .alert("Problem z zapamiętanymi urządzeniami", isPresented: storeErrorIsPresented) {
@@ -91,7 +114,11 @@ struct AppShellView: View {
     } message: {
       Text(knownDeviceStore.errorMessage ?? "Nieznany błąd zapisu.")
     }
-    .task { scanner.refreshContext(); tools.refreshLocalContext() }
+    .task {
+      guard AppDistributionMode.currentBuild == .developer else { return }
+      scanner.refreshContext()
+      tools.refreshLocalContext()
+    }
   }
 
   private var selectedTab: Binding<AppTab> {
@@ -103,6 +130,60 @@ struct AppShellView: View {
 
   private var storeErrorIsPresented: Binding<Bool> {
     Binding(get: { knownDeviceStore.errorMessage != nil }, set: { if !$0 { knownDeviceStore.clearError() } })
+  }
+}
+
+private struct SecurityChecklistView: View {
+  @ObservedObject var progressStore: LearningProgressStore
+
+  var body: some View {
+    NavigationStack {
+      List {
+        Section {
+          Text("Ręczna checklista ustawień bezpieczeństwa. CipherPath nie wykonuje pełnego audytu urządzenia ani nie wysyła wyników.")
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
+        }
+        ForEach(SecurityRiskGroup.allCases, id: \.self) { group in
+          Section(group.title) {
+            ForEach(SecurityChecklistItem.all.filter { $0.riskGroup == group }) { item in
+              Button {
+                progressStore.setSecurityCheck(
+                  item.id,
+                  completed: !progressStore.isSecurityCheckCompleted(item.id)
+                )
+              } label: {
+                HStack(alignment: .top, spacing: 12) {
+                  Image(systemName: progressStore.isSecurityCheckCompleted(item.id)
+                    ? "checkmark.circle.fill"
+                    : item.icon)
+                    .foregroundStyle(progressStore.isSecurityCheckCompleted(item.id) ? Color.green : Color.cyan)
+                    .frame(width: 24)
+                  VStack(alignment: .leading, spacing: 4) {
+                    Text(item.title).font(.headline)
+                    Text(item.explanation)
+                      .font(.caption)
+                      .foregroundStyle(.secondary)
+                    Text("Wskazówka: \(item.tip)")
+                      .font(.caption2)
+                      .foregroundStyle(.secondary)
+                    if let date = progressStore.securityReviewDate(for: item.id) {
+                      Text("Przegląd: \(date, format: .dateTime.day().month().year())")
+                        .font(.caption2)
+                        .foregroundStyle(.green)
+                    }
+                  }
+                  Spacer()
+                }
+              }
+              .buttonStyle(.plain)
+              .accessibilityLabel("\(item.title), \(progressStore.isSecurityCheckCompleted(item.id) ? "wykonano" : "niewykonano")")
+            }
+          }
+        }
+      }
+      .navigationTitle("Security")
+    }
   }
 }
 
@@ -155,7 +236,7 @@ private struct PracticeHubView: View {
           }
         }
       }
-      .navigationTitle("Praktyka")
+      .navigationTitle("Dev Tools")
     }
   }
 }

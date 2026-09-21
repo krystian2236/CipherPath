@@ -1,5 +1,11 @@
 # CipherPath — historia zmian
 
+## Unreleased
+
+- dodano widoczny na ekranie Start identyfikator otwartego bundle: wersja, build, tryb i Bundle ID,
+- ujednolicono identyfikację wersji między ekranem Start i O aplikacji,
+- dodano kontrolę spójności wersji, buildu i changelogu przed push.
+
 ## 1.3
 
 - dodano ekran szczegółów przebiegu skanowania,

@@ -10,20 +10,8 @@ struct FutureFeaturePreview: Identifiable, Equatable, Sendable {
 
 enum FutureFeatureCatalog {
   static let previews = [
-    FutureFeaturePreview(
-      id: "points",
-      title: "Punkty",
-      subtitle: "Zdobywaj w misjach i wykorzystuj na podpowiedzi",
-      icon: "sparkles",
-      isEnabled: true
-    ),
-    FutureFeaturePreview(
-      id: "store",
-      title: "Sklep",
-      subtitle: "Pakiety punktów i subskrypcja",
-      icon: "cart.fill",
-      isEnabled: false
-    ),
+    FutureFeaturePreview(id: "points", title: "Punkty", subtitle: "Zdobywaj je za ukończone ćwiczenia", icon: "sparkles", isEnabled: true),
+    FutureFeaturePreview(id: "store", title: "CipherPath Pro", subtitle: "Jednorazowe odblokowanie w przygotowaniu", icon: "lock.fill", isEnabled: false),
   ]
 }
 
@@ -33,28 +21,52 @@ struct DashboardView: View {
   @ObservedObject var scanner: NetworkScanner
   @ObservedObject var knownDeviceStore: KnownDeviceStore
 
-  private let featuredLesson = StarterCurriculum.lessons.first {
-    $0.id == "blue-team-suspicious-login"
-  } ?? StarterCurriculum.lessons[0]
+  private var availableLessons: [LearningLesson] {
+    StarterCurriculum.lessons.filter { ContentAccessPolicy.current.access(for: $0) == .included }
+  }
+
+  private var completedLessons: Int {
+    availableLessons.filter { progressStore.isCompleted(lessonID: $0.id) }.count
+  }
+
+  private var nextLesson: LearningLesson? {
+    availableLessons.first { !progressStore.isCompleted(lessonID: $0.id) }
+  }
+
+  private var featuredLesson: LearningLesson {
+    nextLesson ?? availableLessons.first ?? StarterCurriculum.lessons[0]
+  }
+
+  private var featuredStageTitle: String {
+    progressStore.currentStage(for: featuredLesson)?.title ?? "Ukończono"
+  }
+
+  private var accessSummary: String {
+    switch ContentAccessPolicy.current.tier {
+    case .free:
+      "Free: pierwsza lekcja każdej ścieżki jest dostępna"
+    case .testFlightDemo:
+      "Demo: dwie pierwsze lekcje każdej ścieżki są dostępne"
+    case .pro:
+      "Pro: pełny katalog jest dostępny w trybie deweloperskim"
+    }
+  }
 
   var body: some View {
     NavigationStack {
       ScrollView {
-        LazyVStack(alignment: .leading, spacing: 22) {
-          HStack {
-            DevLocationLabel(location: .dashboard)
-            UIRefCopyButton(ref: .dashboard)
-          }
+        VStack(alignment: .leading, spacing: 18) {
           header
-          missionCard
-          missionStages
-          networkSnapshot
-          achievementSection
-          futureFeaturesSection
-          footer
+          AppReleaseIdentityCard()
+          readinessCard
+          continueCard
+          todayCard
+          recentActivityCard
+          navigationCards
+          quickMission
+          recentAchievement
         }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 20)
+        .padding(18)
       }
       .background(Color(red: 0.025, green: 0.045, blue: 0.075).ignoresSafeArea())
       .toolbar(.hidden, for: .navigationBar)
@@ -62,244 +74,150 @@ struct DashboardView: View {
     .preferredColorScheme(.dark)
   }
 
-  private var openPortCount: Int {
-    scanner.devices.reduce(0) { $0 + $1.openPorts.count }
-  }
-
-  private var reviewCount: Int {
-    guard let networkID = scanner.networkID else { return 0 }
-    let statuses = scanner.devices.map { device in
-      let key = KnownDeviceKey(networkID: networkID, address: device.address)
-      return DeviceRegistryStatus(
-        record: knownDeviceStore.record(for: key),
-        isNew: scanner.newDeviceKeys.contains(key)
-      )
-    }
-    return DeviceRegistryStatus.reviewCount(in: statuses)
-  }
-
-  private var networkSnapshot: some View {
-    VStack(alignment: .leading, spacing: 12) {
-      HStack {
-        sectionHeader("Stan sieci", destination: .practice)
-        UIRefCopyButton(ref: .networkSnapshot)
-      }
-      LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
-        MetricCard(title: "Urządzenia", value: "\(scanner.devices.count)", icon: "desktopcomputer")
-        MetricCard(title: "Otwarte porty", value: "\(openPortCount)", icon: "door.left.hand.open")
-        MetricCard(title: "Bonjour", value: "\(scanner.bonjourDiscovery.services.count)", icon: "bonjour", tint: .indigo)
-        MetricCard(
-          title: "Nowe / nieznane",
-          value: "\(reviewCount)",
-          icon: "questionmark.circle",
-          tint: reviewCount > 0 ? .orange : .green
-        )
-      }
-      if let context = scanner.context {
-        Label("\(context.address) • \(context.scanRangeDescription)", systemImage: "network")
-          .font(.caption2.monospaced())
-          .foregroundStyle(.secondary)
-      } else {
-        Text("Połącz iPhone’a z Wi‑Fi, aby zobaczyć stan sieci.")
-          .font(.caption)
-          .foregroundStyle(.secondary)
-      }
-    }
-  }
-
   private var header: some View {
     VStack(alignment: .leading, spacing: 6) {
-      HStack(alignment: .firstTextBaseline) {
-        Text("Cipher") + Text("Path").foregroundStyle(.indigo)
-        Spacer()
-        Text("Małe kroki.\nWiększe możliwości.")
-          .font(.caption)
-          .foregroundStyle(.secondary)
-      }
-      .font(.largeTitle.bold())
-      Text("PRAWO  •  BEZPIECZEŃSTWO  •  PRAKTYKA")
-        .font(.caption2.weight(.semibold))
-        .tracking(2)
+      Text("Cipher") + Text("Path").foregroundStyle(.indigo)
+        .font(.largeTitle.bold())
+      Text("Ucz się bezpieczeństwa krok po kroku")
         .foregroundStyle(.secondary)
     }
   }
 
-  private var missionCard: some View {
-    VStack(alignment: .leading, spacing: 14) {
-      HStack {
-        DevLocationLabel(location: .dashboardMission)
-        UIRefCopyButton(ref: .todayMission)
-      }
-      Text("Dzisiejsza misja").font(.largeTitle.bold())
-      Text("Realna wiedza. Bezpieczniejszy świat.").foregroundStyle(.secondary)
-      VStack(alignment: .leading, spacing: 12) {
-        Label("BLUE TEAM • SYMULACJA OFFLINE", systemImage: "lock.shield.fill")
-          .font(.caption2.bold())
-          .foregroundStyle(.indigo)
-        Text(featuredLesson.title).font(.title2.bold())
-        Text(featuredLesson.summary).font(.subheadline).foregroundStyle(.secondary)
-        Label("8 min", systemImage: "clock")
-          .font(.subheadline.weight(.semibold))
-          .foregroundStyle(.secondary)
-        NavigationLink {
-          MissionBriefingView(lesson: featuredLesson, progressStore: progressStore)
-        } label: {
-          HStack {
-            Spacer()
-            Text("Zobacz odprawę").fontWeight(.semibold)
-            Image(systemName: "chevron.right")
-            Spacer()
-          }
-          .padding(.vertical, 13)
-        }
-        .buttonStyle(.borderedProminent)
-        .tint(.indigo)
-      }
-      .padding(18)
-      .background(
-        LinearGradient(
-          colors: [.indigo.opacity(0.2), .cyan.opacity(0.08), .black.opacity(0.35)],
-          startPoint: .topLeading,
-          endPoint: .bottomTrailing
-        ),
-        in: RoundedRectangle(cornerRadius: 22)
-      )
-      .overlay(RoundedRectangle(cornerRadius: 22).stroke(.white.opacity(0.12)))
-    }
-  }
-
-  private var missionStages: some View {
+  private var readinessCard: some View {
     VStack(alignment: .leading, spacing: 8) {
-      HStack {
-        Text("Etapy misji").font(.title3.bold())
-        Spacer()
-        UIRefCopyButton(ref: .missionStages)
-      }
-      HStack(alignment: .top, spacing: 4) {
-      ForEach(Array(LessonStage.allCases.enumerated()), id: \.element) { index, stage in
-        VStack(spacing: 7) {
-          Image(systemName: ["doc.text.fill", "magnifyingglass", "flag.fill", "lightbulb.fill"][index])
-            .font(.headline)
-            .foregroundStyle(index == 0 ? .white : .secondary)
-            .frame(width: 46, height: 46)
-            .background(index == 0 ? Color.indigo : Color.clear, in: Circle())
-            .overlay(Circle().stroke(index == 0 ? Color.indigo : Color.secondary.opacity(0.45), lineWidth: 2))
-          Text(stage.title).font(.caption2.bold()).multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-      }
-      }
+      Label("Learning Readiness", systemImage: "checkmark.shield.fill")
+        .font(.headline)
+        .foregroundStyle(.cyan)
+      Text("\(completedLessons) / \(availableLessons.count) tematów ukończonych")
+        .font(.title2.bold())
+      Text("Postęp nauki, nie pełny audyt urządzenia.")
+        .font(.caption)
+        .foregroundStyle(.secondary)
+      Text(accessSummary)
+        .font(.caption2)
+        .foregroundStyle(.cyan)
     }
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .padding(16)
+    .background(.cyan.opacity(0.1), in: RoundedRectangle(cornerRadius: 18))
+    .overlay(RoundedRectangle(cornerRadius: 18).stroke(.cyan.opacity(0.25)))
   }
 
-  private var achievementSection: some View {
-    VStack(alignment: .leading, spacing: 12) {
-      sectionHeader("Osiągnięcia", destination: .achievements)
-      HStack(spacing: 10) {
-        ForEach(AchievementCatalog.evaluateAll(progressStore.progress), id: \.id) { achievement in
-          achievementCard(
-            achievement.title,
-            icon: achievement.isUnlocked ? "medal.fill" : "lock.fill",
-            color: achievementColor(achievement.rarity),
-            unlocked: achievement.isUnlocked
-          )
-        }
+  private var continueCard: some View {
+    VStack(alignment: .leading, spacing: 10) {
+      Text("Kontynuuj naukę").font(.title3.bold())
+      Text(featuredLesson.title).font(.headline)
+      Text(featuredLesson.summary).font(.subheadline).foregroundStyle(.secondary)
+      Label("Następny etap: \(featuredStageTitle)", systemImage: "arrow.right.circle")
+        .font(.caption)
+        .foregroundStyle(.secondary)
+      NavigationLink {
+        LessonFlowView(lesson: featuredLesson, progressStore: progressStore)
+      } label: {
+        Label("Otwórz temat", systemImage: "arrow.right.circle.fill")
+          .frame(maxWidth: .infinity)
       }
+      .buttonStyle(.borderedProminent)
+      .tint(.indigo)
     }
+    .padding(16)
+    .background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 18))
   }
 
-  private var futureFeaturesSection: some View {
-    VStack(alignment: .leading, spacing: 12) {
-      Text("CipherPath Pro").font(.title3.bold())
-      HStack(spacing: 10) {
-        ForEach(FutureFeatureCatalog.previews) { feature in
-          if feature.id == "points" {
-            NavigationLink {
-              PointsView(progressStore: progressStore)
-            } label: {
-              futureFeatureCard(feature)
-            }
-            .buttonStyle(.plain)
-          } else {
-            futureFeatureCard(feature)
-          }
-        }
-      }
+  private var todayCard: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      Label("Dzisiaj warto zrobić", systemImage: "sun.max.fill")
+        .font(.headline)
+        .foregroundStyle(.orange)
+      Text(featuredLesson.title)
+        .font(.subheadline.weight(.semibold))
+      Text("Poświęć około \(MissionBriefing.forLesson(featuredLesson).estimatedMinutes) minut na kolejny kontrolowany krok.")
+        .font(.caption)
+        .foregroundStyle(.secondary)
+      Button("Zacznij teraz") { selectedTab = .paths }
+        .buttonStyle(.bordered)
     }
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .padding(16)
+    .background(.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 18))
   }
 
-  private func futureFeatureCard(_ feature: FutureFeaturePreview) -> some View {
-    VStack(alignment: .leading, spacing: 9) {
-      HStack {
-        Image(systemName: feature.icon)
-          .font(.title2)
-          .foregroundStyle(feature.isEnabled ? .cyan : .secondary)
-        Spacer()
-        if feature.isEnabled {
-          Text(AppDistributionMode.currentBuild == .developer ? "∞" : "\(progressStore.pointsBalance)")
-            .font(.caption.bold())
-            .foregroundStyle(.cyan)
-        } else {
-          Label("Wkrótce", systemImage: "lock.fill")
-            .font(.caption2.bold())
+  private var recentActivityCard: some View {
+    let activity = progressStore.recentActivities.first
+    return HStack(spacing: 10) {
+      Image(systemName: activity == nil ? "clock" : "checkmark.circle.fill")
+        .foregroundStyle(activity == nil ? Color.secondary : Color.green)
+      VStack(alignment: .leading, spacing: 3) {
+        Text("Ostatnia aktywność")
+          .font(.caption.bold())
+        Text(activity?.title ?? "Jeszcze nic nie ukończono")
+          .font(.subheadline)
+          .lineLimit(2)
+        if let activity {
+          Text(activity.date, format: .dateTime.day().month().hour().minute())
+            .font(.caption2)
             .foregroundStyle(.secondary)
         }
       }
-      Text(feature.title).font(.headline)
-      Text(feature.subtitle)
-        .font(.caption)
-        .foregroundStyle(.secondary)
-        .fixedSize(horizontal: false, vertical: true)
-    }
-    .frame(maxWidth: .infinity, minHeight: 112, alignment: .topLeading)
-    .padding(14)
-    .background(.white.opacity(0.035), in: RoundedRectangle(cornerRadius: 16))
-    .overlay(RoundedRectangle(cornerRadius: 16).stroke(.white.opacity(0.08)))
-    .accessibilityElement(children: .combine)
-    .accessibilityHint(feature.isEnabled ? "Otwiera historię punktów" : "Funkcja jeszcze niedostępna")
-  }
-
-  private func achievementCard(
-    _ title: String,
-    icon: String,
-    color: Color,
-    unlocked: Bool
-  ) -> some View {
-    VStack(spacing: 8) {
-      Image(systemName: icon).font(.title2).foregroundStyle(unlocked ? color : .secondary)
-      Text(title).font(.caption2.bold()).multilineTextAlignment(.center)
-    }
-    .frame(maxWidth: .infinity, minHeight: 84)
-    .padding(8)
-    .background(.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 14))
-    .overlay(RoundedRectangle(cornerRadius: 14).stroke(.white.opacity(0.1)))
-  }
-
-  private func achievementColor(_ rarity: AchievementRarity) -> Color {
-    switch rarity {
-    case .bronze: .orange
-    case .silver: .gray
-    case .gold: .yellow
-    }
-  }
-
-  private func sectionHeader(_ title: String, destination: AppTab) -> some View {
-    HStack {
-      Text(title).font(.title3.bold())
       Spacer()
-      Button("Zobacz wszystkie") { selectedTab = destination }
-        .font(.caption.bold())
-        .foregroundStyle(.indigo)
+    }
+    .padding(14)
+    .background(.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 16))
+  }
+
+  private var navigationCards: some View {
+    VStack(alignment: .leading, spacing: 10) {
+      Text("Twoja przestrzeń").font(.title3.bold())
+      HStack(spacing: 10) {
+        dashboardCard("Learn", icon: "book.fill", tint: .mint, tab: .paths)
+        dashboardCard("Practice", icon: "target", tint: .orange, tab: .missions)
+      }
+      HStack(spacing: 10) {
+        dashboardCard("Security", icon: "lock.shield.fill", tint: .cyan, tab: .practice)
+        dashboardCard("Progress", icon: "chart.bar.fill", tint: .purple, tab: .achievements)
+      }
     }
   }
 
-  private var footer: some View {
-    Label("Systematyczna nauka dziś, większe możliwości jutro.", systemImage: "leaf.fill")
-      .font(.footnote)
-      .foregroundStyle(.secondary)
-      .frame(maxWidth: .infinity, alignment: .leading)
-      .padding(16)
-      .background(.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 16))
+  private func dashboardCard(_ title: String, icon: String, tint: Color, tab: AppTab) -> some View {
+    Button { selectedTab = tab } label: {
+      VStack(alignment: .leading, spacing: 10) {
+        Image(systemName: icon).font(.title2).foregroundStyle(tint)
+        Text(title).font(.headline).foregroundStyle(.primary)
+      }
+      .frame(maxWidth: .infinity, minHeight: 82, alignment: .leading)
+      .padding(14)
+      .background(.white.opacity(0.055), in: RoundedRectangle(cornerRadius: 16))
+    }
+    .buttonStyle(.plain)
+  }
+
+  private var quickMission: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      Text("Dzisiejsza misja").font(.title3.bold())
+      Text("Przećwicz decyzję bezpieczeństwa w kontrolowanym scenariuszu.")
+        .font(.subheadline).foregroundStyle(.secondary)
+      Button("Przejdź do Practice") { selectedTab = .missions }
+        .buttonStyle(.bordered)
+    }
+    .padding(16)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(.indigo.opacity(0.12), in: RoundedRectangle(cornerRadius: 18))
+  }
+
+  private var recentAchievement: some View {
+    let achievement = AchievementCatalog.evaluateAll(progressStore.progress).first(where: { $0.isUnlocked })
+    return HStack {
+      Image(systemName: achievement == nil ? "lock.fill" : "medal.fill")
+        .foregroundStyle(achievement == nil ? Color.secondary : Color.yellow)
+      Text(achievement?.title ?? "Pierwsze osiągnięcie czeka")
+        .font(.subheadline.weight(.semibold))
+      Spacer()
+      Button("Progress") { selectedTab = .achievements }
+        .font(.caption.bold())
+    }
+    .padding(14)
+    .background(.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 16))
   }
 }
 

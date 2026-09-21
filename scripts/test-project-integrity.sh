@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-for dependency in xcodebuild plutil mktemp grep cat rm; do
+for dependency in xcodebuild plutil mktemp grep cat rm rg; do
   command -v "$dependency" >/dev/null || {
     print -u2 "Brak wymaganego narzędzia: $dependency"
     exit 1
@@ -60,7 +60,8 @@ assert_plist_value() {
 }
 
 assert_plist_value CFBundleIdentifier pl.krystian.CipherPath
-assert_plist_value CFBundleShortVersionString 1.3
+expected_marketing_version="$(rg -o -m1 'MARKETING_VERSION = [^;]+' "$repo_root/CipherPath.xcodeproj/project.pbxproj" | sed 's/.* = //')"
+assert_plist_value CFBundleShortVersionString "$expected_marketing_version"
 assert_plist_value ITSAppUsesNonExemptEncryption false
 
 local_network_description="$(

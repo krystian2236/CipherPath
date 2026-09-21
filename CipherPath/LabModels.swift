@@ -17,6 +17,14 @@ enum LabMode: String, Codable, CaseIterable, Hashable, Sendable {
     case .adventure: 150
     }
   }
+
+  var showsGuidance: Bool {
+    self == .guided
+  }
+
+  var guidanceLabel: String {
+    showsGuidance ? "Prowadzony" : "Bez podpowiedzi"
+  }
 }
 
 enum LabAssistanceLevel: Int, Codable, Comparable, Sendable {

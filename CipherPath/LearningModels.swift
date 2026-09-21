@@ -51,6 +51,59 @@ enum ContentAccessTier: String, Codable, Equatable, Sendable {
   case pro
 }
 
+enum SecurityRiskGroup: String, CaseIterable, Codable, Equatable, Hashable, Sendable {
+  case account
+  case recovery
+  case authentication
+
+  var title: String {
+    switch self {
+    case .account: "Konta i dostęp"
+    case .recovery: "Odzyskiwanie i ciągłość"
+    case .authentication: "Uwierzytelnianie"
+    }
+  }
+}
+
+struct SecurityChecklistRecord: Codable, Equatable, Sendable {
+  let checkedAt: Date
+}
+
+struct SecurityChecklistItem: Identifiable, Equatable, Sendable {
+  let id: String
+  let title: String
+  let explanation: String
+  let icon: String
+  let riskGroup: SecurityRiskGroup
+  let tip: String
+
+  init(
+    id: String,
+    title: String,
+    explanation: String,
+    icon: String,
+    riskGroup: SecurityRiskGroup,
+    tip: String
+  ) {
+    self.id = id
+    self.title = title
+    self.explanation = explanation
+    self.icon = icon
+    self.riskGroup = riskGroup
+    self.tip = tip
+  }
+
+  static let all: [SecurityChecklistItem] = [
+    .init(id: "passcode", title: "Kod urządzenia", explanation: "Sprawdź, czy używasz silnego kodu blokady.", icon: "number.square.fill", riskGroup: .authentication, tip: "Nie zapisuj kodu w notatkach ani w aplikacji."),
+    .init(id: "biometrics", title: "Face ID / Touch ID", explanation: "Włącz biometrię tam, gdzie zwiększa wygodę bez osłabiania ochrony.", icon: "faceid", riskGroup: .authentication, tip: "Po zmianie ustawień sprawdź też kod zapasowy."),
+    .init(id: "passkeys", title: "Passkeys", explanation: "Używaj kluczy dostępu zamiast haseł, gdy usługa je obsługuje.", icon: "key.fill", riskGroup: .account, tip: "Dodaj drugą metodę odzyskiwania tylko w zaufanym miejscu."),
+    .init(id: "security-keys", title: "Klucze bezpieczeństwa", explanation: "Rozważ fizyczny klucz dla najważniejszych kont.", icon: "key.horizontal.fill", riskGroup: .account, tip: "Przechowuj zapasowy klucz oddzielnie od głównego."),
+    .init(id: "backup", title: "Klucz zapasowy", explanation: "Miej bezpieczną metodę zapasową, zanim utracisz główną.", icon: "arrow.triangle.2.circlepath", riskGroup: .recovery, tip: "Sprawdź, czy metoda zapasowa nadal działa."),
+    .init(id: "recovery", title: "Odzyskiwanie", explanation: "Zaktualizuj dane odzyskiwania i przechowuj kody offline.", icon: "arrow.uturn.backward.circle.fill", riskGroup: .recovery, tip: "Nie przechowuj kodów odzyskiwania razem z urządzeniem."),
+    .init(id: "mfa", title: "MFA", explanation: "Włącz uwierzytelnianie wieloskładnikowe dla ważnych kont.", icon: "lock.shield.fill", riskGroup: .authentication, tip: "Preferuj klucze dostępu lub sprzętowe tokeny dla kont krytycznych."),
+  ]
+}
+
 enum LessonAccess: Equatable, Sendable {
   case included
   case requiresPro
@@ -150,6 +203,32 @@ enum LessonStage: String, CaseIterable, Codable, Equatable, Sendable {
     case .findFlag: "Znajdź odpowiedź"
     case .explanation: "Wyjaśnienie"
     }
+  }
+}
+
+enum LearningActivityKind: String, Codable, Equatable, Sendable {
+  case lessonStageCompleted
+  case labCompleted
+}
+
+struct LearningActivity: Identifiable, Codable, Equatable, Sendable {
+  let id: String
+  let kind: LearningActivityKind
+  let lessonID: String
+  let title: String
+  let date: Date
+
+  init(
+    kind: LearningActivityKind,
+    lessonID: String,
+    title: String,
+    date: Date = .now
+  ) {
+    self.id = UUID().uuidString
+    self.kind = kind
+    self.lessonID = lessonID
+    self.title = title
+    self.date = date
   }
 }
 

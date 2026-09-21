@@ -4,11 +4,17 @@ struct LearningProgress: Codable, Equatable, Sendable {
   var completedStages: [String: [LessonStage]] = [:]
   var labMissions: [String: LabMissionProgress] = [:]
   var pointsWallet: PointsWallet = .initial
+  var recentActivities: [LearningActivity] = []
+  var lessonNotes: [String: String] = [:]
+  var securityChecks: [String: SecurityChecklistRecord] = [:]
 
   private enum CodingKeys: String, CodingKey {
     case completedStages
     case labMissions
     case pointsWallet
+    case recentActivities
+    case lessonNotes
+    case securityChecks
   }
 
   init() {}
@@ -24,6 +30,15 @@ struct LearningProgress: Codable, Equatable, Sendable {
     pointsWallet = try container.decodeIfPresent(
       PointsWallet.self, forKey: .pointsWallet
     ) ?? .initial
+    recentActivities = try container.decodeIfPresent(
+      [LearningActivity].self, forKey: .recentActivities
+    ) ?? []
+    lessonNotes = try container.decodeIfPresent(
+      [String: String].self, forKey: .lessonNotes
+    ) ?? [:]
+    securityChecks = try container.decodeIfPresent(
+      [String: SecurityChecklistRecord].self, forKey: .securityChecks
+    ) ?? [:]
   }
 }
 
@@ -70,6 +85,41 @@ final class LearningProgressStore: ObservableObject {
 
   var pointsBalance: Int {
     progress.pointsWallet.balance
+  }
+
+  var recentActivities: [LearningActivity] {
+    progress.recentActivities
+  }
+
+  func note(for lessonID: String) -> String {
+    progress.lessonNotes[lessonID, default: ""]
+  }
+
+  func saveNote(_ note: String, for lessonID: String) {
+    let trimmed = note.trimmingCharacters(in: .whitespacesAndNewlines)
+    if trimmed.isEmpty {
+      progress.lessonNotes.removeValue(forKey: lessonID)
+    } else {
+      progress.lessonNotes[lessonID] = String(trimmed.prefix(2_000))
+    }
+    save()
+  }
+
+  func isSecurityCheckCompleted(_ itemID: String) -> Bool {
+    progress.securityChecks[itemID] != nil
+  }
+
+  func securityReviewDate(for itemID: String) -> Date? {
+    progress.securityChecks[itemID]?.checkedAt
+  }
+
+  func setSecurityCheck(_ itemID: String, completed: Bool) {
+    if completed {
+      progress.securityChecks[itemID] = SecurityChecklistRecord(checkedAt: .now)
+    } else {
+      progress.securityChecks.removeValue(forKey: itemID)
+    }
+    save()
   }
 
   func canStartLab(
@@ -214,6 +264,11 @@ final class LearningProgressStore: ObservableObject {
     if distribution == .appStore {
       _ = progress.pointsWallet.rewardMission(lessonID: lessonID)
     }
+    recordActivity(
+      kind: .labCompleted,
+      lessonID: lessonID,
+      title: "\(lesson.title) • laboratorium ukończone"
+    )
     save()
     return true
   }
@@ -225,6 +280,11 @@ final class LearningProgressStore: ObservableObject {
           currentStage(for: lesson) == stage else { return false }
 
     progress.completedStages[lessonID, default: []].append(stage)
+    recordActivity(
+      kind: .lessonStageCompleted,
+      lessonID: lessonID,
+      title: "\(lesson.title) • \(stage.title)"
+    )
     save()
     return true
   }
@@ -246,6 +306,18 @@ final class LearningProgressStore: ObservableObject {
 
   private func lesson(withID id: String) -> LearningLesson? {
     StarterCurriculum.lessons.first { $0.id == id }
+  }
+
+  private func recordActivity(
+    kind: LearningActivityKind,
+    lessonID: String,
+    title: String
+  ) {
+    progress.recentActivities.insert(
+      LearningActivity(kind: kind, lessonID: lessonID, title: title),
+      at: 0
+    )
+    progress.recentActivities = Array(progress.recentActivities.prefix(20))
   }
 
   private func save() {

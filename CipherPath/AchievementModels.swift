@@ -23,6 +23,42 @@ struct AchievementProgress: Equatable, Sendable {
   var isUnlocked: Bool { current >= target }
 }
 
+struct LearningPathProgressSummary: Identifiable, Equatable, Sendable {
+  let path: LearningPath
+  let completedLessons: Int
+  let availableLessons: Int
+  let completedLabs: Int
+  let xp: Int
+
+  var id: LearningPath { path }
+
+  static func make(
+    for path: LearningPath,
+    progress: LearningProgress,
+    policy: ContentAccessPolicy
+  ) -> Self {
+    let lessons = StarterCurriculum.lessons(in: path).filter {
+      policy.access(for: $0) == .included
+    }
+    let completedLessons = lessons.filter {
+      progress.completedStages[$0.id, default: []].count == $0.stages.count
+    }.count
+    let completedLabs = lessons.filter {
+      progress.labMissions[$0.id]?.completedModes.isEmpty == false
+    }.count
+    let xp = lessons.reduce(0) {
+      $0 + (progress.labMissions[$1.id]?.xp ?? 0)
+    }
+    return LearningPathProgressSummary(
+      path: path,
+      completedLessons: completedLessons,
+      availableLessons: lessons.count,
+      completedLabs: completedLabs,
+      xp: xp
+    )
+  }
+}
+
 enum AchievementCatalog {
   static func evaluate(_ progress: LearningProgress, id: AchievementID) -> AchievementProgress {
     let guidedCount = progress.labMissions.values.filter {

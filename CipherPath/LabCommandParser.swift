@@ -24,18 +24,26 @@ enum LabCommand: Equatable, Sendable {
 
 enum LabCommandParseResult: Equatable, Sendable {
   case command(LabCommand)
+  case programNotAllowed
   case rejected(String)
 
   var isRejected: Bool {
-    if case .rejected = self { return true }
-    return false
+    switch self {
+    case .programNotAllowed, .rejected:
+      return true
+    case .command:
+      return false
+    }
   }
 }
 
 enum LabCommandParser {
   private static let forbiddenCharacters = CharacterSet(charactersIn: ";|&><`$()")
 
-  static func parse(_ input: String) -> LabCommandParseResult {
+  static func parse(
+    _ input: String,
+    allowedPrograms: Set<String>? = nil
+  ) -> LabCommandParseResult {
     guard input.rangeOfCharacter(from: forbiddenCharacters) == nil else {
       return .rejected("Operatory powłoki nie są dostępne w laboratorium.")
     }
@@ -46,47 +54,59 @@ enum LabCommandParser {
     }
 
     let arguments = Array(tokens.dropFirst())
+    let result: LabCommandParseResult
     switch program.lowercased() {
-    case "krg" where arguments == ["-help"]:
-      return .command(.help)
+    case "krg" where arguments == ["-help"] || arguments == ["--help"]:
+      result = .command(.help)
     case "run" where arguments.isEmpty:
-      return .command(.run)
+      result = .command(.run)
     case "ip" where arguments.isEmpty:
-      return .command(.ip)
+      result = .command(.ip)
     case "clear" where arguments.isEmpty:
-      return .command(.clear)
+      result = .command(.clear)
     case "ping" where arguments.count == 1:
-      return .command(.ping(target: arguments[0]))
+      result = .command(.ping(target: arguments[0]))
     case "nmap" where !arguments.isEmpty:
-      return .command(.nmap(options: Array(arguments.dropLast()), target: arguments.last!))
+      result = .command(.nmap(options: Array(arguments.dropLast()), target: arguments.last!))
     case "curl" where arguments.count == 1:
-      return .command(.curl(url: arguments[0]))
+      result = .command(.curl(url: arguments[0]))
     case "ftp" where arguments.count == 1:
-      return .command(.ftp(target: arguments[0]))
+      result = .command(.ftp(target: arguments[0]))
     case "smbclient" where !arguments.isEmpty:
-      return .command(.smbclient(arguments: arguments))
+      result = .command(.smbclient(arguments: arguments))
     case "ssh" where arguments.count == 1:
-      return .command(.ssh(destination: arguments[0]))
+      result = .command(.ssh(destination: arguments[0]))
     case "ls" where arguments.first == "-la" && arguments.count <= 2:
-      return .command(.lsAll(path: arguments.count == 2 ? arguments[1] : nil))
+      result = .command(.lsAll(path: arguments.count == 2 ? arguments[1] : nil))
     case "ls" where arguments.count <= 1:
-      return .command(.ls(path: arguments.first))
+      result = .command(.ls(path: arguments.first))
     case "cd" where arguments.count == 1:
-      return .command(.cd(path: arguments[0]))
+      result = .command(.cd(path: arguments[0]))
     case "cat" where arguments.count == 1:
-      return .command(.cat(path: arguments[0]))
+      result = .command(.cat(path: arguments[0]))
     case "sha256sum" where arguments.count == 1:
-      return .command(.sha256sum(path: arguments[0]))
+      result = .command(.sha256sum(path: arguments[0]))
     case "find" where !arguments.isEmpty:
-      return .command(.find(arguments: arguments))
+      result = .command(.find(arguments: arguments))
     case "id" where arguments.isEmpty:
-      return .command(.id)
+      result = .command(.id)
     case "whoami" where arguments.isEmpty:
-      return .command(.whoami)
+      result = .command(.whoami)
     case "sudo" where arguments == ["-l"]:
-      return .command(.sudoList)
+      result = .command(.sudoList)
     default:
-      return .rejected("Polecenie nie jest dostępne w tym laboratorium.")
+      result = .rejected("Polecenie nie jest dostępne w tym laboratorium.")
     }
+
+    guard case .command(let command) = result, let allowedPrograms else {
+      return result
+    }
+
+    let builtInPrograms: Set<String> = ["help", "run", "ip", "clear", "ls", "cd"]
+    guard builtInPrograms.contains(command.program) || allowedPrograms.contains(command.program) else {
+      return .programNotAllowed
+    }
+
+    return result
   }
 }
