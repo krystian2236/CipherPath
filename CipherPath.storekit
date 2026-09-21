@@ -1,0 +1,59 @@
+{
+  "identifier" : "4D0D38C7-4B5D-4CE7-BB07-9A5C1B1D9A01",
+  "products" : [
+    {
+      "displayPrice" : "9.99",
+      "familyShareable" : true,
+      "internalID" : "local-pro",
+      "localizations" : [
+        {
+          "description" : "Dożywotni dostęp Pro do CipherPath.",
+          "displayName" : "CipherPath Pro",
+          "locale" : "pl"
+        }
+      ],
+      "productID" : "local.cipherpath.pro",
+      "referenceName" : "CipherPath Pro",
+      "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "1.99",
+      "familyShareable" : true,
+      "internalID" : "local-monthly",
+      "localizations" : [
+        {
+          "description" : "Miesięczny dostęp subskrypcyjny.",
+          "displayName" : "CipherPath Pro miesięcznie",
+          "locale" : "pl"
+        }
+      ],
+      "productID" : "local.cipherpath.subscription.monthly",
+      "referenceName" : "CipherPath Pro Monthly",
+      "subscriptionGroupID" : "local-cipherpath-subscriptions",
+      "type" : "Auto-Renewable Subscription",
+      "recurringSubscriptionPeriod" : "P1M"
+    },
+    {
+      "displayPrice" : "14.99",
+      "familyShareable" : true,
+      "internalID" : "local-yearly",
+      "localizations" : [
+        {
+          "description" : "Roczny dostęp subskrypcyjny.",
+          "displayName" : "CipherPath Pro rocznie",
+          "locale" : "pl"
+        }
+      ],
+      "productID" : "local.cipherpath.subscription.yearly",
+      "referenceName" : "CipherPath Pro Yearly",
+      "subscriptionGroupID" : "local-cipherpath-subscriptions",
+      "type" : "Auto-Renewable Subscription",
+      "recurringSubscriptionPeriod" : "P1Y"
+    }
+  ],
+  "settings" : {
+    "storefront" : "POL",
+    "defaultLocale" : "pl"
+  },
+  "version" : 1
+}

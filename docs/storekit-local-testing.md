@@ -11,14 +11,13 @@ Ten etap bazuje na StoreKit Testing in Xcode. Lokalna konfiguracja StoreKit zast
 1. File → New → File from Template.
 2. Wybierz **StoreKit Configuration File**.
 3. Utwórz lokalny plik bez synchronizacji z App Store Connect.
-4. Nazwij go `CipherPath.storekit`.
+4. Nazwij go `CipherPath.storekit` (plik jest już zapisany w repozytorium CP-03).
 5. Dodaj:
    - Non-Consumable: `local.cipherpath.pro`
    - Auto-Renewable Subscription: `local.cipherpath.subscription.monthly`
    - Auto-Renewable Subscription: `local.cipherpath.subscription.yearly`
-6. W schemacie **CipherPath Dev** otwórz Edit Scheme → Run → Options.
-7. Ustaw StoreKit Configuration na `CipherPath.storekit`.
-8. Schemat **CipherPath App Store** pozostaw bez lokalnej konfiguracji StoreKit.
+6. W schemacie **CipherPath Dev** konfiguracja `CipherPath.storekit` jest ustawiona w `LaunchAction`.
+7. Schemat **CipherPath App Store** pozostaw bez lokalnej konfiguracji StoreKit.
 
 ## Konfiguracja Product ID dla lokalnego testu
 
