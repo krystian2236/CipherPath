@@ -118,7 +118,10 @@ private struct PracticeHubView: View {
     NavigationStack {
       List {
         Section {
-          DevLocationLabel(location: .practice)
+          HStack {
+            DevLocationLabel(location: .practice)
+            UIRefCopyButton(ref: .practice)
+          }
         }
         Section {
           InfoBanner(

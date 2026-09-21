@@ -1,6 +1,30 @@
 import SwiftUI
 import UIKit
 
+struct UIRefCopyButton: View {
+  let ref: UIRef
+  @State private var copied = false
+
+  var body: some View {
+    #if DEBUG
+      if AppDistributionMode.currentBuild == .developer {
+        Button {
+          UIPasteboard.general.string = ref.clipboardText
+          copied = true
+          DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { copied = false }
+        } label: {
+          Image(systemName: copied ? "checkmark" : "doc.on.doc")
+            .font(.caption2.weight(.semibold))
+            .foregroundStyle(.secondary)
+            .padding(5)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Kopiuj UIREF \(ref.rawValue)")
+      }
+    #endif
+  }
+}
+
 enum DevLocation: String, CaseIterable, Sendable {
   case dashboard = "START"
   case dashboardMission = "START / DZISIEJSZA MISJA"

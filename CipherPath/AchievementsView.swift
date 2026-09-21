@@ -11,7 +11,10 @@ struct AchievementsView: View {
     NavigationStack {
       List {
         Section {
-          DevLocationLabel(location: .achievements)
+          HStack {
+            DevLocationLabel(location: .achievements)
+            UIRefCopyButton(ref: .achievements)
+          }
         }
         ForEach(achievements, id: \.id) { achievement in
           HStack(spacing: 15) {

@@ -29,7 +29,10 @@ struct LearningPathListView: View {
     NavigationStack {
       ScrollView {
         VStack(alignment: .leading, spacing: 16) {
-          DevLocationLabel(location: .paths)
+          HStack {
+            DevLocationLabel(location: .paths)
+            UIRefCopyButton(ref: .paths)
+          }
           LazyVGrid(columns: columns, alignment: .leading, spacing: 8) {
             ForEach(StarterCurriculum.paths, id: \.self) { path in
               let summary = PathCardSummary.make(for: path, policy: accessPolicy)

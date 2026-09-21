@@ -51,6 +51,7 @@
 		E00000000000000000000041 /* PointsWalletTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000037 /* PointsWalletTests.swift */; };
 		E00000000000000000000042 /* PointsModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000038 /* PointsModels.swift */; };
 		E00000000000000000000043 /* PointsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000039 /* PointsView.swift */; };
+		E00000000000000000000044 /* UIRef.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000003A /* UIRef.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -111,6 +112,7 @@
 		F00000000000000000000037 /* PointsWalletTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointsWalletTests.swift; sourceTree = "<group>"; };
 		F00000000000000000000038 /* PointsModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointsModels.swift; sourceTree = "<group>"; };
 		F00000000000000000000039 /* PointsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointsView.swift; sourceTree = "<group>"; };
+		F0000000000000000000003A /* UIRef.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIRef.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -156,6 +158,7 @@
 				F00000000000000000000016 /* PortScannerView.swift */,
 				F00000000000000000000017 /* DashboardView.swift */,
 				F00000000000000000000018 /* UIComponents.swift */,
+				F0000000000000000000003A /* UIRef.swift */,
 				F00000000000000000000019 /* ISHToolkit.swift */,
 				F0000000000000000000001A /* ISHToolkitView.swift */,
 				F0000000000000000000001D /* SSHShortcutLibrary.swift */,
@@ -320,6 +323,7 @@
 				E00000000000000000000013 /* PortScannerView.swift in Sources */,
 				E00000000000000000000014 /* DashboardView.swift in Sources */,
 				E00000000000000000000015 /* UIComponents.swift in Sources */,
+				E00000000000000000000044 /* UIRef.swift in Sources */,
 				E00000000000000000000016 /* ISHToolkit.swift in Sources */,
 				E00000000000000000000017 /* ISHToolkitView.swift in Sources */,
 				E00000000000000000000021 /* SSHShortcutLibrary.swift in Sources */,

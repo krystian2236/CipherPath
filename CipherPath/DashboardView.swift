@@ -41,7 +41,10 @@ struct DashboardView: View {
     NavigationStack {
       ScrollView {
         LazyVStack(alignment: .leading, spacing: 22) {
-          DevLocationLabel(location: .dashboard)
+          HStack {
+            DevLocationLabel(location: .dashboard)
+            UIRefCopyButton(ref: .dashboard)
+          }
           header
           missionCard
           missionStages
@@ -77,7 +80,10 @@ struct DashboardView: View {
 
   private var networkSnapshot: some View {
     VStack(alignment: .leading, spacing: 12) {
-      sectionHeader("Stan sieci", destination: .practice)
+      HStack {
+        sectionHeader("Stan sieci", destination: .practice)
+        UIRefCopyButton(ref: .networkSnapshot)
+      }
       LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
         MetricCard(title: "Urządzenia", value: "\(scanner.devices.count)", icon: "desktopcomputer")
         MetricCard(title: "Otwarte porty", value: "\(openPortCount)", icon: "door.left.hand.open")
@@ -120,7 +126,10 @@ struct DashboardView: View {
 
   private var missionCard: some View {
     VStack(alignment: .leading, spacing: 14) {
-      DevLocationLabel(location: .dashboardMission)
+      HStack {
+        DevLocationLabel(location: .dashboardMission)
+        UIRefCopyButton(ref: .todayMission)
+      }
       Text("Dzisiejsza misja").font(.largeTitle.bold())
       Text("Realna wiedza. Bezpieczniejszy świat.").foregroundStyle(.secondary)
       VStack(alignment: .leading, spacing: 12) {
@@ -160,7 +169,13 @@ struct DashboardView: View {
   }
 
   private var missionStages: some View {
-    HStack(alignment: .top, spacing: 4) {
+    VStack(alignment: .leading, spacing: 8) {
+      HStack {
+        Text("Etapy misji").font(.title3.bold())
+        Spacer()
+        UIRefCopyButton(ref: .missionStages)
+      }
+      HStack(alignment: .top, spacing: 4) {
       ForEach(Array(LessonStage.allCases.enumerated()), id: \.element) { index, stage in
         VStack(spacing: 7) {
           Image(systemName: ["doc.text.fill", "magnifyingglass", "flag.fill", "lightbulb.fill"][index])
@@ -172,6 +187,7 @@ struct DashboardView: View {
           Text(stage.title).font(.caption2.bold()).multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
+      }
       }
     }
   }
