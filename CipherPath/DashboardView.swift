@@ -52,6 +52,8 @@ struct DashboardView: View {
       "Demo: dwie pierwsze lekcje każdej ścieżki są dostępne"
     case .pro:
       "Pro: pełny katalog jest dostępny w trybie deweloperskim"
+    case .subscription:
+      "Subskrypcja: pełny katalog jest dostępny"
     }
   }
 
