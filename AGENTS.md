@@ -33,7 +33,7 @@ Te instrukcje obowiązują Codex, ChatGPT oraz GitHub Copilot podczas pracy w ty
 ### CipherPath / CipherPath Dev
 
 - Przypisany Simulator: `SEC`
-- UDID: `41BEDD50-02F4-43E9-B643-07FE9B56E535`
+- UDID: `402CAB22-504F-4049-AF02-BD6288EFB25E`
 - Dotyczy zarówno `CipherPath`, jak i `CipherPath Dev`.
 - Wszystkie polecenia `xcodebuild`, `simctl`, install, launch oraz screenshoty dla CipherPath wykonuj na tym UDID.
 - Nie wybieraj automatycznie innego Simulatora.

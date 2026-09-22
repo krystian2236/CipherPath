@@ -30,7 +30,10 @@ struct DashboardView: View {
   }
 
   private var nextLesson: LearningLesson? {
-    availableLessons.first { !progressStore.isCompleted(lessonID: $0.id) }
+    if let current = progressStore.continueLesson {
+      return current
+    }
+    return availableLessons.first { !progressStore.isCompleted(lessonID: $0.id) }
   }
 
   private var featuredLesson: LearningLesson {
@@ -105,7 +108,7 @@ struct DashboardView: View {
 
   private var continueCard: some View {
     VStack(alignment: .leading, spacing: 10) {
-      Text("Kontynuuj naukę").font(.title3.bold())
+      Text(progressStore.continueLesson == nil ? "Zacznij naukę" : "Kontynuuj naukę").font(.title3.bold())
       Text(featuredLesson.title).font(.headline)
       Text(featuredLesson.summary).font(.subheadline).foregroundStyle(.secondary)
       Label("Następny etap: \(featuredStageTitle)", systemImage: "arrow.right.circle")
@@ -134,7 +137,7 @@ struct DashboardView: View {
       Text("Poświęć około \(MissionBriefing.forLesson(featuredLesson).estimatedMinutes) minut na kolejny kontrolowany krok.")
         .font(.caption)
         .foregroundStyle(.secondary)
-      Button("Zacznij teraz") { selectedTab = .paths }
+      Button("Zacznij teraz") { selectedTab = .learn }
         .buttonStyle(.bordered)
     }
     .frame(maxWidth: .infinity, alignment: .leading)
@@ -169,12 +172,12 @@ struct DashboardView: View {
     VStack(alignment: .leading, spacing: 10) {
       Text("Twoja przestrzeń").font(.title3.bold())
       HStack(spacing: 10) {
-        dashboardCard("Learn", icon: "book.fill", tint: .mint, tab: .paths)
-        dashboardCard("Practice", icon: "target", tint: .orange, tab: .missions)
+        dashboardCard("Learn", icon: "book.fill", tint: .mint, tab: .learn)
+        dashboardCard("Practice", icon: "wrench.and.screwdriver.fill", tint: .orange, tab: .practice)
       }
       HStack(spacing: 10) {
-        dashboardCard("Security", icon: "lock.shield.fill", tint: .cyan, tab: .practice)
-        dashboardCard("Progress", icon: "chart.bar.fill", tint: .purple, tab: .achievements)
+        dashboardCard("Security", icon: "lock.shield.fill", tint: .cyan, tab: .security)
+        dashboardCard("Progress", icon: "chart.bar.fill", tint: .purple, tab: .progress)
       }
     }
   }
@@ -197,7 +200,7 @@ struct DashboardView: View {
       Text("Dzisiejsza misja").font(.title3.bold())
       Text("Przećwicz decyzję bezpieczeństwa w kontrolowanym scenariuszu.")
         .font(.subheadline).foregroundStyle(.secondary)
-      Button("Przejdź do Practice") { selectedTab = .missions }
+      Button("Przejdź do Security") { selectedTab = .security }
         .buttonStyle(.bordered)
     }
     .padding(16)
@@ -213,7 +216,7 @@ struct DashboardView: View {
       Text(achievement?.title ?? "Pierwsze osiągnięcie czeka")
         .font(.subheadline.weight(.semibold))
       Spacer()
-      Button("Progress") { selectedTab = .achievements }
+      Button("Progress") { selectedTab = .progress }
         .font(.caption.bold())
     }
     .padding(14)

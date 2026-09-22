@@ -232,6 +232,24 @@ struct LearningActivity: Identifiable, Codable, Equatable, Sendable {
   }
 }
 
+struct PracticeHistoryEntry: Identifiable, Codable, Equatable, Sendable {
+  let id: String
+  let lessonID: String
+  let labTitle: String
+  let mode: LabMode
+  let xp: Int
+  let date: Date
+
+  init(lessonID: String, labTitle: String, mode: LabMode, xp: Int, date: Date = .now) {
+    self.id = UUID().uuidString
+    self.lessonID = lessonID
+    self.labTitle = labTitle
+    self.mode = mode
+    self.xp = xp
+    self.date = date
+  }
+}
+
 struct LearningLesson: Identifiable, Codable, Equatable, Sendable {
   let id: String
   let path: LearningPath
@@ -241,6 +259,14 @@ struct LearningLesson: Identifiable, Codable, Equatable, Sendable {
   let environment: LearningEnvironment
   let availability: LessonAvailability
   let stages: [LessonStage]
+
+  var difficulty: MissionDifficulty {
+    order == 1 ? .easy : .medium
+  }
+
+  var estimatedMinutes: Int {
+    order == 1 ? 8 : 12
+  }
 }
 
 enum StarterCurriculum {

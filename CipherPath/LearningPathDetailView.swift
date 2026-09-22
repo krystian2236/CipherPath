@@ -1,10 +1,11 @@
 import SwiftUI
 
-private enum LessonFilter: String, CaseIterable, Identifiable, Hashable {
+enum LessonFilter: String, CaseIterable, Identifiable, Hashable {
   case all
   case inProgress
   case completed
   case locked
+  case bookmarked
 
   var id: Self { self }
 
@@ -14,6 +15,7 @@ private enum LessonFilter: String, CaseIterable, Identifiable, Hashable {
     case .inProgress: "W toku"
     case .completed: "Ukończone"
     case .locked: "Zablokowane"
+    case .bookmarked: "Zapisane"
     }
   }
 }
@@ -35,6 +37,8 @@ struct LearningPathDetailView: View {
         access == .included && progressStore.isCompleted(lessonID: lesson.id)
       case .locked:
         access != .included
+      case .bookmarked:
+        progressStore.isBookmarked(lessonID: lesson.id)
       }
     }
   }
@@ -59,7 +63,11 @@ struct LearningPathDetailView: View {
         }
       }
       if lessons.isEmpty {
-        ContentUnavailableView("Brak lekcji", systemImage: "line.3.horizontal.decrease.circle")
+        ContentUnavailableView(
+          "Brak lekcji",
+          systemImage: "line.3.horizontal.decrease.circle",
+          description: Text("Zmień filtr i spróbuj ponownie.")
+        )
       }
     }
     .navigationTitle(path.title)
@@ -78,7 +86,8 @@ struct LearningPathDetailView: View {
             access: access,
             isCompleted: progressStore.isCompleted(lessonID: lesson.id),
             prerequisiteTitle: prerequisiteTitle(for: lesson),
-            note: progressStore.note(for: lesson.id)
+            note: progressStore.note(for: lesson.id),
+            completedStageCount: progressStore.progress.completedStages[lesson.id, default: []].count
           )
         }
       } else {
@@ -88,7 +97,8 @@ struct LearningPathDetailView: View {
           access: access,
           isCompleted: false,
           prerequisiteTitle: prerequisiteTitle(for: lesson),
-          note: progressStore.note(for: lesson.id)
+          note: progressStore.note(for: lesson.id),
+          completedStageCount: 0
         )
       }
       NavigationLink {
@@ -99,6 +109,15 @@ struct LearningPathDetailView: View {
           .padding(6)
       }
       .accessibilityLabel("Notatka do lekcji")
+      Button {
+        progressStore.toggleBookmark(lessonID: lesson.id)
+      } label: {
+        Image(systemName: progressStore.isBookmarked(lessonID: lesson.id) ? "bookmark.fill" : "bookmark")
+          .foregroundStyle(.secondary)
+          .padding(6)
+      }
+      .buttonStyle(.plain)
+      .accessibilityLabel(progressStore.isBookmarked(lessonID: lesson.id) ? "Usuń zakładkę" : "Zapisz lekcję na później")
     }
   }
 
@@ -116,6 +135,7 @@ private struct LessonRow: View {
   let isCompleted: Bool
   let prerequisiteTitle: String?
   let note: String
+  let completedStageCount: Int
 
   var body: some View {
     HStack(spacing: 12) {
@@ -127,14 +147,21 @@ private struct LessonRow: View {
         Text(lesson.title).font(.headline)
         Text(lesson.summary).font(.caption).foregroundStyle(.secondary)
         HStack(spacing: 8) {
-          Label("\(lesson.order == 1 ? 8 : 12) min", systemImage: "clock")
-          Label(lesson.order == 1 ? "Łatwa" : "Średnia", systemImage: "gauge.with.dots.needle.67percent")
+          Label("\(lesson.estimatedMinutes) min", systemImage: "clock")
+          Label(lesson.difficulty.rawValue, systemImage: "gauge.with.dots.needle.67percent")
           if !note.isEmpty {
             Label("Notatka", systemImage: "note.text")
           }
         }
         .font(.caption2)
         .foregroundStyle(.secondary)
+        if access == .included {
+          ProgressView(
+            value: Double(completedStageCount),
+            total: Double(max(lesson.stages.count, 1))
+          )
+          .tint(path.tint)
+        }
         if let prerequisiteTitle {
           Text("Wymaga: \(prerequisiteTitle)")
             .font(.caption2)

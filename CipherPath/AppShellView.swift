@@ -2,23 +2,23 @@ import SwiftUI
 
 enum AppTab: Int, Hashable {
   case start = 0
-  case paths = 1
-  case missions = 2
-  case practice = 3
-  case achievements = 4
+  case learn = 1
+  case practice = 2
+  case security = 3
+  case progress = 4
 
   static let navigationOrder: [AppTab] = [
-    .start, .paths, .missions, .practice, .achievements,
+    .start, .learn, .practice, .security, .progress,
   ]
 
   /// Publiczne nazwy obszarów; surowe wartości pozostają zgodne z `SceneStorage`.
   var sectionTitle: String {
     switch self {
     case .start: "Start"
-    case .paths: "Learn"
-    case .missions: "Practice"
-    case .practice: "Security"
-    case .achievements: "Progress"
+    case .learn: "Learn"
+    case .practice: "Practice"
+    case .security: "Security"
+    case .progress: "Progress"
     }
   }
 
@@ -81,32 +81,22 @@ struct AppShellView: View {
       )
         .tabItem { Label("Start", systemImage: "house.fill") }.tag(AppTab.start)
       LearningPathListView(progressStore: learningProgressStore, accessPolicy: .current)
-        .tabItem { Label("Learn", systemImage: "book.fill") }.tag(AppTab.paths)
-      MissionsView(progressStore: learningProgressStore, accessPolicy: .current)
-        .tabItem { Label("Practice", systemImage: "target") }.tag(AppTab.missions)
-      Group {
-        if AppDistributionMode.currentBuild == .developer {
-          PracticeHubView(
-            scanner: scanner,
-            tools: tools,
-            knownDeviceStore: knownDeviceStore,
-            learningProgressStore: learningProgressStore,
-            selectedTab: selectedTab,
-            ishWorkspaceRouteRaw: $ishWorkspaceRouteRaw
-          )
-        } else {
-          SecurityChecklistView(progressStore: learningProgressStore)
-        }
-      }
-        .tabItem {
-          Label(
-            "Security",
-            systemImage: AppDistributionMode.currentBuild == .developer ? "wrench.and.screwdriver.fill" : "lock.shield.fill"
-          )
-        }
+        .tabItem { Label("Learn", systemImage: "book.fill") }.tag(AppTab.learn)
+      PracticeHubView(
+        scanner: scanner,
+        tools: tools,
+        knownDeviceStore: knownDeviceStore,
+        learningProgressStore: learningProgressStore,
+        selectedTab: selectedTab,
+        ishWorkspaceRouteRaw: $ishWorkspaceRouteRaw
+      )
+        .tabItem { Label("Practice", systemImage: "wrench.and.screwdriver.fill") }
         .tag(AppTab.practice)
+      SecurityHubView(progressStore: learningProgressStore, accessPolicy: .current)
+        .tabItem { Label("Security", systemImage: "lock.shield.fill") }
+        .tag(AppTab.security)
       AchievementsView(progressStore: learningProgressStore)
-        .tabItem { Label("Progress", systemImage: "chart.bar.fill") }.tag(AppTab.achievements)
+        .tabItem { Label("Progress", systemImage: "chart.bar.fill") }.tag(AppTab.progress)
     }
     .tint(.cyan)
     .alert("Problem z zapamiętanymi urządzeniami", isPresented: storeErrorIsPresented) {
@@ -133,12 +123,21 @@ struct AppShellView: View {
   }
 }
 
-private struct SecurityChecklistView: View {
+private struct SecurityHubView: View {
   @ObservedObject var progressStore: LearningProgressStore
+  let accessPolicy: ContentAccessPolicy
 
   var body: some View {
     NavigationStack {
       List {
+        Section {
+          Text("Security łączy checklistę, scenariusze sytuacyjne i bezpieczne misje offline.")
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
+          NavigationLink("Misje bezpieczeństwa") {
+            MissionsView(progressStore: progressStore, accessPolicy: accessPolicy)
+          }
+        }
         Section {
           Text("Ręczna checklista ustawień bezpieczeństwa. CipherPath nie wykonuje pełnego audytu urządzenia ani nie wysyła wyników.")
             .font(.subheadline)
@@ -236,7 +235,7 @@ private struct PracticeHubView: View {
           }
         }
       }
-      .navigationTitle("Dev Tools")
+      .navigationTitle("Practice")
     }
   }
 }

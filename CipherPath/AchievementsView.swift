@@ -33,7 +33,7 @@ struct AchievementsView: View {
         Section {
           HStack {
             DevLocationLabel(location: .achievements)
-            UIRefCopyButton(ref: .achievements)
+            UIRefCopyButton(ref: .progress)
           }
         }
         Section("Podsumowanie") {
@@ -47,6 +47,21 @@ struct AchievementsView: View {
           } label: {
             Label("Punkty i historia", systemImage: "list.bullet.rectangle")
           }
+        }
+        Section("Cel dzienny i seria") {
+          HStack {
+            progressMetric(
+              "Dzisiaj",
+              value: "\(progressStore.progress.xpEarnedToday)/\(progressStore.progress.dailyGoalXP) XP",
+              icon: "sun.max.fill",
+              color: .orange
+            )
+            progressMetric("Seria", value: "\(progressStore.streakDays) dni", icon: "flame.fill", color: .red)
+          }
+          ProgressView(value: progressStore.dailyGoalProgress) {
+            Text(progressStore.isDailyGoalComplete ? "Cel wykonany" : "Postęp celu dziennego")
+          }
+          .tint(.orange)
         }
         Section("Postęp ścieżek") {
           ForEach(pathSummaries) { summary in
@@ -76,34 +91,85 @@ struct AchievementsView: View {
           }
         }
         Section("Osiągnięcia") {
-        ForEach(achievements, id: \.id) { achievement in
-          HStack(spacing: 15) {
-            Image(systemName: achievement.isUnlocked ? "medal.fill" : "lock.fill")
-              .font(.title)
-              .foregroundStyle(achievement.isUnlocked ? color(achievement.rarity) : .secondary)
-              .frame(width: 52, height: 52)
-              .background(color(achievement.rarity).opacity(0.14), in: Circle())
-            VStack(alignment: .leading, spacing: 4) {
-              Text(achievement.title).font(.headline)
-              Text(achievement.rarity.rawValue)
-                .font(.caption.bold())
-                .foregroundStyle(color(achievement.rarity))
-              Text(achievement.requirement).font(.caption).foregroundStyle(.secondary)
-              ProgressView(
-                value: Double(achievement.current),
-                total: Double(achievement.target)
-              )
-              .tint(color(achievement.rarity))
-              Text("\(achievement.current)/\(achievement.target)")
-                .font(.caption2.monospacedDigit())
-                .foregroundStyle(.secondary)
+            ForEach(achievements, id: \.id) { achievement in
+              HStack(spacing: 15) {
+                Image(systemName: achievement.isUnlocked ? "medal.fill" : "lock.fill")
+                  .font(.title)
+                  .foregroundStyle(achievement.isUnlocked ? color(achievement.rarity) : .secondary)
+                  .frame(width: 52, height: 52)
+                  .background(color(achievement.rarity).opacity(0.14), in: Circle())
+                VStack(alignment: .leading, spacing: 4) {
+                  Text(achievement.title).font(.headline)
+                  Text(achievement.rarity.rawValue)
+                    .font(.caption.bold())
+                    .foregroundStyle(color(achievement.rarity))
+                  Text(achievement.requirement).font(.caption).foregroundStyle(.secondary)
+                  ProgressView(
+                    value: Double(achievement.current),
+                    total: Double(achievement.target)
+                  )
+                  .tint(color(achievement.rarity))
+                  Text("\(achievement.current)/\(achievement.target)")
+                    .font(.caption2.monospacedDigit())
+                    .foregroundStyle(.secondary)
+                }
+              }
+              .padding(.vertical, 7)
             }
           }
-          .padding(.vertical, 7)
-        }
-        }
+          Section("Ostatnia aktywność") {
+            if progressStore.recentActivities.isEmpty {
+              ContentUnavailableView("Brak aktywności", systemImage: "clock")
+            } else {
+              ForEach(progressStore.recentActivities.prefix(8)) { activity in
+                HStack {
+                  Image(systemName: activity.kind == .labCompleted ? "target" : "book.fill")
+                    .foregroundStyle(activity.kind == .labCompleted ? .orange : .cyan)
+                  VStack(alignment: .leading) {
+                    Text(activity.title)
+                    Text(activity.date, format: .dateTime.day().month().hour().minute())
+                      .font(.caption2)
+                      .foregroundStyle(.secondary)
+                  }
+                }
+              }
+            }
+          }
+          Section("Historia Practice") {
+            if progressStore.practiceHistory.isEmpty {
+              Text("Ukończ pierwszy lab, aby zobaczyć historię.")
+                .foregroundStyle(.secondary)
+            } else {
+              ForEach(progressStore.practiceHistory.prefix(8)) { entry in
+                HStack {
+                  VStack(alignment: .leading) {
+                    Text(entry.labTitle)
+                    Text("\(entry.mode.title) • \(entry.date, format: .dateTime.day().month().year())")
+                      .font(.caption)
+                      .foregroundStyle(.secondary)
+                  }
+                  Spacer()
+                  Text("+\(entry.xp) XP")
+                    .font(.caption.bold())
+                    .foregroundStyle(.green)
+                }
+              }
+            }
+          }
+          #if CIPHERPATH_DEVELOPER
+            if AppDistributionMode.currentBuild == .developer {
+              Section("Narzędzia Dev") {
+                Button("Resetuj postęp", role: .destructive) {
+                  progressStore.reset()
+                }
+                Button("Dodaj 100 XP") {
+                  progressStore.addPointsForDevelopment(100)
+                }
+              }
+            }
+          #endif
       }
-      .navigationTitle("Osiągnięcia")
+      .navigationTitle("Progress")
     }
   }
 

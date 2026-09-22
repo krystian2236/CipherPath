@@ -6,8 +6,9 @@ enum UIRef: String, CaseIterable, Sendable {
   case missionStages = "CIPHERPATH.DASHBOARD.MISSION_STAGES"
   case networkSnapshot = "CIPHERPATH.DASHBOARD.NETWORK_SNAPSHOT"
   case practice = "CIPHERPATH.PRACTICE"
-  case paths = "CIPHERPATH.PATHS"
-  case achievements = "CIPHERPATH.ACHIEVEMENTS"
+  case security = "CIPHERPATH.SECURITY"
+  case learn = "CIPHERPATH.LEARN"
+  case progress = "CIPHERPATH.PROGRESS"
 
   var label: String {
     switch self {
@@ -15,18 +16,19 @@ enum UIRef: String, CaseIterable, Sendable {
     case .todayMission: "Dzisiejsza misja"
     case .missionStages: "Etapy misji"
     case .networkSnapshot: "Stan sieci"
-    case .practice: "Praktyka"
-    case .paths: "Ścieżki"
-    case .achievements: "Osiągnięcia"
+    case .practice: "Practice"
+    case .security: "Security"
+    case .learn: "Learn"
+    case .progress: "Progress"
     }
   }
 
   var source: String {
     switch self {
     case .dashboard, .todayMission, .missionStages, .networkSnapshot: "CipherPath/DashboardView.swift"
-    case .practice: "CipherPath/AppShellView.swift"
-    case .paths: "CipherPath/LearningPathListView.swift"
-    case .achievements: "CipherPath/AchievementsView.swift"
+    case .practice, .security: "CipherPath/AppShellView.swift"
+    case .learn: "CipherPath/LearningPathListView.swift"
+    case .progress: "CipherPath/AchievementsView.swift"
     }
   }
 
@@ -37,8 +39,9 @@ enum UIRef: String, CaseIterable, Sendable {
     case .missionStages: "missionStages"
     case .networkSnapshot: "networkSnapshot"
     case .practice: "PracticeHubView"
-    case .paths: "LearningPathListView"
-    case .achievements: "AchievementsView"
+    case .security: "SecurityHubView"
+    case .learn: "LearningPathListView"
+    case .progress: "AchievementsView"
     }
   }
 

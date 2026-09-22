@@ -376,7 +376,7 @@ struct SessionRestorationTests {
 
   @Test("Primary navigation follows the learning journey")
   func primaryNavigationFollowsLearningJourney() {
-    #expect(AppTab.navigationOrder == [.start, .paths, .missions, .practice, .achievements])
+    #expect(AppTab.navigationOrder == [.start, .learn, .practice, .security, .progress])
     #expect(AppTab.navigationOrder.map(\.sectionTitle) == ["Start", "Learn", "Practice", "Security", "Progress"])
   }
 

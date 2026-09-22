@@ -19,6 +19,8 @@ struct PathCardSummary: Equatable, Sendable {
 struct LearningPathListView: View {
   @ObservedObject var progressStore: LearningProgressStore
   let accessPolicy: ContentAccessPolicy
+  @State private var searchText = ""
+  @State private var filter: LessonFilter = .all
 
   private let columns = Array(
     repeating: GridItem(.flexible(), spacing: 8, alignment: .top),
@@ -31,8 +33,16 @@ struct LearningPathListView: View {
         VStack(alignment: .leading, spacing: 16) {
           HStack {
             DevLocationLabel(location: .paths)
-            UIRefCopyButton(ref: .paths)
+            UIRefCopyButton(ref: .learn)
           }
+          Picker("Filtr lekcji", selection: $filter) {
+            ForEach(LessonFilter.allCases) { filter in
+              Text(filter.title).tag(filter)
+            }
+          }
+          .pickerStyle(.segmented)
+          TextField("Szukaj lekcji", text: $searchText)
+            .textFieldStyle(.roundedBorder)
           LazyVGrid(columns: columns, alignment: .leading, spacing: 8) {
             ForEach(StarterCurriculum.paths, id: \.self) { path in
               let summary = PathCardSummary.make(for: path, policy: accessPolicy)
@@ -46,9 +56,12 @@ struct LearningPathListView: View {
                 pathTile(path, summary: summary)
               }
               .buttonStyle(.plain)
+              .disabled(filteredLessons(in: path).isEmpty)
+              .opacity(filteredLessons(in: path).isEmpty ? 0.45 : 1)
             }
           }
         }
+
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
       }
@@ -56,6 +69,24 @@ struct LearningPathListView: View {
       .navigationTitle("Ścieżki")
     }
     .preferredColorScheme(.dark)
+  }
+
+  private func filteredLessons(in path: LearningPath) -> [LearningLesson] {
+    StarterCurriculum.lessons(in: path).filter { lesson in
+      let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+      let matchesSearch = query.isEmpty
+        || lesson.title.localizedCaseInsensitiveContains(query)
+        || lesson.summary.localizedCaseInsensitiveContains(query)
+      let access = accessPolicy.access(for: lesson)
+      let matchesFilter: Bool = switch filter {
+      case .all: true
+      case .inProgress: access == .included && !progressStore.isCompleted(lessonID: lesson.id)
+      case .completed: access == .included && progressStore.isCompleted(lessonID: lesson.id)
+      case .locked: access != .included
+      case .bookmarked: progressStore.isBookmarked(lessonID: lesson.id)
+      }
+      return matchesSearch && matchesFilter
+    }
   }
 
   private func pathTile(_ path: LearningPath, summary: PathCardSummary) -> some View {

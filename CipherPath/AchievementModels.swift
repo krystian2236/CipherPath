@@ -4,6 +4,10 @@ enum AchievementID: String, CaseIterable, Codable, Sendable {
   case firstFlag
   case withoutHints
   case labMaster
+  case firstLesson
+  case fiveLabs
+  case completedPath
+  case sevenDayStreak
 }
 
 enum AchievementRarity: String, Codable, Sendable {
@@ -67,6 +71,15 @@ enum AchievementCatalog {
     let independentCount = progress.labMissions.values.filter {
       $0.completedModes.contains(.adventure) && !$0.hintUsedModes.contains(.adventure)
     }.count
+    let completedLessons = StarterCurriculum.lessons.filter {
+      progress.completedStages[$0.id, default: []].count == $0.stages.count
+    }.count
+    let completedPaths = LearningPath.allCases.filter { path in
+      let lessons = StarterCurriculum.lessons(in: path)
+      return !lessons.isEmpty && lessons.allSatisfy {
+        progress.completedStages[$0.id, default: []].count == $0.stages.count
+      }
+    }.count
 
     switch id {
     case .firstFlag:
@@ -95,6 +108,26 @@ enum AchievementCatalog {
         rarity: .gold,
         current: min(guidedCount, 10),
         target: 10
+      )
+    case .firstLesson:
+      return AchievementProgress(
+        id: id, title: "Pierwsza lekcja", requirement: "Ukończ pierwszą lekcję",
+        rarity: .bronze, current: min(completedLessons, 1), target: 1
+      )
+    case .fiveLabs:
+      return AchievementProgress(
+        id: id, title: "Pięć laboratoriów", requirement: "Ukończ 5 laboratoriów",
+        rarity: .silver, current: min(guidedCount, 5), target: 5
+      )
+    case .completedPath:
+      return AchievementProgress(
+        id: id, title: "Cała ścieżka", requirement: "Ukończ całą ścieżkę",
+        rarity: .gold, current: min(completedPaths, 1), target: 1
+      )
+    case .sevenDayStreak:
+      return AchievementProgress(
+        id: id, title: "Tydzień nauki", requirement: "Utrzymaj serię przez 7 dni",
+        rarity: .gold, current: min(progress.streakDays, 7), target: 7
       )
     }
   }
