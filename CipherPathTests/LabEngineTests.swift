@@ -2,11 +2,22 @@ import Testing
 
 @testable import CipherPath
 
+@Suite("Lab mode safety")
+struct LabModeSafetyTests {
+  @Test("Adventure mode hides guidance")
+  func adventureModeIsHintFree() {
+    #expect(LabMode.guided.showsGuidance)
+    #expect(!LabMode.adventure.showsGuidance)
+    #expect(LabMode.adventure.guidanceLabel == "Bez podpowiedzi")
+  }
+}
+
 @Suite("Lab command parser")
 struct LabCommandParserTests {
   @Test("Recognizes the safe starter command set")
   func recognizesSafeCommands() {
     #expect(LabCommandParser.parse("krg -help") == .command(.help))
+    #expect(LabCommandParser.parse("krg --help") == .command(.help))
     #expect(LabCommandParser.parse("help").isRejected)
     #expect(!LabCommandParser.parse("run").isRejected)
     #expect(!LabCommandParser.parse("ip").isRejected)
@@ -164,6 +175,18 @@ struct LabEngineTests {
     #expect(otherTarget.status == .targetRejected)
     #expect(unavailableProgram.status == .programRejected)
     #expect(session.history.isEmpty)
+  }
+
+  @Test("Keeps the mission allowlist while accepting both help spellings")
+  func acceptsPortDetectiveCommandsOnly() throws {
+    let portDetective = try #require(StarterLabs.definition(for: "fundamentals-digital-safety"))
+    var session = LabSession(definitionID: portDetective.id)
+
+    #expect(LabEngine.execute("run", definition: portDetective, session: &session).status == .success)
+    #expect(LabEngine.execute("krg --help", definition: portDetective, session: &session).status == .success)
+    #expect(LabEngine.execute("ping 192.0.2.10", definition: portDetective, session: &session).status == .success)
+    #expect(LabEngine.execute("nmap -sC -sV 192.0.2.10", definition: portDetective, session: &session).status == .success)
+    #expect(LabEngine.execute("curl http://192.0.2.10", definition: portDetective, session: &session).status == .programRejected)
   }
 
   @Test("Unlocks a readable answer only after its objectives")

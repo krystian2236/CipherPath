@@ -55,16 +55,24 @@ struct LabTerminalView: View {
           DevLocationLabel(location: .labMode)
           Picker("Sposób gry", selection: $mode) {
             Text("Prowadzony").tag(LabMode.guided)
-            Text("Przygodowy").tag(LabMode.adventure)
+            Text("Bez podpowiedzi").tag(LabMode.adventure)
           }
           .pickerStyle(.segmented)
           .onChange(of: mode) { _, _ in
             resetSession()
           }
+          if !mode.showsGuidance {
+            Label(
+              "Samodzielny scenariusz: cele i sugerowane polecenia są ukryte.",
+              systemImage: "eye.slash.fill"
+            )
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+          }
         }
       }
 
-      if mode == .guided {
+      if mode.showsGuidance {
         Section("Cele") {
           DevLocationLabel(location: .labObjectives)
           ForEach(definition.objectives, id: \.id) { objective in
@@ -81,7 +89,7 @@ struct LabTerminalView: View {
         DevLocationLabel(location: .labTerminal)
         terminalOutput
 
-        if distribution == .developer || revealCommands {
+        if mode.showsGuidance || revealCommands {
           ScrollView(.horizontal, showsIndicators: false) {
             HStack {
               ForEach(definition.suggestedCommands, id: \.self) { command in
@@ -399,7 +407,7 @@ struct LabTerminalView: View {
     answerInput = ""
     answerMessage = nil
     revealTextHint = false
-    revealCommands = distribution == .developer
+    revealCommands = distribution == .developer && mode.showsGuidance
     purchaseMessage = nil
     pendingPurchase = nil
     startedAt = Date()
@@ -436,7 +444,7 @@ struct LabTerminalView: View {
   private func restoreAssistanceVisibility() {
     let assistance = progressStore.labProgress(for: lesson.id).assistanceByMode[mode] ?? .none
     revealTextHint = distribution == .appStore && assistance >= .hint
-    revealCommands = distribution == .developer || assistance >= .solution
+    revealCommands = (distribution == .developer && mode.showsGuidance) || assistance >= .solution
   }
 }
 

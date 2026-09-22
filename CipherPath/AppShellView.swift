@@ -2,14 +2,25 @@ import SwiftUI
 
 enum AppTab: Int, Hashable {
   case start = 0
-  case paths = 1
-  case missions = 2
-  case practice = 3
-  case achievements = 4
+  case learn = 1
+  case practice = 2
+  case security = 3
+  case progress = 4
 
   static let navigationOrder: [AppTab] = [
-    .start, .paths, .missions, .practice, .achievements,
+    .start, .learn, .practice, .security, .progress,
   ]
+
+  /// Publiczne nazwy obszarów; surowe wartości pozostają zgodne z `SceneStorage`.
+  var sectionTitle: String {
+    switch self {
+    case .start: "Start"
+    case .learn: "Learn"
+    case .practice: "Practice"
+    case .security: "Security"
+    case .progress: "Progress"
+    }
+  }
 
   static func restored(from rawValue: Int) -> AppTab {
     AppTab(rawValue: rawValue) ?? .start
@@ -62,12 +73,15 @@ struct AppShellView: View {
 
   var body: some View {
     TabView(selection: selectedTab) {
-      DashboardView(selectedTab: selectedTab, progressStore: learningProgressStore)
+      DashboardView(
+        selectedTab: selectedTab,
+        progressStore: learningProgressStore,
+        scanner: scanner,
+        knownDeviceStore: knownDeviceStore
+      )
         .tabItem { Label("Start", systemImage: "house.fill") }.tag(AppTab.start)
       LearningPathListView(progressStore: learningProgressStore, accessPolicy: .current)
-        .tabItem { Label("Ścieżki", systemImage: "safari.fill") }.tag(AppTab.paths)
-      MissionsView(progressStore: learningProgressStore, accessPolicy: .current)
-        .tabItem { Label("Misje", systemImage: "target") }.tag(AppTab.missions)
+        .tabItem { Label("Learn", systemImage: "book.fill") }.tag(AppTab.learn)
       PracticeHubView(
         scanner: scanner,
         tools: tools,
@@ -76,9 +90,13 @@ struct AppShellView: View {
         selectedTab: selectedTab,
         ishWorkspaceRouteRaw: $ishWorkspaceRouteRaw
       )
-        .tabItem { Label("Praktyka", systemImage: "chart.bar.fill") }.tag(AppTab.practice)
+        .tabItem { Label("Practice", systemImage: "wrench.and.screwdriver.fill") }
+        .tag(AppTab.practice)
+      SecurityHubView(progressStore: learningProgressStore, accessPolicy: .current)
+        .tabItem { Label("Security", systemImage: "lock.shield.fill") }
+        .tag(AppTab.security)
       AchievementsView(progressStore: learningProgressStore)
-        .tabItem { Label("Osiągnięcia", systemImage: "medal.fill") }.tag(AppTab.achievements)
+        .tabItem { Label("Progress", systemImage: "chart.bar.fill") }.tag(AppTab.progress)
     }
     .tint(.cyan)
     .alert("Problem z zapamiętanymi urządzeniami", isPresented: storeErrorIsPresented) {
@@ -86,7 +104,11 @@ struct AppShellView: View {
     } message: {
       Text(knownDeviceStore.errorMessage ?? "Nieznany błąd zapisu.")
     }
-    .task { scanner.refreshContext(); tools.refreshLocalContext() }
+    .task {
+      guard AppDistributionMode.currentBuild == .developer else { return }
+      scanner.refreshContext()
+      tools.refreshLocalContext()
+    }
   }
 
   private var selectedTab: Binding<AppTab> {
@@ -98,6 +120,69 @@ struct AppShellView: View {
 
   private var storeErrorIsPresented: Binding<Bool> {
     Binding(get: { knownDeviceStore.errorMessage != nil }, set: { if !$0 { knownDeviceStore.clearError() } })
+  }
+}
+
+private struct SecurityHubView: View {
+  @ObservedObject var progressStore: LearningProgressStore
+  let accessPolicy: ContentAccessPolicy
+
+  var body: some View {
+    NavigationStack {
+      List {
+        Section {
+          Text("Security łączy checklistę, scenariusze sytuacyjne i bezpieczne misje offline.")
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
+          NavigationLink("Misje bezpieczeństwa") {
+            MissionsView(progressStore: progressStore, accessPolicy: accessPolicy)
+          }
+        }
+        Section {
+          Text("Ręczna checklista ustawień bezpieczeństwa. CipherPath nie wykonuje pełnego audytu urządzenia ani nie wysyła wyników.")
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
+        }
+        ForEach(SecurityRiskGroup.allCases, id: \.self) { group in
+          Section(group.title) {
+            ForEach(SecurityChecklistItem.all.filter { $0.riskGroup == group }) { item in
+              Button {
+                progressStore.setSecurityCheck(
+                  item.id,
+                  completed: !progressStore.isSecurityCheckCompleted(item.id)
+                )
+              } label: {
+                HStack(alignment: .top, spacing: 12) {
+                  Image(systemName: progressStore.isSecurityCheckCompleted(item.id)
+                    ? "checkmark.circle.fill"
+                    : item.icon)
+                    .foregroundStyle(progressStore.isSecurityCheckCompleted(item.id) ? Color.green : Color.cyan)
+                    .frame(width: 24)
+                  VStack(alignment: .leading, spacing: 4) {
+                    Text(item.title).font(.headline)
+                    Text(item.explanation)
+                      .font(.caption)
+                      .foregroundStyle(.secondary)
+                    Text("Wskazówka: \(item.tip)")
+                      .font(.caption2)
+                      .foregroundStyle(.secondary)
+                    if let date = progressStore.securityReviewDate(for: item.id) {
+                      Text("Przegląd: \(date, format: .dateTime.day().month().year())")
+                        .font(.caption2)
+                        .foregroundStyle(.green)
+                    }
+                  }
+                  Spacer()
+                }
+              }
+              .buttonStyle(.plain)
+              .accessibilityLabel("\(item.title), \(progressStore.isSecurityCheckCompleted(item.id) ? "wykonano" : "niewykonano")")
+            }
+          }
+        }
+      }
+      .navigationTitle("Security")
+    }
   }
 }
 
@@ -113,7 +198,10 @@ private struct PracticeHubView: View {
     NavigationStack {
       List {
         Section {
-          DevLocationLabel(location: .practice)
+          HStack {
+            DevLocationLabel(location: .practice)
+            UIRefCopyButton(ref: .practice)
+          }
         }
         Section {
           InfoBanner(
@@ -139,12 +227,15 @@ private struct PracticeHubView: View {
           }
         }
         Section("Informacje") {
+          NavigationLink("O aplikacji") {
+            AboutView()
+          }
           NavigationLink("Prywatność i bezpieczeństwo") {
             PrivacySecurityView(progressStore: learningProgressStore)
           }
         }
       }
-      .navigationTitle("Praktyka")
+      .navigationTitle("Practice")
     }
   }
 }

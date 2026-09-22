@@ -4,11 +4,31 @@ struct LearningProgress: Codable, Equatable, Sendable {
   var completedStages: [String: [LessonStage]] = [:]
   var labMissions: [String: LabMissionProgress] = [:]
   var pointsWallet: PointsWallet = .initial
+  var recentActivities: [LearningActivity] = []
+  var lessonNotes: [String: String] = [:]
+  var securityChecks: [String: SecurityChecklistRecord] = [:]
+  var bookmarkedLessonIDs: Set<String> = []
+  var practiceHistory: [PracticeHistoryEntry] = []
+  var lastLessonID: String?
+  var dailyGoalXP: Int = 100
+  var xpEarnedToday = 0
+  var streakDays = 0
+  var lastActiveDay: String?
 
   private enum CodingKeys: String, CodingKey {
     case completedStages
     case labMissions
     case pointsWallet
+    case recentActivities
+    case lessonNotes
+    case securityChecks
+    case bookmarkedLessonIDs
+    case practiceHistory
+    case lastLessonID
+    case dailyGoalXP
+    case xpEarnedToday
+    case streakDays
+    case lastActiveDay
   }
 
   init() {}
@@ -24,6 +44,22 @@ struct LearningProgress: Codable, Equatable, Sendable {
     pointsWallet = try container.decodeIfPresent(
       PointsWallet.self, forKey: .pointsWallet
     ) ?? .initial
+    recentActivities = try container.decodeIfPresent(
+      [LearningActivity].self, forKey: .recentActivities
+    ) ?? []
+    lessonNotes = try container.decodeIfPresent(
+      [String: String].self, forKey: .lessonNotes
+    ) ?? [:]
+    securityChecks = try container.decodeIfPresent(
+      [String: SecurityChecklistRecord].self, forKey: .securityChecks
+    ) ?? [:]
+    bookmarkedLessonIDs = try container.decodeIfPresent(Set<String>.self, forKey: .bookmarkedLessonIDs) ?? []
+    practiceHistory = try container.decodeIfPresent([PracticeHistoryEntry].self, forKey: .practiceHistory) ?? []
+    lastLessonID = try container.decodeIfPresent(String.self, forKey: .lastLessonID)
+    dailyGoalXP = try container.decodeIfPresent(Int.self, forKey: .dailyGoalXP) ?? 100
+    xpEarnedToday = try container.decodeIfPresent(Int.self, forKey: .xpEarnedToday) ?? 0
+    streakDays = try container.decodeIfPresent(Int.self, forKey: .streakDays) ?? 0
+    lastActiveDay = try container.decodeIfPresent(String.self, forKey: .lastActiveDay)
   }
 }
 
@@ -70,6 +106,74 @@ final class LearningProgressStore: ObservableObject {
 
   var pointsBalance: Int {
     progress.pointsWallet.balance
+  }
+
+  var recentActivities: [LearningActivity] {
+    progress.recentActivities
+  }
+
+  var continueLesson: LearningLesson? {
+    guard let id = progress.lastLessonID else { return nil }
+    return lesson(withID: id)
+  }
+
+  var dailyGoalProgress: Double {
+    min(Double(progress.xpEarnedToday) / Double(max(progress.dailyGoalXP, 1)), 1)
+  }
+
+  var isDailyGoalComplete: Bool {
+    progress.xpEarnedToday >= progress.dailyGoalXP
+  }
+
+  var streakDays: Int { progress.streakDays }
+
+  var practiceHistory: [PracticeHistoryEntry] { progress.practiceHistory }
+
+  func isBookmarked(lessonID: String) -> Bool {
+    progress.bookmarkedLessonIDs.contains(lessonID)
+  }
+
+  func toggleBookmark(lessonID: String) {
+    if !progress.bookmarkedLessonIDs.insert(lessonID).inserted {
+      progress.bookmarkedLessonIDs.remove(lessonID)
+    }
+    save()
+  }
+
+  func setDailyGoalXP(_ value: Int) {
+    progress.dailyGoalXP = min(max(value, 25), 500)
+    save()
+  }
+
+  func note(for lessonID: String) -> String {
+    progress.lessonNotes[lessonID, default: ""]
+  }
+
+  func saveNote(_ note: String, for lessonID: String) {
+    let trimmed = note.trimmingCharacters(in: .whitespacesAndNewlines)
+    if trimmed.isEmpty {
+      progress.lessonNotes.removeValue(forKey: lessonID)
+    } else {
+      progress.lessonNotes[lessonID] = String(trimmed.prefix(2_000))
+    }
+    save()
+  }
+
+  func isSecurityCheckCompleted(_ itemID: String) -> Bool {
+    progress.securityChecks[itemID] != nil
+  }
+
+  func securityReviewDate(for itemID: String) -> Date? {
+    progress.securityChecks[itemID]?.checkedAt
+  }
+
+  func setSecurityCheck(_ itemID: String, completed: Bool) {
+    if completed {
+      progress.securityChecks[itemID] = SecurityChecklistRecord(checkedAt: .now)
+    } else {
+      progress.securityChecks.removeValue(forKey: itemID)
+    }
+    save()
   }
 
   func canStartLab(
@@ -214,6 +318,22 @@ final class LearningProgressStore: ObservableObject {
     if distribution == .appStore {
       _ = progress.pointsWallet.rewardMission(lessonID: lessonID)
     }
+    recordDailyProgress(reward(lessonID: lessonID, mode: mode).xp)
+    progress.practiceHistory.insert(
+      PracticeHistoryEntry(
+        lessonID: lessonID,
+        labTitle: StarterLabs.definition(for: lessonID)?.title ?? lesson.title,
+        mode: mode,
+        xp: reward(lessonID: lessonID, mode: mode).xp
+      ),
+      at: 0
+    )
+    progress.practiceHistory = Array(progress.practiceHistory.prefix(30))
+    recordActivity(
+      kind: .labCompleted,
+      lessonID: lessonID,
+      title: "\(lesson.title) • laboratorium ukończone"
+    )
     save()
     return true
   }
@@ -225,6 +345,13 @@ final class LearningProgressStore: ObservableObject {
           currentStage(for: lesson) == stage else { return false }
 
     progress.completedStages[lessonID, default: []].append(stage)
+    progress.lastLessonID = lessonID
+    touchActivityDay()
+    recordActivity(
+      kind: .lessonStageCompleted,
+      lessonID: lessonID,
+      title: "\(lesson.title) • \(stage.title)"
+    )
     save()
     return true
   }
@@ -246,6 +373,41 @@ final class LearningProgressStore: ObservableObject {
 
   private func lesson(withID id: String) -> LearningLesson? {
     StarterCurriculum.lessons.first { $0.id == id }
+  }
+
+  private func recordActivity(
+    kind: LearningActivityKind,
+    lessonID: String,
+    title: String
+  ) {
+    progress.recentActivities.insert(
+      LearningActivity(kind: kind, lessonID: lessonID, title: title),
+      at: 0
+    )
+    progress.recentActivities = Array(progress.recentActivities.prefix(20))
+  }
+
+  private func recordDailyProgress(_ xp: Int) {
+    touchActivityDay()
+    progress.xpEarnedToday += max(xp, 0)
+  }
+
+  private func touchActivityDay() {
+    let formatter = DateFormatter()
+    formatter.calendar = Calendar(identifier: .gregorian)
+    formatter.dateFormat = "yyyy-MM-dd"
+    let today = formatter.string(from: .now)
+    if progress.lastActiveDay == today { return }
+
+    if let last = progress.lastActiveDay,
+       let lastDate = formatter.date(from: last),
+       Calendar.current.dateComponents([.day], from: lastDate, to: .now).day == 1 {
+      progress.streakDays += 1
+    } else {
+      progress.streakDays = 1
+    }
+    progress.lastActiveDay = today
+    progress.xpEarnedToday = 0
   }
 
   private func save() {

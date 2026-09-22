@@ -3,6 +3,11 @@ import Testing
 
 @testable import CipherPath
 
+private func isolatedDefaults() -> UserDefaults {
+  let suiteName = "CipherPathTests.Isolated.\(UUID().uuidString)"
+  return UserDefaults(suiteName: suiteName)!
+}
+
 @Suite("Starter curriculum")
 struct StarterCurriculumTests {
   @Test("MVP contains five learning paths and twenty-five visible lessons")
@@ -59,10 +64,10 @@ struct StarterCurriculumTests {
 
 @Suite("Content access")
 struct ContentAccessTests {
-  @Test("Missions tab stays non-interactive until independent challenges arrive")
-  func missionsTabIsComingSoon() {
-    #expect(MissionsTabPresentation.current == .comingSoon)
-    #expect(!MissionsTabPresentation.current.showsLessonLinks)
+  @Test("Missions tab exposes controlled offline lessons")
+  func missionsTabIsAvailable() {
+    #expect(MissionsTabPresentation.current == .available)
+    #expect(MissionsTabPresentation.current.showsLessonLinks)
   }
 
   @Test("Developer location labels are stable and hidden from store builds")
@@ -235,11 +240,6 @@ struct PortScanAccessTests {
 
 @Suite("Learning progress")
 struct LearningProgressTests {
-  private func isolatedDefaults() -> UserDefaults {
-    let suiteName = "CipherPathTests.LearningProgress.\(UUID().uuidString)"
-    return UserDefaults(suiteName: suiteName)!
-  }
-
   private func comingSoonLessonFixture() -> LearningLesson {
     LearningLesson(
       id: "coming-soon-test",
@@ -389,7 +389,77 @@ struct SessionRestorationTests {
 
   @Test("Primary navigation follows the learning journey")
   func primaryNavigationFollowsLearningJourney() {
-    #expect(AppTab.navigationOrder == [.start, .paths, .missions, .practice, .achievements])
+    #expect(AppTab.navigationOrder == [.start, .learn, .practice, .security, .progress])
+    #expect(AppTab.navigationOrder.map(\.sectionTitle) == ["Start", "Learn", "Practice", "Security", "Progress"])
+  }
+
+  @Test("Completing a lesson stage records local activity")
+  @MainActor
+  func completingLessonStageRecordsActivity() {
+    let lesson = StarterCurriculum.lessons.first { $0.availability == .available }!
+    let store = LearningProgressStore(defaults: isolatedDefaults())
+
+    #expect(store.complete(stage: .learn, lessonID: lesson.id))
+    #expect(store.recentActivities.count == 1)
+    #expect(store.recentActivities[0].kind == LearningActivityKind.lessonStageCompleted)
+    #expect(store.recentActivities[0].lessonID == lesson.id)
+    #expect(store.recentActivities[0].title.contains("Poznaj"))
+  }
+
+  @Test("Legacy progress without activities remains readable")
+  func legacyProgressDecodesWithoutActivityHistory() throws {
+    let data = try JSONEncoder().encode(LearningProgress())
+    var object = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+    object.removeValue(forKey: "recentActivities")
+    let legacyData = try JSONSerialization.data(withJSONObject: object)
+
+    let restored = try JSONDecoder().decode(LearningProgress.self, from: legacyData)
+    #expect(restored.recentActivities.isEmpty)
+  }
+
+  @Test("Lesson notes stay local and are restored")
+  @MainActor
+  func lessonNotesPersistLocally() {
+    let defaults = isolatedDefaults()
+    let lessonID = "fundamentals-digital-safety"
+    let store = LearningProgressStore(defaults: defaults)
+
+    store.saveNote("  Sprawdź tylko przygotowany host.  ", for: lessonID)
+    #expect(store.note(for: lessonID) == "Sprawdź tylko przygotowany host.")
+
+    let restored = LearningProgressStore(defaults: defaults)
+    #expect(restored.note(for: lessonID) == "Sprawdź tylko przygotowany host.")
+  }
+
+  @Test("Security checklist stores a local review date")
+  @MainActor
+  func securityChecklistPersistsReview() {
+    let defaults = isolatedDefaults()
+    let store = LearningProgressStore(defaults: defaults)
+
+    #expect(!store.isSecurityCheckCompleted("mfa"))
+    store.setSecurityCheck("mfa", completed: true)
+    #expect(store.isSecurityCheckCompleted("mfa"))
+    #expect(store.securityReviewDate(for: "mfa") != nil)
+
+    let restored = LearningProgressStore(defaults: defaults)
+    #expect(restored.isSecurityCheckCompleted("mfa"))
+    restored.setSecurityCheck("mfa", completed: false)
+    #expect(!restored.isSecurityCheckCompleted("mfa"))
+  }
+
+  @Test("Progress summarizes each path without hidden lessons")
+  func pathProgressUsesCurrentAccessPolicy() {
+    let summary = LearningPathProgressSummary.make(
+      for: .fundamentals,
+      progress: LearningProgress(),
+      policy: ContentAccessPolicy(tier: .free)
+    )
+
+    #expect(summary.availableLessons == 1)
+    #expect(summary.completedLessons == 0)
+    #expect(summary.completedLabs == 0)
+    #expect(summary.xp == 0)
   }
 
   @Test("Shortcut route restores the selected command")

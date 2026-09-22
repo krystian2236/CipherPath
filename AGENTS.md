@@ -30,9 +30,16 @@ Te instrukcje obowiązują Codex, ChatGPT oraz GitHub Copilot podczas pracy w ty
 
 ## Simulator iOS
 
-- Domyślnym urządzeniem projektu jest `CipherPath — iPhone 17` o UDID `9C2648ED-A53E-4B37-BD28-AEB21233D180` z iOS 27.0. Przy poleceniach `xcodebuild` i `simctl` zawsze wskazuj ten UDID jawnie.
-- Po zmianach restartuj tylko aplikację. Nie wyłączaj, nie restartuj ani nie wymazuj całego Simulatora bez osobnego polecenia użytkownika.
-- Do kontroli innych rozmiarów używaj trybu zmiany rozmiaru ekranu w Device Hub zamiast tworzenia lub przełączania Simulatora.
+### CipherPath / CipherPath Dev
+
+- Przypisany Simulator: `SEC`
+- UDID: `402CAB22-504F-4049-AF02-BD6288EFB25E`
+- Dotyczy zarówno `CipherPath`, jak i `CipherPath Dev`.
+- Wszystkie polecenia `xcodebuild`, `simctl`, install, launch oraz screenshoty dla CipherPath wykonuj na tym UDID.
+- Nie wybieraj automatycznie innego Simulatora.
+- Jeśli ten UDID nie jest dostępny, zatrzymaj się i pokaż dostępne urządzenia zamiast wybierać inne.
+- Dev i Production mogą być zainstalowane jednocześnie na `SEC`, jeśli mają różne bundle ID.
+- Po zmianach restartuj tylko aplikację. Nie resetuj ani nie wymazuj całego Simulatora bez osobnego polecenia użytkownika.
 
 ## App Store
 
@@ -41,6 +48,8 @@ Te instrukcje obowiązują Codex, ChatGPT oraz GitHub Copilot podczas pracy w ty
 - Nie obchodź procesu App Review i nie wysyłaj buildu do App Store Connect bez osobnego zatwierdzenia.
 
 ## TARGET / REFERENCE
+
+- Jeśli polecenie użytkownika zawiera `UIREF:`, traktuj wskazany identyfikator jako główny zakres zadania. Najpierw odnajdź powiązany View/symbol i jego bezpośrednie zależności. Nie rozszerzaj zmian poza ten obszar bez uzasadnienia lub zgody użytkownika.
 
 - Gdy Codex ma dostęp do kilku repozytoriów, jawnie ustal przed zmianami:
   - TARGET — repozytorium, które wolno modyfikować,

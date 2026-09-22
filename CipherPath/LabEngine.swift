@@ -17,7 +17,13 @@ enum LabEngine {
       )
     }
 
-    let parseResult = LabCommandParser.parse(input)
+    let parseResult = LabCommandParser.parse(input, allowedPrograms: definition.allowedPrograms)
+    if case .programNotAllowed = parseResult {
+      return LabExecutionResult(
+        status: .programRejected,
+        output: "To polecenie nie jest dostępne w tej misji."
+      )
+    }
     guard case .command(let command) = parseResult else {
       return LabExecutionResult(
         status: .parseRejected,

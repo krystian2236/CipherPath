@@ -474,10 +474,16 @@ struct ServicesView: View {
 }
 
 struct AboutView: View {
+  private let identity = AppReleaseIdentity.current
+
   var body: some View {
     List {
       Section("Wersja") {
-        LabeledContent("CipherPath", value: "1.3")
+        LabeledContent("Nazwa", value: identity.displayName)
+        LabeledContent("Wersja", value: identity.version)
+        LabeledContent("Build", value: identity.build)
+        LabeledContent("Bundle ID", value: identity.bundleIdentifier)
+        LabeledContent("Tryb", value: identity.distribution)
         Text("Natywny zestaw narzędzi do obserwacji własnej sieci na iOS.")
           .font(.caption)
           .foregroundStyle(.secondary)
@@ -526,6 +532,7 @@ struct AboutView: View {
     .navigationTitle("O aplikacji")
     .navigationBarTitleDisplayMode(.inline)
   }
+
 }
 
 struct ScanCSVDocument: FileDocument {
