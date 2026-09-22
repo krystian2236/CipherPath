@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 2.2
+
+- uproszczono ekran Start do jednego dynamicznego następnego kroku i kompaktowego timeline’u postępu,
+- poprawiono responsywny układ zakładki Learn na wąskich ekranach,
+- usunięto techniczne etykiety DEV z interfejsu zakładki Learn,
+- usunięto techniczne etykiety DEV z całego przepływu lekcji i labu uruchamianego z Learn,
+
 ## 2.1
 
 - uporządkowano główną nawigację na Start, Learn, Practice, Security i Progress,

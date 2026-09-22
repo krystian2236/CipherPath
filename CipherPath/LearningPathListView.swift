@@ -22,17 +22,11 @@ struct LearningPathListView: View {
   @State private var searchText = ""
   @State private var filter: LessonFilter = .all
 
-  private let columns = Array(
-    repeating: GridItem(.flexible(), spacing: 8, alignment: .top),
-    count: 3
-  )
-
   var body: some View {
     NavigationStack {
       ScrollView {
         VStack(alignment: .leading, spacing: 16) {
           HStack {
-            DevLocationLabel(location: .paths)
             UIRefCopyButton(ref: .learn)
           }
           Picker("Filtr lekcji", selection: $filter) {
@@ -40,10 +34,15 @@ struct LearningPathListView: View {
               Text(filter.title).tag(filter)
             }
           }
-          .pickerStyle(.segmented)
+          .pickerStyle(.menu)
+          .frame(maxWidth: .infinity, alignment: .leading)
           TextField("Szukaj lekcji", text: $searchText)
             .textFieldStyle(.roundedBorder)
-          LazyVGrid(columns: columns, alignment: .leading, spacing: 8) {
+          LazyVGrid(
+            columns: [GridItem(.adaptive(minimum: 150), spacing: 10, alignment: .top)],
+            alignment: .leading,
+            spacing: 10
+          ) {
             ForEach(StarterCurriculum.paths, id: \.self) { path in
               let summary = PathCardSummary.make(for: path, policy: accessPolicy)
               NavigationLink {

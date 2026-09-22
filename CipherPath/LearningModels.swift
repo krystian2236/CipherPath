@@ -286,6 +286,14 @@ enum StarterCurriculum {
       id: "fundamentals-security-evidence", path: .fundamentals, order: 5,
       title: "Dowody i notatki",
       summary: "Zapiszesz obserwacje bez przechowywania sekretów."),
+    lesson(
+      id: "fundamentals-dns-resolution", path: .fundamentals, order: 6,
+      title: "DNS i rozwiązywanie nazw",
+      summary: "Przeanalizujesz fikcyjne rekordy DNS i wybierzesz bezpieczną rekomendację."),
+    lesson(
+      id: "fundamentals-least-privilege", path: .fundamentals, order: 7,
+      title: "Najmniejsze uprawnienia",
+      summary: "Ocenisz właściciela pliku, zakres dostępu i ryzyko konta administratora."),
 
     lesson(
       id: "blue-team-find-log-event", path: .blueTeam, order: 1,
@@ -307,6 +315,14 @@ enum StarterCurriculum {
       id: "blue-team-incident-notes", path: .blueTeam, order: 5,
       title: "Pierwsza reakcja na incydent",
       summary: "Uporządkujesz działania bez zmieniania materiału dowodowego."),
+    lesson(
+      id: "blue-team-suspicious-message", path: .blueTeam, order: 6,
+      title: "Analiza podejrzanej wiadomości",
+      summary: "Odczytasz fikcyjne nagłówki i wybierzesz bezpieczną reakcję."),
+    lesson(
+      id: "blue-team-alert-prioritization", path: .blueTeam, order: 7,
+      title: "Priorytetyzacja alertów",
+      summary: "Połączysz kontrolowane zdarzenia i ustalisz kolejność reakcji."),
 
     lesson(
       id: "red-team-scope-first", path: .redTeam, order: 1,
@@ -328,6 +344,14 @@ enum StarterCurriculum {
       id: "red-team-defensive-report", path: .redTeam, order: 5,
       title: "Raport z rekomendacją",
       summary: "Opiszesz znalezisko i praktyczny sposób jego usunięcia."),
+    lesson(
+      id: "red-team-threat-modeling", path: .redTeam, order: 6,
+      title: "Modelowanie zagrożeń",
+      summary: "Zbudujesz defensywny model zagrożeń dla fikcyjnego systemu."),
+    lesson(
+      id: "red-team-controlled-report", path: .redTeam, order: 7,
+      title: "Raport z kontrolowanego testu",
+      summary: "Oddzielisz fakty od założeń i przygotujesz raport dla właściciela."),
 
     lesson(
       id: "web-http-anatomy", path: .webSecurity, order: 1,
@@ -349,6 +373,14 @@ enum StarterCurriculum {
       id: "web-security-headers", path: .webSecurity, order: 5,
       title: "Nagłówki ochronne",
       summary: "Dobierzesz ochronne nagłówki do aplikacji demonstracyjnej."),
+    lesson(
+      id: "web-secure-cookies", path: .webSecurity, order: 6,
+      title: "Bezpieczne sesje i cookies",
+      summary: "Ocenisz flagi ciasteczek i dobierzesz bezpieczną konfigurację sesji."),
+    lesson(
+      id: "web-secure-api", path: .webSecurity, order: 7,
+      title: "Bezpieczne API",
+      summary: "Rozdzielisz uwierzytelnianie od autoryzacji i ograniczysz dane API."),
 
     lesson(
       id: "mobile-review-permissions", path: .mobileSecurity, order: 1,
@@ -370,6 +402,14 @@ enum StarterCurriculum {
       id: "mobile-release-review", path: .mobileSecurity, order: 5,
       title: "Kontrola przed wydaniem",
       summary: "Przejdziesz bezpieczną listę kontrolną aplikacji mobilnej."),
+    lesson(
+      id: "mobile-secure-logging", path: .mobileSecurity, order: 6,
+      title: "Bezpieczne logowanie aplikacji",
+      summary: "Usuniesz sekrety z logów i przygotujesz bezpieczną kontrolę wydania."),
+    lesson(
+      id: "mobile-data-flow-privacy", path: .mobileSecurity, order: 7,
+      title: "Przepływ danych i prywatność",
+      summary: "Dobierzesz minimalny zakres danych zgodnie z privacy-by-design."),
   ]
 
   static func lessons(in path: LearningPath) -> [LearningLesson] {
@@ -388,18 +428,28 @@ enum StarterCurriculum {
       "fundamentals-network-addresses",
       "fundamentals-terminal-basics",
       "fundamentals-security-evidence",
+      "fundamentals-dns-resolution",
+      "fundamentals-least-privilege",
       "blue-team-file-integrity",
       "blue-team-network-baseline",
       "blue-team-incident-notes",
+      "blue-team-suspicious-message",
+      "blue-team-alert-prioritization",
       "red-team-owned-lab-recon",
       "red-team-risk-chain",
       "red-team-defensive-report",
+      "red-team-threat-modeling",
+      "red-team-controlled-report",
       "web-session-basics",
       "web-access-control",
       "web-security-headers",
+      "web-secure-cookies",
+      "web-secure-api",
       "mobile-transport-security",
       "mobile-app-privacy",
       "mobile-release-review",
+      "mobile-secure-logging",
+      "mobile-data-flow-privacy",
     ]
     let availability: LessonAvailability =
       order <= 2 || proLessonIDs.contains(id) ? .available : .comingSoon

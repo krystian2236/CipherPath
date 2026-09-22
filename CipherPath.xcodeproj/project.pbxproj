@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		082ED673303EE688004EB778 /* KnownDeviceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 082ED672303EE688004EB778 /* KnownDeviceStore.swift */; };
+		08E858E1306276F4009DC56A /* GlobalSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08E858E0306276F4009DC56A /* GlobalSearchView.swift */; };
+		08E858E33062771E009DC56A /* AppSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08E858E23062771E009DC56A /* AppSettingsView.swift */; };
 		E00000000000000000000001 /* CipherPathApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000001 /* CipherPathApp.swift */; };
 		E00000000000000000000002 /* AppShellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000002 /* AppShellView.swift */; };
 		E00000000000000000000003 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000003 /* Models.swift */; };
@@ -67,6 +69,8 @@
 
 /* Begin PBXFileReference section */
 		082ED672303EE688004EB778 /* KnownDeviceStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnownDeviceStore.swift; sourceTree = "<group>"; };
+		08E858E0306276F4009DC56A /* GlobalSearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalSearchView.swift; sourceTree = "<group>"; };
+		08E858E23062771E009DC56A /* AppSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsView.swift; sourceTree = "<group>"; };
 		F00000000000000000000001 /* CipherPathApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CipherPathApp.swift; sourceTree = "<group>"; };
 		F00000000000000000000002 /* AppShellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppShellView.swift; sourceTree = "<group>"; };
 		F00000000000000000000003 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
@@ -189,6 +193,8 @@
 				F00000000000000000000009 /* Info.plist */,
 				F0000000000000000000001C /* PrivacyInfo.xcprivacy */,
 				F0000000000000000000000D /* Assets.xcassets */,
+				08E858E0306276F4009DC56A /* GlobalSearchView.swift */,
+				08E858E23062771E009DC56A /* AppSettingsView.swift */,
 			);
 			path = CipherPath;
 			sourceTree = "<group>";
@@ -317,6 +323,7 @@
 				E00000000000000000000001 /* CipherPathApp.swift in Sources */,
 				E00000000000000000000002 /* AppShellView.swift in Sources */,
 				E00000000000000000000003 /* Models.swift in Sources */,
+				08E858E1306276F4009DC56A /* GlobalSearchView.swift in Sources */,
 				E00000000000000000000004 /* LocalNetworkInfo.swift in Sources */,
 				E00000000000000000000005 /* BonjourDiscovery.swift in Sources */,
 				E00000000000000000000006 /* NetworkScanner.swift in Sources */,
@@ -345,6 +352,7 @@
 				E00000000000000000000034 /* LabModels.swift in Sources */,
 				E00000000000000000000035 /* LabEngine.swift in Sources */,
 				E00000000000000000000037 /* StarterLabs.swift in Sources */,
+				08E858E33062771E009DC56A /* AppSettingsView.swift in Sources */,
 				E00000000000000000000038 /* LabTerminalView.swift in Sources */,
 				E00000000000000000000040 /* AchievementModels.swift in Sources */,
 				E00000000000000000000042 /* PointsModels.swift in Sources */,
@@ -484,7 +492,7 @@
 				APP_DISPLAY_NAME = "CipherPath Dev";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 12;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = CipherPath/Info.plist;
@@ -494,7 +502,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.1;
+				MARKETING_VERSION = 2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = pl.krystian.CipherPath.dev;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) CIPHERPATH_DEVELOPER";
@@ -510,7 +518,7 @@
 				APP_DISPLAY_NAME = CipherPath;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 12;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = CipherPath/Info.plist;
@@ -520,7 +528,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.1;
+				MARKETING_VERSION = 2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = pl.krystian.CipherPath;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;

@@ -10,25 +10,25 @@ private func isolatedDefaults() -> UserDefaults {
 
 @Suite("Starter curriculum")
 struct StarterCurriculumTests {
-  @Test("MVP contains five learning paths and twenty-five visible lessons")
+  @Test("Catalog contains five learning paths and thirty-five visible lessons")
   func containsCompleteVisibleCatalog() {
     #expect(StarterCurriculum.paths == LearningPath.allCases)
-    #expect(StarterCurriculum.lessons.count == 25)
+    #expect(StarterCurriculum.lessons.count == 35)
     #expect(
       LearningPath.allCases.allSatisfy {
-        StarterCurriculum.lessons(in: $0).count == 5
+        StarterCurriculum.lessons(in: $0).count == 7
       }
     )
   }
 
-  @Test("Pro exposes the complete twenty-five-mission catalog")
+  @Test("Pro exposes the complete thirty-five-mission catalog")
   func keepsReleaseAvailabilityPerPath() {
     for path in LearningPath.allCases {
       let lessons = StarterCurriculum.lessons(in: path)
-      let releasedCount = 5
+      let releasedCount = 7
       #expect(lessons.filter { $0.availability == .available }.count == releasedCount)
-      #expect(lessons.filter { $0.availability == .comingSoon }.count == 5 - releasedCount)
-      #expect(lessons.map(\.order) == [1, 2, 3, 4, 5])
+      #expect(lessons.filter { $0.availability == .comingSoon }.count == 7 - releasedCount)
+      #expect(lessons.map(\.order) == [1, 2, 3, 4, 5, 6, 7])
     }
   }
 
@@ -38,7 +38,7 @@ struct StarterCurriculumTests {
       $0.availability == .available
     }
 
-    #expect(availableLessons.count == 25)
+    #expect(availableLessons.count == 35)
     #expect(
       availableLessons.allSatisfy {
         $0.stages == [.learn, .check, .findFlag, .explanation]
@@ -93,16 +93,16 @@ struct ContentAccessTests {
     let pro = ContentAccessPolicy(tier: .pro)
     let demo = ContentAccessPolicy(tier: .testFlightDemo)
 
-    #expect(PathCardSummary.make(for: .blueTeam, policy: pro).includedCount == 5)
+    #expect(PathCardSummary.make(for: .blueTeam, policy: pro).includedCount == 7)
     #expect(PathCardSummary.make(for: .blueTeam, policy: pro).remainingCount == 0)
-    #expect(PathCardSummary.make(for: .webSecurity, policy: pro).includedCount == 5)
-    #expect(PathCardSummary.make(for: .fundamentals, policy: pro).includedCount == 5)
-    #expect(PathCardSummary.make(for: .redTeam, policy: pro).includedCount == 5)
-    #expect(PathCardSummary.make(for: .mobileSecurity, policy: pro).includedCount == 5)
+    #expect(PathCardSummary.make(for: .webSecurity, policy: pro).includedCount == 7)
+    #expect(PathCardSummary.make(for: .fundamentals, policy: pro).includedCount == 7)
+    #expect(PathCardSummary.make(for: .redTeam, policy: pro).includedCount == 7)
+    #expect(PathCardSummary.make(for: .mobileSecurity, policy: pro).includedCount == 7)
 
     for path in LearningPath.allCases {
       #expect(PathCardSummary.make(for: path, policy: demo).includedCount == 2)
-      #expect(PathCardSummary.make(for: path, policy: demo).remainingCount == 3)
+      #expect(PathCardSummary.make(for: path, policy: demo).remainingCount == 5)
     }
   }
 

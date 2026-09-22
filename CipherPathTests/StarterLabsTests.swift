@@ -64,9 +64,9 @@ struct StarterLabsTests {
     }
     let definitions = availableLessons.compactMap(StarterLabs.definition(for:))
 
-    #expect(availableLessons.count == 25)
-    #expect(definitions.count == 25)
-    #expect(Set(definitions.map(\.id)).count == 25)
+    #expect(availableLessons.count == 35)
+    #expect(definitions.count == 35)
+    #expect(Set(definitions.map(\.id)).count == 35)
     #expect(Set(definitions.map(\.targetAddress)).count == definitions.count)
     #expect(Set(definitions.map(\.allowedPrograms)).count >= 5)
     #expect(definitions.contains { $0.flags.count == 2 })
@@ -75,7 +75,29 @@ struct StarterLabsTests {
       let pathDefinitions = StarterCurriculum.lessons(in: path)
         .filter { $0.availability == .available }
         .compactMap(StarterLabs.definition(for:))
-      #expect(pathDefinitions.count == 5)
+      #expect(pathDefinitions.count == 7)
+    }
+  }
+
+  @Test("Adds ten new lessons with exactly five offline objectives each")
+  func addsTenLessonsWithFiveObjectives() throws {
+    let lessonIDs = [
+      "fundamentals-dns-resolution", "fundamentals-least-privilege",
+      "blue-team-suspicious-message", "blue-team-alert-prioritization",
+      "red-team-threat-modeling", "red-team-controlled-report",
+      "web-secure-cookies", "web-secure-api",
+      "mobile-secure-logging", "mobile-data-flow-privacy",
+    ]
+
+    #expect(lessonIDs.count == 10)
+    for lessonID in lessonIDs {
+      let lesson = try #require(StarterCurriculum.lessons.first { $0.id == lessonID })
+      let definition = try #require(StarterLabs.definition(for: lessonID))
+      #expect(lesson.availability == .available)
+      #expect(lesson.environment == .offlineSimulation)
+      #expect(definition.objectives.count == 5)
+      #expect(definition.rules.count == 5)
+      #expect(definition.suggestedCommands.count == 5)
     }
   }
 

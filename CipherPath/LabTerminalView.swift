@@ -52,7 +52,6 @@ struct LabTerminalView: View {
 
       if distribution.showsAdventureMode {
         Section("Tryb") {
-          DevLocationLabel(location: .labMode)
           Picker("Sposób gry", selection: $mode) {
             Text("Prowadzony").tag(LabMode.guided)
             Text("Bez podpowiedzi").tag(LabMode.adventure)
@@ -74,7 +73,6 @@ struct LabTerminalView: View {
 
       if mode.showsGuidance {
         Section("Cele") {
-          DevLocationLabel(location: .labObjectives)
           ForEach(definition.objectives, id: \.id) { objective in
             Label(
               objective.title,
@@ -86,7 +84,6 @@ struct LabTerminalView: View {
       }
 
       Section("Terminal") {
-        DevLocationLabel(location: .labTerminal)
         terminalOutput
 
         if mode.showsGuidance || revealCommands {
@@ -140,7 +137,6 @@ struct LabTerminalView: View {
       }
 
       Section("Odpowiedź") {
-        DevLocationLabel(location: .labAnswer)
         TextField("Odnaleziona odpowiedź", text: $answerInput)
           .textInputAutocapitalization(.sentences)
           .autocorrectionDisabled()
@@ -166,7 +162,6 @@ struct LabTerminalView: View {
 
       if allFlagsCaptured {
         Section("Jak się bronić") {
-          DevLocationLabel(location: .labDefense)
           Text(definition.defenseSummary)
           Button("Zakończ misję", action: finishMission)
             .buttonStyle(.borderedProminent)

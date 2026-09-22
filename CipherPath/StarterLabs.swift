@@ -36,6 +36,16 @@ enum StarterLabs {
     secureTransport,
     appPrivacy,
     releaseReview,
+    dnsResolution,
+    leastPrivilege,
+    suspiciousMessage,
+    alertPrioritization,
+    threatModeling,
+    controlledReport,
+    secureCookies,
+    secureAPI,
+    secureLogging,
+    dataFlowPrivacy,
   ]
 
   static func definition(for lesson: LearningLesson) -> LabDefinition? {
@@ -49,26 +59,36 @@ enum StarterLabs {
     case "fundamentals-network-addresses": privateAddresses
     case "fundamentals-terminal-basics": terminalBasics
     case "fundamentals-security-evidence": securityEvidence
+    case "fundamentals-dns-resolution": dnsResolution
+    case "fundamentals-least-privilege": leastPrivilege
     case "blue-team-find-log-event": logHunter
     case "blue-team-suspicious-login": incidentLockdown
     case "blue-team-file-integrity": fileIntegrity
     case "blue-team-network-baseline": networkBaseline
     case "blue-team-incident-notes": incidentNotes
+    case "blue-team-suspicious-message": suspiciousMessage
+    case "blue-team-alert-prioritization": alertPrioritization
     case "red-team-scope-first": forgottenFTP
     case "red-team-threat-thinking": permissionTrail
     case "red-team-owned-lab-recon": ownedLabRecon
     case "red-team-risk-chain": riskChain
     case "red-team-defensive-report": defensiveReport
+    case "red-team-threat-modeling": threatModeling
+    case "red-team-controlled-report": controlledReport
     case "web-http-anatomy": hiddenWeb
     case "web-spot-input-risk": unsafeAPI
     case "web-session-basics": sessionBasics
     case "web-access-control": accessControl
     case "web-security-headers": securityHeaders
+    case "web-secure-cookies": secureCookies
+    case "web-secure-api": secureAPI
     case "mobile-review-permissions": iPhoneVault
     case "mobile-protect-local-data": mobileTrafficInspector
     case "mobile-transport-security": secureTransport
     case "mobile-app-privacy": appPrivacy
     case "mobile-release-review": releaseReview
+    case "mobile-secure-logging": secureLogging
+    case "mobile-data-flow-privacy": dataFlowPrivacy
     default: nil
     }
   }
@@ -1217,5 +1237,215 @@ enum StarterLabs {
       "cat /release/checklist.txt",
     ],
     defenseSummary: "Przed wydaniem sprawdź prywatność, uprawnienia, sekrety, podpis i integralność paczki. Wynik zapisuj jako powtarzalną listę kontrolną."
+  )
+
+  private static let dnsResolution = LabDefinition(
+    id: "dns-resolution", title: "DNS i rozwiązywanie nazw", targetAddress: "192.0.2.60", allowedPrograms: ["cat"],
+    rules: [
+      LabRule(command: .cat(path: "/dns/a-record.txt"), output: "A app.training.test 192.0.2.60", discovery: "Odczytano rekord A", objectiveID: "a-record"),
+      LabRule(command: .cat(path: "/dns/private.txt"), output: "192.168.10.24 = private address", discovery: "Adres należy do zakresu prywatnego", objectiveID: "private-address"),
+      LabRule(command: .cat(path: "/dns/cname.txt"), output: "portal.training.test CNAME legacy.training.test", discovery: "Znaleziono alias CNAME", objectiveID: "cname"),
+      LabRule(command: .cat(path: "/dns/config.txt"), output: "public-api.training.test A 10.0.0.7", discovery: "Publiczna nazwa wskazuje na prywatny adres", objectiveID: "bad-config"),
+      LabRule(command: .cat(path: "/dns/recommendation.txt"), output: "split-horizon DNS; remove private address from public zone; review CNAME CIPHER{DNS_REVIEW_COMPLETE}", discovery: "Rekomendacja ogranicza ujawnienie topologii", objectiveID: "recommendation"),
+    ],
+    objectives: [
+      LabObjective(id: "a-record", title: "Odczytaj rekord A"),
+      LabObjective(id: "private-address", title: "Rozpoznaj prywatny adres"),
+      LabObjective(id: "cname", title: "Przeanalizuj rekord CNAME"),
+      LabObjective(id: "bad-config", title: "Wykryj błędną konfigurację"),
+      LabObjective(id: "recommendation", title: "Wybierz bezpieczną rekomendację"),
+    ],
+    flags: [LabFlag(id: "dns", value: "CIPHER{DNS_REVIEW_COMPLETE}", answer: "Ukryj prywatne adresy w publicznej strefie i kontroluj aliasy", requiredObjectiveIDs: ["a-record", "private-address", "cname", "bad-config", "recommendation"])],
+    suggestedCommands: ["cat /dns/a-record.txt", "cat /dns/private.txt", "cat /dns/cname.txt", "cat /dns/config.txt", "cat /dns/recommendation.txt"],
+    defenseSummary: "Publiczne rekordy DNS nie powinny ujawniać prywatnej topologii. Weryfikuj aliasy i rozdziel strefy publiczne od wewnętrznych."
+  )
+
+  private static let leastPrivilege = LabDefinition(
+    id: "least-privilege", title: "Najmniejsze uprawnienia", targetAddress: "192.0.2.61", allowedPrograms: ["cat"],
+    rules: [
+      LabRule(command: .cat(path: "/permissions/owner.txt"), output: "owner=deploy group=app mode=0640", discovery: "Właścicielem jest konto wdrożeniowe", objectiveID: "owner"),
+      LabRule(command: .cat(path: "/permissions/mode.txt"), output: "backup.sh mode=0666 world-writable", discovery: "Plik może modyfikować każdy użytkownik", objectiveID: "wide-mode"),
+      LabRule(command: .cat(path: "/permissions/access.txt"), output: "service: read; deploy: read/write; others: none", discovery: "Dostęp można ograniczyć do roli usługi i wdrożenia", objectiveID: "access"),
+      LabRule(command: .cat(path: "/permissions/admin.txt"), output: "shared-admin used by four operators", discovery: "Wspólne konto utrudnia rozliczalność", objectiveID: "admin-risk"),
+      LabRule(command: .cat(path: "/permissions/fix.txt"), output: "chown deploy:app backup.sh; chmod 0640 backup.sh; individual accounts CIPHER{LEAST_PRIVILEGE_APPLIED}", discovery: "Poprawka przywraca zasadę najmniejszych uprawnień", objectiveID: "fix"),
+    ],
+    objectives: [
+      LabObjective(id: "owner", title: "Przeanalizuj właściciela pliku"),
+      LabObjective(id: "wide-mode", title: "Rozpoznaj zbyt szerokie uprawnienia"),
+      LabObjective(id: "access", title: "Wybierz właściwy poziom dostępu"),
+      LabObjective(id: "admin-risk", title: "Wskaż ryzyko konta administratora"),
+      LabObjective(id: "fix", title: "Przygotuj poprawkę"),
+    ],
+    flags: [LabFlag(id: "permissions", value: "CIPHER{LEAST_PRIVILEGE_APPLIED}", answer: "Ogranicz zapis i zastąp wspólne konto indywidualnymi kontami", requiredObjectiveIDs: ["owner", "wide-mode", "access", "admin-risk", "fix"])],
+    suggestedCommands: ["cat /permissions/owner.txt", "cat /permissions/mode.txt", "cat /permissions/access.txt", "cat /permissions/admin.txt", "cat /permissions/fix.txt"],
+    defenseSummary: "Nadaj tylko niezbędny dostęp, używaj indywidualnych kont i regularnie przeglądaj właścicieli oraz tryby plików."
+  )
+
+  private static let suspiciousMessage = LabDefinition(
+    id: "suspicious-message", title: "Analiza podejrzanej wiadomości", targetAddress: "192.0.2.62", allowedPrograms: ["cat"],
+    rules: [
+      LabRule(command: .cat(path: "/message/headers.txt"), output: "From: payroll@payrolI.training.test\nReply-To: review@external.test", discovery: "Nagłówki pokazują rozbieżność nadawcy i odpowiedzi", objectiveID: "headers"),
+      LabRule(command: .cat(path: "/message/domain.txt"), output: "payrolI.training.test != payroll.training.test", discovery: "Domena używa podobnego znaku zamiast właściwej nazwy", objectiveID: "domain"),
+      LabRule(command: .cat(path: "/message/urgency.txt"), output: "PAY NOW within 10 minutes or account will close", discovery: "Wiadomość wywiera presję czasu", objectiveID: "urgency"),
+      LabRule(command: .cat(path: "/message/risk.txt"), output: "risk=high; credential theft likely", discovery: "Klasyfikacja ryzyka jest wysoka", objectiveID: "risk"),
+      LabRule(command: .cat(path: "/message/response.txt"), output: "do not click; report; verify through known channel CIPHER{PHISHING_TRIAGE_COMPLETE}", discovery: "Bezpieczna reakcja nie używa linku z wiadomości", objectiveID: "response"),
+    ],
+    objectives: [
+      LabObjective(id: "headers", title: "Odczytaj nagłówki"),
+      LabObjective(id: "domain", title: "Rozpoznaj fałszywą domenę"),
+      LabObjective(id: "urgency", title: "Wykryj pilną manipulację"),
+      LabObjective(id: "risk", title: "Sklasyfikuj ryzyko"),
+      LabObjective(id: "response", title: "Wybierz bezpieczną reakcję"),
+    ],
+    flags: [LabFlag(id: "message", value: "CIPHER{PHISHING_TRIAGE_COMPLETE}", answer: "Nie klikaj, zgłoś wiadomość i zweryfikuj ją znanym kanałem", requiredObjectiveIDs: ["headers", "domain", "urgency", "risk", "response"])],
+    suggestedCommands: ["cat /message/headers.txt", "cat /message/domain.txt", "cat /message/urgency.txt", "cat /message/risk.txt", "cat /message/response.txt"],
+    defenseSummary: "Traktuj rozbieżne domeny i presję czasu jako sygnały ostrzegawcze. Weryfikuj prośby niezależnym, znanym kanałem."
+  )
+
+  private static let alertPrioritization = LabDefinition(
+    id: "alert-prioritization", title: "Priorytetyzacja alertów", targetAddress: "192.0.2.63", allowedPrograms: ["cat"],
+    rules: [
+      LabRule(command: .cat(path: "/alerts/info.txt"), output: "INFO backup completed successfully", discovery: "To zdarzenie informacyjne, nie incydent", objectiveID: "classification"),
+      LabRule(command: .cat(path: "/alerts/correlation.txt"), output: "08:10 failed login; 08:11 new admin token; 08:12 export started", discovery: "Zdarzenia tworzą jeden łańcuch", objectiveID: "correlation"),
+      LabRule(command: .cat(path: "/alerts/severity.txt"), output: "severity=critical; privileged account and data export", discovery: "Incydent wymaga najwyższego priorytetu", objectiveID: "severity"),
+      LabRule(command: .cat(path: "/alerts/first-action.txt"), output: "preserve evidence; contain token; notify owner", discovery: "Pierwsze działanie chroni dowody i ogranicza dostęp", objectiveID: "first-action"),
+      LabRule(command: .cat(path: "/alerts/summary.txt"), output: "Possible token misuse led to a privileged export; evidence preserved CIPHER{ALERT_TRIAGE_COMPLETE}", discovery: "Podsumowanie jest krótkie i oparte na faktach", objectiveID: "summary"),
+    ],
+    objectives: [
+      LabObjective(id: "classification", title: "Odróżnij informację od incydentu"),
+      LabObjective(id: "correlation", title: "Połącz kilka zdarzeń"),
+      LabObjective(id: "severity", title: "Wyznacz poziom ważności"),
+      LabObjective(id: "first-action", title: "Wybierz pierwsze działanie"),
+      LabObjective(id: "summary", title: "Przygotuj krótkie podsumowanie"),
+    ],
+    flags: [LabFlag(id: "alerts", value: "CIPHER{ALERT_TRIAGE_COMPLETE}", answer: "Połącz zdarzenia, zachowaj dowody i ogranicz token", requiredObjectiveIDs: ["classification", "correlation", "severity", "first-action", "summary"])],
+    suggestedCommands: ["cat /alerts/info.txt", "cat /alerts/correlation.txt", "cat /alerts/severity.txt", "cat /alerts/first-action.txt", "cat /alerts/summary.txt"],
+    defenseSummary: "Łącz powiązane sygnały, oceniaj wpływ i zaczynaj od zachowania dowodów oraz ograniczenia aktywnego zagrożenia."
+  )
+
+  private static let threatModeling = LabDefinition(
+    id: "threat-modeling", title: "Modelowanie zagrożeń", targetAddress: "192.0.2.64", allowedPrograms: ["cat"],
+    rules: [
+      LabRule(command: .cat(path: "/model/assets.txt"), output: "assets=customer records; signing key; admin console", discovery: "Zidentyfikowano zasoby o różnej wartości", objectiveID: "assets"),
+      LabRule(command: .cat(path: "/model/actor.txt"), output: "actor=external opportunist with stolen credentials", discovery: "Aktor wykorzystuje przejęte dane logowania", objectiveID: "actor"),
+      LabRule(command: .cat(path: "/model/entry-point.txt"), output: "entry=public login endpoint", discovery: "Punktem wejścia jest publiczny endpoint logowania", objectiveID: "entry"),
+      LabRule(command: .cat(path: "/model/impact.txt"), output: "impact=record disclosure and unauthorized signing", discovery: "Skutek obejmuje ujawnienie i nadużycie podpisu", objectiveID: "impact"),
+      LabRule(command: .cat(path: "/model/control.txt"), output: "controls=MFA; least privilege; key isolation; monitoring CIPHER{THREAT_MODEL_COMPLETE}", discovery: "Kontrole ograniczają prawdopodobieństwo i wpływ", objectiveID: "control"),
+    ],
+    objectives: [
+      LabObjective(id: "assets", title: "Zidentyfikuj zasoby"),
+      LabObjective(id: "actor", title: "Wskaż aktora zagrożenia"),
+      LabObjective(id: "entry", title: "Znajdź punkt wejścia"),
+      LabObjective(id: "impact", title: "Określ skutek"),
+      LabObjective(id: "control", title: "Wybierz kontrolę obronną"),
+    ],
+    flags: [LabFlag(id: "model", value: "CIPHER{THREAT_MODEL_COMPLETE}", answer: "Chroń zasoby kontrolami dopasowanymi do punktu wejścia i wpływu", requiredObjectiveIDs: ["assets", "actor", "entry", "impact", "control"])],
+    suggestedCommands: ["cat /model/assets.txt", "cat /model/actor.txt", "cat /model/entry-point.txt", "cat /model/impact.txt", "cat /model/control.txt"],
+    defenseSummary: "Modeluj zasoby, aktorów, punkty wejścia i skutki, a następnie dobieraj kontrole do konkretnego ryzyka."
+  )
+
+  private static let controlledReport = LabDefinition(
+    id: "controlled-report", title: "Raport z kontrolowanego testu", targetAddress: "192.0.2.65", allowedPrograms: ["cat"],
+    rules: [
+      LabRule(command: .cat(path: "/report/scope.txt"), output: "scope=training-api; window=09:00-10:00; no production", discovery: "Zakres nie obejmuje produkcji", objectiveID: "scope"),
+      LabRule(command: .cat(path: "/report/facts.txt"), output: "fact=demo endpoint returned 403 for viewer and 200 for owner", discovery: "Fakt jest oddzielony od interpretacji", objectiveID: "facts"),
+      LabRule(command: .cat(path: "/report/impact.txt"), output: "impact=unauthorized record visibility if role check regresses", discovery: "Wpływ opisuje warunek i skutek", objectiveID: "impact"),
+      LabRule(command: .cat(path: "/report/fix.txt"), output: "fix=enforce server-side role check; add regression test", discovery: "Rekomendacja jest konkretna i defensywna", objectiveID: "fix"),
+      LabRule(command: .cat(path: "/report/owner.txt"), output: "owner=API team; reviewer=security; due=next sprint CIPHER{CONTROLLED_REPORT_COMPLETE}", discovery: "Raport ma właściciela i termin", objectiveID: "owner"),
+    ],
+    objectives: [
+      LabObjective(id: "scope", title: "Opisz zakres"),
+      LabObjective(id: "facts", title: "Oddziel fakty od założeń"),
+      LabObjective(id: "impact", title: "Oceń wpływ"),
+      LabObjective(id: "fix", title: "Zarekomenduj naprawę"),
+      LabObjective(id: "owner", title: "Przygotuj raport dla właściciela"),
+    ],
+    flags: [LabFlag(id: "report", value: "CIPHER{CONTROLLED_REPORT_COMPLETE}", answer: "Raportuj zakres, dowody, wpływ i właściciela naprawy", requiredObjectiveIDs: ["scope", "facts", "impact", "fix", "owner"])],
+    suggestedCommands: ["cat /report/scope.txt", "cat /report/facts.txt", "cat /report/impact.txt", "cat /report/fix.txt", "cat /report/owner.txt"],
+    defenseSummary: "Dobry raport ogranicza zakres, rozdziela fakty od założeń, opisuje wpływ i kończy się właścicielem naprawy."
+  )
+
+  private static let secureCookies = LabDefinition(
+    id: "secure-cookies", title: "Bezpieczne sesje i cookies", targetAddress: "192.0.2.66", allowedPrograms: ["cat"],
+    rules: [
+      LabRule(command: .cat(path: "/cookies/flags.txt"), output: "session=abc; Secure=missing; HttpOnly=missing; SameSite=Lax", discovery: "Odczytano wszystkie flagi sesji", objectiveID: "flags"),
+      LabRule(command: .cat(path: "/cookies/secure.txt"), output: "Secure missing: cookie may travel over HTTP", discovery: "Brak Secure zwiększa ryzyko przechwycenia", objectiveID: "secure"),
+      LabRule(command: .cat(path: "/cookies/httponly.txt"), output: "HttpOnly missing: scripts can read session", discovery: "Brak HttpOnly ułatwia odczyt przez skrypt", objectiveID: "httponly"),
+      LabRule(command: .cat(path: "/cookies/samesite.txt"), output: "SameSite=Lax; acceptable for standard navigation; review cross-site flows", discovery: "SameSite wymaga oceny przepływu aplikacji", objectiveID: "samesite"),
+      LabRule(command: .cat(path: "/cookies/config.txt"), output: "Secure; HttpOnly; SameSite=Lax; short expiry; rotate on login CIPHER{SESSION_FLAGS_REVIEWED}", discovery: "Konfiguracja ogranicza kradzież i replay sesji", objectiveID: "config"),
+    ],
+    objectives: [
+      LabObjective(id: "flags", title: "Odczytaj flagi cookie"),
+      LabObjective(id: "secure", title: "Rozpoznaj brak Secure"),
+      LabObjective(id: "httponly", title: "Rozpoznaj brak HttpOnly"),
+      LabObjective(id: "samesite", title: "Oceń SameSite"),
+      LabObjective(id: "config", title: "Wybierz poprawną konfigurację"),
+    ],
+    flags: [LabFlag(id: "cookies", value: "CIPHER{SESSION_FLAGS_REVIEWED}", answer: "Włącz Secure i HttpOnly oraz dobierz SameSite do przepływu", requiredObjectiveIDs: ["flags", "secure", "httponly", "samesite", "config"])],
+    suggestedCommands: ["cat /cookies/flags.txt", "cat /cookies/secure.txt", "cat /cookies/httponly.txt", "cat /cookies/samesite.txt", "cat /cookies/config.txt"],
+    defenseSummary: "Sesje powinny używać Secure, HttpOnly i właściwego SameSite, z krótkim czasem życia oraz rotacją po logowaniu."
+  )
+
+  private static let secureAPI = LabDefinition(
+    id: "secure-api", title: "Bezpieczne API", targetAddress: "192.0.2.67", allowedPrograms: ["cat"],
+    rules: [
+      LabRule(command: .cat(path: "/api/authz.txt"), output: "GET /records/42 -> 200 for viewer; owner check missing", discovery: "Endpoint nie sprawdza uprawnienia do konkretnego rekordu", objectiveID: "authz"),
+      LabRule(command: .cat(path: "/api/authn.txt"), output: "authentication=valid token; authorization=not evaluated", discovery: "Uwierzytelnienie nie oznacza autoryzacji", objectiveID: "authn"),
+      LabRule(command: .cat(path: "/api/data.txt"), output: "response includes email, phone, internal_notes", discovery: "Odpowiedź zwraca nadmiarowe pola", objectiveID: "data"),
+      LabRule(command: .cat(path: "/api/rate-limit.txt"), output: "no limit; 10,000 requests per minute accepted", discovery: "Brakuje limitowania żądań", objectiveID: "rate-limit"),
+      LabRule(command: .cat(path: "/api/fix.txt"), output: "authorize resource owner; return minimal fields; rate limit and audit CIPHER{API_CONTROLS_COMPLETE}", discovery: "Poprawka łączy kontrolę dostępu, minimalizację i limit", objectiveID: "fix"),
+    ],
+    objectives: [
+      LabObjective(id: "authz", title: "Rozpoznaj brak autoryzacji"),
+      LabObjective(id: "authn", title: "Odróżnij uwierzytelnienie od uprawnień"),
+      LabObjective(id: "data", title: "Wykryj nadmiarowe dane"),
+      LabObjective(id: "rate-limit", title: "Wybierz limitowanie żądań"),
+      LabObjective(id: "fix", title: "Zaproponuj poprawkę"),
+    ],
+    flags: [LabFlag(id: "api", value: "CIPHER{API_CONTROLS_COMPLETE}", answer: "Sprawdzaj właściciela zasobu, zwracaj minimum i limituj żądania", requiredObjectiveIDs: ["authz", "authn", "data", "rate-limit", "fix"])],
+    suggestedCommands: ["cat /api/authz.txt", "cat /api/authn.txt", "cat /api/data.txt", "cat /api/rate-limit.txt", "cat /api/fix.txt"],
+    defenseSummary: "API musi egzekwować autoryzację po stronie serwera, zwracać minimalny zakres danych i ograniczać nadużycia."
+  )
+
+  private static let secureLogging = LabDefinition(
+    id: "secure-logging", title: "Bezpieczne logowanie aplikacji", targetAddress: "192.0.2.68", allowedPrograms: ["cat"],
+    rules: [
+      LabRule(command: .cat(path: "/logs/app.log"), output: "login user=alex token=sk_test_12345 password=present", discovery: "Log zawiera sekret i hasło", objectiveID: "secret"),
+      LabRule(command: .cat(path: "/logs/classification.txt"), output: "diagnostic=timing; sensitive=token,password,session_cookie", discovery: "Dane diagnostyczne trzeba oddzielić od wrażliwych", objectiveID: "classification"),
+      LabRule(command: .cat(path: "/logs/level.txt"), output: "release level=warning; redact identifiers; no secrets", discovery: "Poziom warning ogranicza szczegóły w wydaniu", objectiveID: "level"),
+      LabRule(command: .cat(path: "/logs/debug.txt"), output: "debug build enabled verbose network tracing", discovery: "Debug build może ujawniać dane i konfigurację", objectiveID: "debug"),
+      LabRule(command: .cat(path: "/logs/release.txt"), output: "secrets=none; redaction=on; debug=off; review=approved CIPHER{SAFE_LOGGING_RELEASE}", discovery: "Checklista wydania blokuje sekrety w logach", objectiveID: "release"),
+    ],
+    objectives: [
+      LabObjective(id: "secret", title: "Znajdź sekret w logu"),
+      LabObjective(id: "classification", title: "Odróżnij dane diagnostyczne od wrażliwych"),
+      LabObjective(id: "level", title: "Wybierz bezpieczny poziom logowania"),
+      LabObjective(id: "debug", title: "Wskaż ryzyko debug builda"),
+      LabObjective(id: "release", title: "Przejdź checklistę przed wydaniem"),
+    ],
+    flags: [LabFlag(id: "logging", value: "CIPHER{SAFE_LOGGING_RELEASE}", answer: "Usuń sekrety, redaguj dane i wyłącz debug przed wydaniem", requiredObjectiveIDs: ["secret", "classification", "level", "debug", "release"])],
+    suggestedCommands: ["cat /logs/app.log", "cat /logs/classification.txt", "cat /logs/level.txt", "cat /logs/debug.txt", "cat /logs/release.txt"],
+    defenseSummary: "Logi powinny pomagać diagnozować problemy bez przechowywania sekretów. Redaguj dane i wyłącz debug w wydaniu."
+  )
+
+  private static let dataFlowPrivacy = LabDefinition(
+    id: "data-flow-privacy", title: "Przepływ danych i prywatność", targetAddress: "192.0.2.69", allowedPrograms: ["cat"],
+    rules: [
+      LabRule(command: .cat(path: "/privacy/data.txt"), output: "data=email; precise_location; device_id; crash_count", discovery: "Zidentyfikowano dane osobowe i techniczne", objectiveID: "personal-data"),
+      LabRule(command: .cat(path: "/privacy/purpose.txt"), output: "purpose=account recovery needs email; crash report needs crash_count", discovery: "Cel powinien uzasadniać konkretny typ danych", objectiveID: "purpose"),
+      LabRule(command: .cat(path: "/privacy/permission.txt"), output: "location permission requested but feature never reads location", discovery: "Uprawnienie lokalizacji jest zbędne", objectiveID: "permission"),
+      LabRule(command: .cat(path: "/privacy/minimum.txt"), output: "collect coarse region only; hash device identifier; retain briefly", discovery: "Minimalny zakres zmniejsza ryzyko", objectiveID: "minimum"),
+      LabRule(command: .cat(path: "/privacy/decision.txt"), output: "remove location permission; document purpose; offer opt-out CIPHER{PRIVACY_BY_DESIGN_COMPLETE}", discovery: "Decyzja realizuje privacy-by-design", objectiveID: "decision"),
+    ],
+    objectives: [
+      LabObjective(id: "personal-data", title: "Wskaż dane osobowe"),
+      LabObjective(id: "purpose", title: "Określ cel użycia"),
+      LabObjective(id: "permission", title: "Wykryj zbędne uprawnienie"),
+      LabObjective(id: "minimum", title: "Wybierz minimalny zakres danych"),
+      LabObjective(id: "decision", title: "Podejmij decyzję privacy-by-design"),
+    ],
+    flags: [LabFlag(id: "privacy-flow", value: "CIPHER{PRIVACY_BY_DESIGN_COMPLETE}", answer: "Zbieraj minimum, uzasadnij cel i usuń zbędne uprawnienie", requiredObjectiveIDs: ["personal-data", "purpose", "permission", "minimum", "decision"])],
+    suggestedCommands: ["cat /privacy/data.txt", "cat /privacy/purpose.txt", "cat /privacy/permission.txt", "cat /privacy/minimum.txt", "cat /privacy/decision.txt"],
+    defenseSummary: "Projektuj przepływ danych od celu i minimalizacji. Każde uprawnienie powinno mieć rzeczywiste, opisane uzasadnienie."
   )
 }

@@ -9,7 +9,6 @@ struct MissionBriefingView: View {
   var body: some View {
     ScrollView {
       VStack(alignment: .leading, spacing: 20) {
-        DevLocationLabel(location: .briefing)
         VStack(alignment: .leading, spacing: 10) {
           Label(lesson.path.title.uppercased(), systemImage: lesson.path.iconName)
             .font(.caption.bold())
