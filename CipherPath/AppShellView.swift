@@ -139,7 +139,7 @@ private struct SecurityHubView: View {
           }
         }
         Section {
-          Text("Ręczna checklista ustawień bezpieczeństwa. CipherPath nie wykonuje pełnego audytu urządzenia ani nie wysyła wyników.")
+          Text("Ręczna checklista ustawień bezpieczeństwa. Northbyte Lab nie wykonuje pełnego audytu urządzenia ani nie wysyła wyników.")
             .font(.subheadline)
             .foregroundStyle(.secondary)
         }
@@ -212,7 +212,7 @@ private struct PracticeHubView: View {
           .listRowInsets(EdgeInsets())
           .listRowBackground(Color.clear)
         }
-        Section("Narzędzia CipherPath") {
+        Section("Narzędzia Northbyte Lab") {
           NavigationLink("Skan prywatnej sieci") {
             ScannerView(scanner: scanner, knownDeviceStore: knownDeviceStore, selectedTab: $selectedTab)
           }
@@ -249,7 +249,7 @@ private struct PrivacySecurityView: View {
       Section("Twoje dane") {
         Label("Brak konta, reklam, analityki i śledzenia", systemImage: "hand.raised.fill")
         Label("Postęp, historia skanów i urządzenia pozostają lokalnie", systemImage: "iphone")
-        Label("CipherPath nie przechowuje haseł ani kluczy prywatnych", systemImage: "key.slash")
+        Label("Northbyte Lab nie przechowuje haseł ani kluczy prywatnych", systemImage: "key.slash")
       }
       Section("Sieć") {
         Text("Dostęp do sieci lokalnej jest używany dopiero po uruchomieniu narzędzia przez użytkownika.")

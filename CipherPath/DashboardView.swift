@@ -11,7 +11,7 @@ struct FutureFeaturePreview: Identifiable, Equatable, Sendable {
 enum FutureFeatureCatalog {
   static let previews = [
     FutureFeaturePreview(id: "points", title: "Punkty", subtitle: "Zdobywaj je za ukończone ćwiczenia", icon: "sparkles", isEnabled: true),
-    FutureFeaturePreview(id: "store", title: "CipherPath Pro", subtitle: "Jednorazowe odblokowanie w przygotowaniu", icon: "lock.fill", isEnabled: false),
+    FutureFeaturePreview(id: "store", title: "Northbyte Lab Pro", subtitle: "Jednorazowe odblokowanie w przygotowaniu", icon: "lock.fill", isEnabled: false),
   ]
 }
 
@@ -29,19 +29,61 @@ struct DashboardView: View {
     availableLessons.filter { progressStore.isCompleted(lessonID: $0.id) }.count
   }
 
-  private var nextLesson: LearningLesson? {
-    if let current = progressStore.continueLesson {
-      return current
+  private var completedStages: Int {
+    availableLessons.reduce(0) { partialResult, lesson in
+      partialResult + progressStore.progress.completedStages[lesson.id, default: []].count
     }
-    return availableLessons.first { !progressStore.isCompleted(lessonID: $0.id) }
   }
 
-  private var featuredLesson: LearningLesson {
-    nextLesson ?? availableLessons.first ?? StarterCurriculum.lessons[0]
+  private var totalStages: Int {
+    availableLessons.reduce(0) { $0 + $1.stages.count }
   }
 
-  private var featuredStageTitle: String {
-    progressStore.currentStage(for: featuredLesson)?.title ?? "Ukończono"
+  private var tutorialLesson: LearningLesson {
+    availableLessons.first { $0.id == "fundamentals-digital-safety" }
+      ?? availableLessons.first
+      ?? StarterCurriculum.lessons[0]
+  }
+
+  private var taskLessons: [LearningLesson] {
+    availableLessons.filter { $0.id != tutorialLesson.id }
+  }
+
+  private var tutorialIsComplete: Bool {
+    progressStore.isCompleted(lessonID: tutorialLesson.id)
+  }
+
+  private var hasStartedTasks: Bool {
+    taskLessons.contains { !progressStore.progress.completedStages[$0.id, default: []].isEmpty }
+  }
+
+  private var currentTask: LearningLesson? {
+    if let lastLesson = progressStore.continueLesson,
+       taskLessons.contains(where: { $0.id == lastLesson.id }),
+       progressStore.currentStage(for: lastLesson) != nil {
+      return lastLesson
+    }
+    return taskLessons.first { progressStore.currentStage(for: $0) != nil }
+  }
+
+  private var firstUnfinishedTask: LearningLesson? {
+    taskLessons.first { !progressStore.isCompleted(lessonID: $0.id) }
+  }
+
+  private var primaryLesson: LearningLesson {
+    if hasStartedTasks {
+      return currentTask ?? firstUnfinishedTask ?? tutorialLesson
+    }
+    return tutorialIsComplete ? (firstUnfinishedTask ?? tutorialLesson) : tutorialLesson
+  }
+
+  private var primaryStageTitle: String? {
+    progressStore.currentStage(for: primaryLesson)?.title
+  }
+
+  private var progressFraction: Double {
+    guard totalStages > 0 else { return 0 }
+    return Double(completedStages) / Double(totalStages)
   }
 
   private var accessSummary: String {
@@ -63,15 +105,12 @@ struct DashboardView: View {
         VStack(alignment: .leading, spacing: 18) {
           header
           AppReleaseIdentityCard()
-          readinessCard
-          continueCard
-          todayCard
-          recentActivityCard
-          navigationCards
-          quickMission
-          recentAchievement
+          progressSummary
+          primaryActionCard
+          recentCard
         }
         .padding(18)
+        .padding(.bottom, 32)
       }
       .background(Color(red: 0.025, green: 0.045, blue: 0.075).ignoresSafeArea())
       .toolbar(.hidden, for: .navigationBar)
@@ -80,150 +119,176 @@ struct DashboardView: View {
   }
 
   private var header: some View {
-    VStack(alignment: .leading, spacing: 6) {
-      Text("Cipher") + Text("Path").foregroundStyle(.indigo)
-        .font(.largeTitle.bold())
-      Text("Ucz się bezpieczeństwa krok po kroku")
-        .foregroundStyle(.secondary)
+    HStack(alignment: .top, spacing: 12) {
+      VStack(alignment: .leading, spacing: 6) {
+        Text("Cipher") + Text("Path").foregroundStyle(.indigo)
+          .font(.largeTitle.bold())
+        Text("Ucz się bezpieczeństwa krok po kroku")
+          .foregroundStyle(.secondary)
+      }
+
+      Spacer()
+
+      HStack(spacing: 8) {
+        NavigationLink {
+          GlobalSearchView(selectedTab: $selectedTab, progressStore: progressStore)
+        } label: {
+          Image(systemName: "magnifyingglass")
+            .font(.headline.weight(.semibold))
+            .foregroundStyle(.cyan)
+            .frame(width: 42, height: 42)
+            .background(.cyan.opacity(0.12), in: Circle())
+        }
+        .accessibilityLabel("Szukaj w Northbyte Lab")
+
+        NavigationLink {
+          AppSettingsView(progressStore: progressStore)
+        } label: {
+          Image(systemName: "gearshape.fill")
+            .font(.headline.weight(.semibold))
+            .foregroundStyle(.secondary)
+            .frame(width: 42, height: 42)
+            .background(.white.opacity(0.08), in: Circle())
+        }
+        .accessibilityLabel("Ustawienia")
+      }
     }
   }
 
-  private var readinessCard: some View {
+  private var progressSummary: some View {
     VStack(alignment: .leading, spacing: 8) {
-      Label("Learning Readiness", systemImage: "checkmark.shield.fill")
-        .font(.headline)
-        .foregroundStyle(.cyan)
-      Text("\(completedLessons) / \(availableLessons.count) tematów ukończonych")
-        .font(.title2.bold())
-      Text("Postęp nauki, nie pełny audyt urządzenia.")
-        .font(.caption)
-        .foregroundStyle(.secondary)
+      HStack(spacing: 8) {
+        Label("Postęp nauki", systemImage: "arrow.right")
+          .font(.headline)
+          .foregroundStyle(.cyan)
+        Spacer()
+        Text("\(completedLessons) / \(availableLessons.count) lekcji")
+          .font(.caption.bold())
+          .foregroundStyle(.secondary)
+      }
+      ProgressView(value: progressFraction)
+        .tint(.cyan)
+        .accessibilityLabel("Postęp nauki")
+        .accessibilityValue("\(completedStages) z \(totalStages) etapów")
       Text(accessSummary)
         .font(.caption2)
-        .foregroundStyle(.cyan)
+        .foregroundStyle(.secondary)
     }
     .frame(maxWidth: .infinity, alignment: .leading)
-    .padding(16)
+    .padding(14)
     .background(.cyan.opacity(0.1), in: RoundedRectangle(cornerRadius: 18))
     .overlay(RoundedRectangle(cornerRadius: 18).stroke(.cyan.opacity(0.25)))
   }
 
-  private var continueCard: some View {
+  private var primaryActionCard: some View {
     VStack(alignment: .leading, spacing: 10) {
-      Text(progressStore.continueLesson == nil ? "Zacznij naukę" : "Kontynuuj naukę").font(.title3.bold())
-      Text(featuredLesson.title).font(.headline)
-      Text(featuredLesson.summary).font(.subheadline).foregroundStyle(.secondary)
-      Label("Następny etap: \(featuredStageTitle)", systemImage: "arrow.right.circle")
-        .font(.caption)
+      Label(primaryActionTitle, systemImage: primaryActionIcon)
+        .font(.title3.bold())
+        .foregroundStyle(.indigo)
+      Text(primaryLesson.title).font(.title3.bold())
+      Text(primaryActionDescription)
+        .font(.subheadline)
         .foregroundStyle(.secondary)
+      if let primaryStageTitle {
+        Label("Aktualny etap: \(primaryStageTitle)", systemImage: "arrow.right.circle")
+          .font(.caption)
+          .foregroundStyle(.secondary)
+      }
       NavigationLink {
-        LessonFlowView(lesson: featuredLesson, progressStore: progressStore)
+        LessonFlowView(lesson: primaryLesson, progressStore: progressStore)
       } label: {
-        Label("Otwórz temat", systemImage: "arrow.right.circle.fill")
+        Label(primaryActionButtonTitle, systemImage: "arrow.right.circle.fill")
           .frame(maxWidth: .infinity)
       }
       .buttonStyle(.borderedProminent)
       .tint(.indigo)
     }
     .padding(16)
-    .background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 18))
+    .background(.indigo.opacity(0.12), in: RoundedRectangle(cornerRadius: 18))
+    .overlay(RoundedRectangle(cornerRadius: 18).stroke(.indigo.opacity(0.3)))
   }
 
-  private var todayCard: some View {
-    VStack(alignment: .leading, spacing: 8) {
-      Label("Dzisiaj warto zrobić", systemImage: "sun.max.fill")
-        .font(.headline)
-        .foregroundStyle(.orange)
-      Text(featuredLesson.title)
-        .font(.subheadline.weight(.semibold))
-      Text("Poświęć około \(MissionBriefing.forLesson(featuredLesson).estimatedMinutes) minut na kolejny kontrolowany krok.")
-        .font(.caption)
-        .foregroundStyle(.secondary)
-      Button("Zacznij teraz") { selectedTab = .learn }
-        .buttonStyle(.bordered)
+  private var primaryActionTitle: String {
+    if !tutorialIsComplete { return "Samouczek" }
+    return hasStartedTasks ? "Kontynuuj" : "Pierwsze zadanie"
+  }
+
+  private var primaryActionIcon: String {
+    !tutorialIsComplete ? "sparkles" : "arrow.right.circle.fill"
+  }
+
+  private var primaryActionDescription: String {
+    if !tutorialIsComplete {
+      return "Poznaj bezpieczne granice ćwiczeń i przejdź pierwszą lokalną symulację."
     }
-    .frame(maxWidth: .infinity, alignment: .leading)
-    .padding(16)
-    .background(.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 18))
+    return primaryLesson.summary
   }
 
-  private var recentActivityCard: some View {
-    let activity = progressStore.recentActivities.first
-    return HStack(spacing: 10) {
-      Image(systemName: activity == nil ? "clock" : "checkmark.circle.fill")
-        .foregroundStyle(activity == nil ? Color.secondary : Color.green)
-      VStack(alignment: .leading, spacing: 3) {
-        Text("Ostatnia aktywność")
-          .font(.caption.bold())
-        Text(activity?.title ?? "Jeszcze nic nie ukończono")
+  private var primaryActionButtonTitle: String {
+    if !tutorialIsComplete {
+      return progressStore.currentStage(for: tutorialLesson) == nil ? "Rozpocznij samouczek" : "Kontynuuj samouczek"
+    }
+    return hasStartedTasks ? "Kontynuuj" : "Rozpocznij zadanie"
+  }
+
+  private var recentCard: some View {
+    VStack(alignment: .leading, spacing: 10) {
+      Label("Ostatnie", systemImage: "clock.arrow.circlepath")
+        .font(.title3.bold())
+        .foregroundStyle(.orange)
+      if recentItems.isEmpty {
+        Text("Ukończ etap lub zadanie, aby zobaczyć je tutaj.")
           .font(.subheadline)
-          .lineLimit(2)
-        if let activity {
-          Text(activity.date, format: .dateTime.day().month().hour().minute())
-            .font(.caption2)
-            .foregroundStyle(.secondary)
+          .foregroundStyle(.secondary)
+      } else {
+        ForEach(recentItems) { item in
+          HStack(alignment: .top, spacing: 10) {
+            Image(systemName: item.icon)
+              .foregroundStyle(item.tint)
+              .frame(width: 22)
+            VStack(alignment: .leading, spacing: 2) {
+              Text(item.title).font(.subheadline.weight(.semibold))
+              Text(item.subtitle)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+              Text(item.date, format: .dateTime.day().month().hour().minute())
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+            }
+            Spacer()
+          }
         }
       }
-      Spacer()
     }
     .padding(14)
     .background(.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 16))
   }
 
-  private var navigationCards: some View {
-    VStack(alignment: .leading, spacing: 10) {
-      Text("Twoja przestrzeń").font(.title3.bold())
-      HStack(spacing: 10) {
-        dashboardCard("Learn", icon: "book.fill", tint: .mint, tab: .learn)
-        dashboardCard("Practice", icon: "wrench.and.screwdriver.fill", tint: .orange, tab: .practice)
-      }
-      HStack(spacing: 10) {
-        dashboardCard("Security", icon: "lock.shield.fill", tint: .cyan, tab: .security)
-        dashboardCard("Progress", icon: "chart.bar.fill", tint: .purple, tab: .progress)
-      }
+  private var recentItems: [DashboardTimelineItem] {
+    progressStore.recentActivities.map {
+      DashboardTimelineItem(
+        id: "activity-\($0.id)",
+        title: $0.title,
+        subtitle: $0.kind == .labCompleted ? "Practice" : "Lekcja",
+        date: $0.date,
+        icon: $0.kind == .labCompleted ? "target" : "book.fill",
+        tint: $0.kind == .labCompleted ? .orange : .cyan
+      )
     }
+    .sorted { $0.date > $1.date }
+    .prefix(4)
+    .map { $0 }
   }
 
-  private func dashboardCard(_ title: String, icon: String, tint: Color, tab: AppTab) -> some View {
-    Button { selectedTab = tab } label: {
-      VStack(alignment: .leading, spacing: 10) {
-        Image(systemName: icon).font(.title2).foregroundStyle(tint)
-        Text(title).font(.headline).foregroundStyle(.primary)
-      }
-      .frame(maxWidth: .infinity, minHeight: 82, alignment: .leading)
-      .padding(14)
-      .background(.white.opacity(0.055), in: RoundedRectangle(cornerRadius: 16))
-    }
-    .buttonStyle(.plain)
-  }
+}
 
-  private var quickMission: some View {
-    VStack(alignment: .leading, spacing: 8) {
-      Text("Dzisiejsza misja").font(.title3.bold())
-      Text("Przećwicz decyzję bezpieczeństwa w kontrolowanym scenariuszu.")
-        .font(.subheadline).foregroundStyle(.secondary)
-      Button("Przejdź do Security") { selectedTab = .security }
-        .buttonStyle(.bordered)
-    }
-    .padding(16)
-    .frame(maxWidth: .infinity, alignment: .leading)
-    .background(.indigo.opacity(0.12), in: RoundedRectangle(cornerRadius: 18))
-  }
-
-  private var recentAchievement: some View {
-    let achievement = AchievementCatalog.evaluateAll(progressStore.progress).first(where: { $0.isUnlocked })
-    return HStack {
-      Image(systemName: achievement == nil ? "lock.fill" : "medal.fill")
-        .foregroundStyle(achievement == nil ? Color.secondary : Color.yellow)
-      Text(achievement?.title ?? "Pierwsze osiągnięcie czeka")
-        .font(.subheadline.weight(.semibold))
-      Spacer()
-      Button("Progress") { selectedTab = .progress }
-        .font(.caption.bold())
-    }
-    .padding(14)
-    .background(.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 16))
-  }
+private struct DashboardTimelineItem: Identifiable {
+  let id: String
+  let title: String
+  let subtitle: String
+  let date: Date
+  let icon: String
+  let tint: Color
 }
 
 extension LearningPath {
@@ -231,6 +296,9 @@ extension LearningPath {
     switch self {
     case .webSecurity: "Web"
     case .mobileSecurity: "Mobile"
+    case .networkAnalysis: "Sieci"
+    case .cloudSecurity: "Cloud"
+    case .privacyEngineering: "Prywatność"
     default: title
     }
   }
@@ -242,6 +310,11 @@ extension LearningPath {
     case .redTeam: "xmark.shield.fill"
     case .webSecurity: "globe"
     case .mobileSecurity: "iphone"
+    case .terminal: "terminal"
+    case .networkAnalysis: "network"
+    case .cloudSecurity: "cloud.fill"
+    case .cryptography: "key.fill"
+    case .privacyEngineering: "hand.raised.fill"
     }
   }
 
@@ -252,6 +325,11 @@ extension LearningPath {
     case .redTeam: .red
     case .webSecurity: .purple
     case .mobileSecurity: .cyan
+    case .terminal: .orange
+    case .networkAnalysis: .indigo
+    case .cloudSecurity: .teal
+    case .cryptography: .yellow
+    case .privacyEngineering: .pink
     }
   }
 }

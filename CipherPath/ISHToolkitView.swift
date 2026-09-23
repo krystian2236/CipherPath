@@ -14,7 +14,7 @@ struct NmapGuideView: View {
           InfoBanner(
             icon: "terminal.fill",
             title: "Nmap krok po kroku",
-            message: "Najpierw wykryj urządzenia w CipherPath. Potem przechodź przez analizy po kolei; komendy pozostają ukryte, dopóki ich nie otworzysz."
+            message: "Najpierw wykryj urządzenia w Northbyte Lab. Potem przechodź przez analizy po kolei; komendy pozostają ukryte, dopóki ich nie otworzysz."
           )
 
           if scanner.devices.isEmpty {
@@ -254,9 +254,9 @@ struct ISHToolkitView: View {
   private var intro: some View {
     InfoBanner(
       icon: "terminal.fill",
-      title: "CipherPath → iSH",
+      title: "Northbyte Lab → iSH",
       message:
-        "Przygotowuje polecenie Nmap i gotowy skrypt dla prywatnej sieci. CipherPath niczego nie uruchamia automatycznie."
+        "Przygotowuje polecenie Nmap i gotowy skrypt dla prywatnej sieci. Northbyte Lab niczego nie uruchamia automatycznie."
     )
   }
 

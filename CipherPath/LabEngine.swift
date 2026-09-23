@@ -17,7 +17,10 @@ enum LabEngine {
       )
     }
 
-    let parseResult = LabCommandParser.parse(input, allowedPrograms: definition.allowedPrograms)
+    let parseResult = LabCommandParser.parse(
+      input,
+      allowedPrograms: definition.allowedPrograms.union(["krg-orbit", "krg-vault"])
+    )
     if case .programNotAllowed = parseResult {
       return LabExecutionResult(
         status: .programRejected,
@@ -31,15 +34,17 @@ enum LabEngine {
       )
     }
 
-    if command == .run {
-      let output: String
-      if session.isRunning {
-        output = "Jeśli chcesz uzyskać pomoc, wpisz krg -help."
-      } else {
-        session.isRunning = true
-        session.history.removeAll()
-        output = "Jeśli chcesz uzyskać pomoc, wpisz krg -help."
+    if command == .hiddenOrbit || command == .hiddenVault {
+      let expectedTrigger = command == .hiddenOrbit ? "ls -d */" : "ls -d ~/"
+      guard isTerminalEasterEgg(definition), session.history.last?.command == expectedTrigger else {
+        return LabExecutionResult(
+          status: .programRejected,
+          output: "To hasło nie jest dostępne w tym miejscu."
+        )
       }
+      session.isRunning = true
+      let output = "RUN\n--- KRG{TERMINAL_BEHIND_THE_SCREEN} ---\nUkryta ścieżka odnaleziona."
+      session.history.append(LabTerminalEntry(command: input, output: output))
       return LabExecutionResult(status: .success, output: output)
     }
 
@@ -53,7 +58,7 @@ enum LabEngine {
     if command == .help {
       let programHelp = definition.allowedPrograms.sorted().compactMap(programUsage).joined(separator: "\n")
       let output = """
-      krg -help — pokazuje dostępne polecenia
+      help — pokazuje dostępne polecenia
       ip — pokazuje adres celu w symulacji
       clear — czyści historię terminala
       ls [ścieżka] — pokazuje widoczne pliki i katalogi
@@ -111,7 +116,7 @@ enum LabEngine {
 
     return LabExecutionResult(
       status: .noMatchingRule,
-      output: "Ta składnia nie prowadzi dalej. Użyj krg -help lub sprawdź cel misji."
+      output: "Ta składnia nie prowadzi dalej. Użyj help lub sprawdź cel misji."
     )
   }
 
@@ -185,6 +190,13 @@ enum LabEngine {
         return LabExecutionResult(status: .noMatchingRule, output: "Nie znaleziono takiego katalogu w laboratorium.")
       }
       output = listing
+    case .lsDirectories(let path):
+      guard isTerminalEasterEgg(definition) else {
+        return LabExecutionResult(status: .programRejected, output: "To polecenie nie jest dostępne w tej misji.")
+      }
+      output = path == "*/"
+        ? "KRG-ORBIT"
+        : "KRG-VAULT"
     case .cd(let path):
       guard filesystem.directories.contains(path) else {
         return LabExecutionResult(status: .noMatchingRule, output: "Nie znaleziono takiego katalogu w laboratorium.")
@@ -197,6 +209,10 @@ enum LabEngine {
 
     session.history.append(LabTerminalEntry(command: input, output: output))
     return LabExecutionResult(status: .success, output: output)
+  }
+
+  private static func isTerminalEasterEgg(_ definition: LabDefinition) -> Bool {
+    definition.id == "terminal-basics"
   }
 
   private struct VirtualFilesystem {
@@ -339,7 +355,7 @@ enum LabEngine {
 private extension LabCommand {
   var isNavigationCommand: Bool {
     switch self {
-    case .ls, .lsAll, .cd:
+    case .ls, .lsAll, .lsDirectories, .cd:
       true
     default:
       false

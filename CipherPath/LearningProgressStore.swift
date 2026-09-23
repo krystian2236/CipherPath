@@ -14,6 +14,7 @@ struct LearningProgress: Codable, Equatable, Sendable {
   var xpEarnedToday = 0
   var streakDays = 0
   var lastActiveDay: String?
+  var terminalUnlocks: Set<TerminalUnlock> = []
 
   private enum CodingKeys: String, CodingKey {
     case completedStages
@@ -29,6 +30,7 @@ struct LearningProgress: Codable, Equatable, Sendable {
     case xpEarnedToday
     case streakDays
     case lastActiveDay
+    case terminalUnlocks
   }
 
   init() {}
@@ -60,6 +62,7 @@ struct LearningProgress: Codable, Equatable, Sendable {
     xpEarnedToday = try container.decodeIfPresent(Int.self, forKey: .xpEarnedToday) ?? 0
     streakDays = try container.decodeIfPresent(Int.self, forKey: .streakDays) ?? 0
     lastActiveDay = try container.decodeIfPresent(String.self, forKey: .lastActiveDay)
+    terminalUnlocks = try container.decodeIfPresent(Set<TerminalUnlock>.self, forKey: .terminalUnlocks) ?? []
   }
 }
 
@@ -128,6 +131,22 @@ final class LearningProgressStore: ObservableObject {
   var streakDays: Int { progress.streakDays }
 
   var practiceHistory: [PracticeHistoryEntry] { progress.practiceHistory }
+
+  func beginLesson(lessonID: String) {
+    guard let lesson = lesson(withID: lessonID), canStart(lesson),
+          progress.lastLessonID != lessonID else { return }
+    progress.lastLessonID = lessonID
+    save()
+  }
+
+  func hasTerminalUnlock(_ unlock: TerminalUnlock) -> Bool {
+    progress.terminalUnlocks.contains(unlock)
+  }
+
+  func unlockTerminal(_ unlock: TerminalUnlock) {
+    guard progress.terminalUnlocks.insert(unlock).inserted else { return }
+    save()
+  }
 
   func isBookmarked(lessonID: String) -> Bool {
     progress.bookmarkedLessonIDs.contains(lessonID)
@@ -312,6 +331,7 @@ final class LearningProgressStore: ObservableObject {
     progress.labMissions[lessonID, default: LabMissionProgress()].checkpoints.removeValue(
       forKey: mode
     )
+    progress.lastLessonID = lessonID
     if mode == .guided {
       progress.completedStages[lessonID] = lesson.stages
     }

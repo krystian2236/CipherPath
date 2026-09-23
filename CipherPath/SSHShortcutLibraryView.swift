@@ -102,7 +102,7 @@ struct SSHShortcutLibraryView: View {
           InfoBanner(
             icon: "link",
             title: "Połączenie i diagnostyka",
-            message: "CipherPath otwiera logowanie w zainstalowanym kliencie SSH. Dodatkowe polecenia diagnostyczne kopiuje do świadomego uruchomienia."
+            message: "Northbyte Lab otwiera logowanie w zainstalowanym kliencie SSH. Dodatkowe polecenia diagnostyczne kopiuje do świadomego uruchomienia."
           )
           categoryPicker
           preparation
@@ -272,7 +272,7 @@ struct SSHShortcutLibraryView: View {
             }
             Button("Anuluj", role: .cancel) {}
           } message: {
-            Text("Zainstaluj Termius, aby otwierać sesje SSH bezpośrednio z CipherPath.")
+            Text("Zainstaluj Termius, aby otwierać sesje SSH bezpośrednio z Northbyte Lab.")
           }
         }
 

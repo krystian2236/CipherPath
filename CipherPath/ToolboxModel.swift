@@ -54,7 +54,7 @@ enum ToolboxTool: String, CaseIterable, Identifiable, Sendable {
 
   var title: String {
     switch self {
-    case .nativeDiscovery: "Skan CipherPath"
+    case .nativeDiscovery: "Skan Northbyte Lab"
     case .nmapDiscovery: "Nmap — urządzenia"
     case .netdiscover: "Netdiscover"
     case .nmapCommonPorts: "Nmap — porty"
@@ -185,7 +185,7 @@ enum ToolboxCommandBuilder {
     }
 
     if tool == .nativeDiscovery {
-      return .blocked("To narzędzie działa bezpośrednio w CipherPath.")
+      return .blocked("To narzędzie działa bezpośrednio w Northbyte Lab.")
     }
     if tool == .nmapDiscovery, let network {
       return .command("nmap -sn \(quoted(network.scanRangeDescription))")

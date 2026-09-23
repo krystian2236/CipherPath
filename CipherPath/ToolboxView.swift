@@ -7,7 +7,10 @@ struct ToolboxView: View {
   @Binding var workspaceRouteRaw: String
   @SceneStorage("CipherPath.toolboxTarget") private var selectedAddress = ""
   @SceneStorage("CipherPath.toolboxExpandedTool") private var expandedToolRaw = ""
+  @AppStorage("CipherPath.toolboxFavoriteTools") private var favoriteToolIDs = ""
+  @AppStorage("CipherPath.toolboxRecentTools") private var recentToolIDs = ""
   @State private var presentedCommand: ToolboxTool?
+  @State private var showsFavoritesOnly = false
 
   private var selectedDevice: NetworkDevice? {
     scanner.devices.first { $0.address == selectedAddress }
@@ -23,11 +26,12 @@ struct ToolboxView: View {
         LazyVStack(spacing: 12) {
           InfoBanner(
             icon: "arrow.up.circle.fill",
-            title: "CipherPath Toolbox",
+            title: "Northbyte Lab Toolbox",
             message: "Discover → Inspect → Verify. Każdy krok używa wyłącznie danych z bieżącej sieci i wybranego urządzenia."
           )
 
           targetCard
+          recentToolsCard
 
           ForEach(ToolboxStage.allCases) { stage in
             stageSection(stage)
@@ -36,7 +40,7 @@ struct ToolboxView: View {
           InfoBanner(
             icon: "hand.raised.fill",
             title: "Tryb defensywny",
-            message: "Uruchamiaj narzędzia tylko we własnej sieci lub za zgodą właściciela. CipherPath nie udostępnia modułów eksploatacji ani łamania haseł."
+            message: "Uruchamiaj narzędzia tylko we własnej sieci lub za zgodą właściciela. Northbyte Lab nie udostępnia modułów eksploatacji ani łamania haseł."
           )
         }
         .padding(12)
@@ -44,6 +48,21 @@ struct ToolboxView: View {
       .background(Color(.systemGroupedBackground))
       .navigationTitle("Toolbox")
       .navigationBarTitleDisplayMode(.inline)
+      .toolbar {
+        ToolbarItem(placement: .navigationBarTrailing) {
+          Menu {
+            Toggle("Tylko ulubione", isOn: $showsFavoritesOnly)
+            if showsFavoritesOnly {
+              Button("Pokaż wszystkie") {
+                showsFavoritesOnly = false
+              }
+            }
+          } label: {
+            Image(systemName: showsFavoritesOnly ? "star.fill" : "line.3.horizontal.decrease.circle")
+          }
+          .accessibilityLabel("Filtr narzędzi")
+        }
+      }
       .navigationDestination(item: $presentedCommand) { tool in
         ToolboxCommandView(
           tool: tool,
@@ -83,7 +102,7 @@ struct ToolboxView: View {
       subtitle: "Dalsze narzędzia korzystają tylko z tego urządzenia"
     ) {
       if scanner.devices.isEmpty {
-        Label("Najpierw uruchom Skan CipherPath.", systemImage: "lock.fill")
+        Label("Najpierw uruchom Skan Northbyte Lab.", systemImage: "lock.fill")
           .font(.caption)
           .foregroundStyle(.secondary)
           .frame(maxWidth: .infinity, alignment: .leading)
@@ -109,6 +128,30 @@ struct ToolboxView: View {
     }
   }
 
+  private var favoriteTools: Set<String> {
+    Set(favoriteToolIDs.split(separator: ",").map(String.init))
+  }
+
+  private var recentTools: [ToolboxTool] {
+    recentToolIDs
+      .split(separator: ",")
+      .compactMap { ToolboxTool(rawValue: String($0)) }
+  }
+
+  private var recentToolsCard: some View {
+    Group {
+      if !recentTools.isEmpty {
+        VStack(alignment: .leading, spacing: 8) {
+          Text("Ostatnio używane")
+            .font(.headline)
+          ForEach(recentTools.prefix(3)) { tool in
+            toolCard(tool)
+          }
+        }
+      }
+    }
+  }
+
   private func stageSection(_ stage: ToolboxStage) -> some View {
     VStack(alignment: .leading, spacing: 8) {
       VStack(alignment: .leading, spacing: 2) {
@@ -118,8 +161,14 @@ struct ToolboxView: View {
       .frame(maxWidth: .infinity, alignment: .leading)
       .padding(.horizontal, 2)
 
-      ForEach(ToolboxTool.tools(for: stage)) { tool in
+      ForEach(ToolboxTool.tools(for: stage).filter { !showsFavoritesOnly || favoriteTools.contains($0.rawValue) }) { tool in
         toolCard(tool)
+      }
+
+      if showsFavoritesOnly && ToolboxTool.tools(for: stage).allSatisfy({ !favoriteTools.contains($0.rawValue) }) {
+        Text("Brak ulubionych narzędzi w tej sekcji.")
+          .font(.caption)
+          .foregroundStyle(.secondary)
       }
     }
   }
@@ -172,6 +221,18 @@ struct ToolboxView: View {
           Text(tool.runner.rawValue).font(.caption2).foregroundStyle(.secondary)
         }
         Spacer()
+        Button {
+          toggleFavorite(tool)
+        } label: {
+          Image(systemName: favoriteTools.contains(tool.rawValue) ? "star.fill" : "star")
+            .foregroundStyle(favoriteTools.contains(tool.rawValue) ? .yellow : .secondary)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(
+          favoriteTools.contains(tool.rawValue)
+            ? "Usuń z ulubionych"
+            : "Dodaj do ulubionych"
+        )
         if !availability.isAvailable {
           Image(systemName: "lock.fill").font(.caption2).foregroundStyle(.tertiary)
         }
@@ -186,7 +247,25 @@ struct ToolboxView: View {
     tool == .nativeDiscovery ? "Rozpocznij skan" : "Przygotuj na agencie"
   }
 
+  private func toggleFavorite(_ tool: ToolboxTool) {
+    var ids = favoriteTools
+    if !ids.insert(tool.rawValue).inserted {
+      ids.remove(tool.rawValue)
+    }
+    favoriteToolIDs = ToolboxTool.allCases
+      .filter { ids.contains($0.rawValue) }
+      .map(\.rawValue)
+      .joined(separator: ",")
+  }
+
+  private func recordRecent(_ tool: ToolboxTool) {
+    var ids = recentTools.map(\.rawValue).filter { $0 != tool.rawValue }
+    ids.insert(tool.rawValue, at: 0)
+    recentToolIDs = ids.prefix(6).joined(separator: ",")
+  }
+
   private func run(_ tool: ToolboxTool) {
+    recordRecent(tool)
     if tool == .nativeDiscovery {
       Task { await scanner.scan() }
     } else {

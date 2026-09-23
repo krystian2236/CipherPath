@@ -22,17 +22,11 @@ struct LearningPathListView: View {
   @State private var searchText = ""
   @State private var filter: LessonFilter = .all
 
-  private let columns = Array(
-    repeating: GridItem(.flexible(), spacing: 8, alignment: .top),
-    count: 3
-  )
-
   var body: some View {
     NavigationStack {
       ScrollView {
         VStack(alignment: .leading, spacing: 16) {
           HStack {
-            DevLocationLabel(location: .paths)
             UIRefCopyButton(ref: .learn)
           }
           Picker("Filtr lekcji", selection: $filter) {
@@ -40,10 +34,15 @@ struct LearningPathListView: View {
               Text(filter.title).tag(filter)
             }
           }
-          .pickerStyle(.segmented)
+          .pickerStyle(.menu)
+          .frame(maxWidth: .infinity, alignment: .leading)
           TextField("Szukaj lekcji", text: $searchText)
             .textFieldStyle(.roundedBorder)
-          LazyVGrid(columns: columns, alignment: .leading, spacing: 8) {
+          LazyVGrid(
+            columns: [GridItem(.adaptive(minimum: 150), spacing: 10, alignment: .top)],
+            alignment: .leading,
+            spacing: 10
+          ) {
             ForEach(StarterCurriculum.paths, id: \.self) { path in
               let summary = PathCardSummary.make(for: path, policy: accessPolicy)
               NavigationLink {
@@ -80,7 +79,10 @@ struct LearningPathListView: View {
       let access = accessPolicy.access(for: lesson)
       let matchesFilter: Bool = switch filter {
       case .all: true
-      case .inProgress: access == .included && !progressStore.isCompleted(lessonID: lesson.id)
+      case .inProgress:
+        access == .included
+          && !progressStore.progress.completedStages[lesson.id, default: []].isEmpty
+          && !progressStore.isCompleted(lessonID: lesson.id)
       case .completed: access == .included && progressStore.isCompleted(lessonID: lesson.id)
       case .locked: access != .included
       case .bookmarked: progressStore.isBookmarked(lessonID: lesson.id)
@@ -90,7 +92,8 @@ struct LearningPathListView: View {
   }
 
   private func pathTile(_ path: LearningPath, summary: PathCardSummary) -> some View {
-    VStack(alignment: .leading, spacing: 7) {
+    let lessonCount = StarterCurriculum.lessons(in: path).count
+    return VStack(alignment: .leading, spacing: 7) {
       Image(systemName: path.iconName)
         .font(.title3)
         .foregroundStyle(path.tint)
@@ -99,13 +102,13 @@ struct LearningPathListView: View {
         .lineLimit(1)
         .minimumScaleFactor(0.7)
       HStack(spacing: 3) {
-        ForEach(1...5, id: \.self) { number in
+        ForEach(1...max(lessonCount, 1), id: \.self) { number in
           Image(systemName: number <= summary.includedCount ? "circle.fill" : "lock.fill")
             .font(.system(size: 7, weight: .semibold))
             .foregroundStyle(number <= summary.includedCount ? path.tint : .secondary)
         }
       }
-      Text("\(summary.includedCount)/5 dostępne")
+      Text("\(summary.includedCount)/\(lessonCount) dostępne")
         .font(.caption2)
         .foregroundStyle(.secondary)
         .lineLimit(1)
@@ -116,6 +119,6 @@ struct LearningPathListView: View {
     .background(path.tint.opacity(0.11), in: RoundedRectangle(cornerRadius: 14))
     .overlay(RoundedRectangle(cornerRadius: 14).stroke(path.tint.opacity(0.35)))
     .accessibilityElement(children: .combine)
-    .accessibilityLabel("\(path.title), \(summary.includedCount) z 5 dostępnych")
+    .accessibilityLabel("\(path.title), \(summary.includedCount) z \(lessonCount) dostępnych")
   }
 }

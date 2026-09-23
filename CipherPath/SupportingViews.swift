@@ -518,13 +518,13 @@ struct AboutView: View {
 
       Section("iSH") {
         Text(
-          "CipherPath generuje polecenia i skrypty dla Nmap w trybie TCP connect. Skrypt trzeba świadomie zapisać i uruchomić w iSH."
+          "Northbyte Lab generuje polecenia i skrypty dla Nmap w trybie TCP connect. Skrypt trzeba świadomie zapisać i uruchomić w iSH."
         )
       }
 
       Section("Dostęp") {
         Link(
-          "Otwórz ustawienia CipherPath",
+          "Otwórz ustawienia Northbyte Lab",
           destination: URL(string: UIApplication.openSettingsURLString)!
         )
       }

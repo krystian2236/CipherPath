@@ -3,13 +3,13 @@ import SwiftUI
 struct MissionBriefingView: View {
   let lesson: LearningLesson
   @ObservedObject var progressStore: LearningProgressStore
+  @Environment(\.dismiss) private var dismiss
 
   private var briefing: MissionBriefing { .forLesson(lesson) }
 
   var body: some View {
     ScrollView {
       VStack(alignment: .leading, spacing: 20) {
-        DevLocationLabel(location: .briefing)
         VStack(alignment: .leading, spacing: 10) {
           Label(lesson.path.title.uppercased(), systemImage: lesson.path.iconName)
             .font(.caption.bold())
@@ -48,7 +48,11 @@ struct MissionBriefingView: View {
         .background(.green.opacity(0.1), in: RoundedRectangle(cornerRadius: 14))
 
         NavigationLink {
-          LessonFlowView(lesson: lesson, progressStore: progressStore)
+          LessonFlowView(
+            lesson: lesson,
+            progressStore: progressStore,
+            onFinish: { dismiss() }
+          )
         } label: {
           Label(
             progressStore.isCompleted(lessonID: lesson.id) ? "Zagraj ponownie" : "Rozpocznij misję",
@@ -201,7 +205,7 @@ struct LessonMissionContent: Equatable, Sendable {
         checkPrompt: "Wybierz systemowe miejsce dla małego sekretu aplikacji.",
         offlineEvidence: "UserDefaults: ustawienia\nDocuments: pliki użytkownika\nKEYCHAIN: dane uwierzytelniające",
         expectedFlag: "CIPHER{KEYCHAIN}",
-        explanation: "Keychain zapewnia systemową ochronę małych sekretów. CipherPath nie zapisuje w lekcji żadnych prawdziwych danych logowania."
+        explanation: "Keychain zapewnia systemową ochronę małych sekretów. Northbyte Lab nie zapisuje w lekcji żadnych prawdziwych danych logowania."
       )
     default:
       return LessonMissionContent(
@@ -219,8 +223,19 @@ struct LessonMissionContent: Equatable, Sendable {
 struct LessonFlowView: View {
   let lesson: LearningLesson
   @ObservedObject var progressStore: LearningProgressStore
+  let onFinish: (() -> Void)?
   @State private var flagInput = ""
   @State private var flagError = false
+
+  init(
+    lesson: LearningLesson,
+    progressStore: LearningProgressStore,
+    onFinish: (() -> Void)? = nil
+  ) {
+    self.lesson = lesson
+    self.progressStore = progressStore
+    self.onFinish = onFinish
+  }
 
   private var content: LessonMissionContent {
     LessonMissionContent.content(for: lesson)
@@ -232,7 +247,8 @@ struct LessonFlowView: View {
         LabTerminalView(
           definition: definition,
           lesson: lesson,
-          progressStore: progressStore
+          progressStore: progressStore,
+          onFinish: onFinish
         )
       } else {
         classicMission
@@ -291,22 +307,30 @@ struct LessonFlowView: View {
       advanceButton("Dane sprawdzone", stage: stage)
     case .findFlag:
       Text("Wpisz flagę odnalezioną w materiale powyżej.")
-      TextField("CIPHER{...}", text: $flagInput)
-        .textInputAutocapitalization(.characters)
-        .autocorrectionDisabled()
-      if flagError {
-        Label("Flaga nie pasuje. Sprawdź materiał jeszcze raz.", systemImage: "exclamationmark.triangle.fill")
-          .font(.footnote).foregroundStyle(.orange)
-      }
-      Button("Sprawdź flagę") {
-        if content.accepts(flag: flagInput) {
-          flagError = false
-          progressStore.complete(stage: stage, lessonID: lesson.id)
-        } else {
-          flagError = true
+      HStack(spacing: 10) {
+        TextField("CIPHER{...}", text: $flagInput)
+          .textInputAutocapitalization(.characters)
+          .autocorrectionDisabled()
+          .padding(.horizontal, 14)
+          .frame(minHeight: 48)
+          .background(.secondary.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
+          .accessibilityLabel("Flaga odpowiedzi")
+        Button {
+          if content.accepts(flag: flagInput) {
+            flagError = false
+            progressStore.complete(stage: stage, lessonID: lesson.id)
+          } else {
+            flagError = true
+          }
+        } label: {
+          Image(systemName: "flag.checkered.circle.fill")
+            .font(.title2)
+            .frame(width: 48, height: 48)
         }
+        .buttonStyle(.borderedProminent)
+        .clipShape(Circle())
+        .accessibilityLabel("Sprawdź flagę")
       }
-      .buttonStyle(.borderedProminent)
     case .explanation:
       Text(content.explanation)
       advanceButton("Zakończ misję", stage: stage)

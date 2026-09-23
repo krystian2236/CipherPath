@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- przebudowano ekran Start: samouczek poprzedza pierwsze zadania, a ostatnie działania zastępują powielone skróty i podsumowanie postępu,
+- rozszerzono ścieżki nauki, zapisywanie postępów i zestaw kontrolowanych laboratoriów offline,
+- usprawniono terminal laboratoryjny, parser poleceń i ich weryfikację testami,
+- zwiększono numer buildu do 13; wersja marketingowa pozostaje 2.2.
+
+## 2.2
+
+- uproszczono ekran Start do jednego dynamicznego następnego kroku i kompaktowego timeline’u postępu,
+- poprawiono responsywny układ zakładki Learn na wąskich ekranach,
+- usunięto techniczne etykiety DEV z interfejsu zakładki Learn,
+- usunięto techniczne etykiety DEV z całego przepływu lekcji i labu uruchamianego z Learn,
+
 ## 2.1
 
 - uporządkowano główną nawigację na Start, Learn, Practice, Security i Progress,

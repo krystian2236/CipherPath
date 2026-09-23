@@ -25,6 +25,7 @@ struct LearningPathDetailView: View {
   @ObservedObject var progressStore: LearningProgressStore
   let accessPolicy: ContentAccessPolicy
   @State private var filter: LessonFilter = .all
+  @State private var selectedLessonID: String?
 
   private var lessons: [LearningLesson] {
     StarterCurriculum.lessons(in: path).filter { lesson in
@@ -32,7 +33,9 @@ struct LearningPathDetailView: View {
       return switch filter {
       case .all: true
       case .inProgress:
-        access == .included && !progressStore.isCompleted(lessonID: lesson.id)
+        access == .included
+          && !progressStore.progress.completedStages[lesson.id, default: []].isEmpty
+          && !progressStore.isCompleted(lessonID: lesson.id)
       case .completed:
         access == .included && progressStore.isCompleted(lessonID: lesson.id)
       case .locked:
@@ -46,7 +49,6 @@ struct LearningPathDetailView: View {
   var body: some View {
     List {
       Section {
-        DevLocationLabel(location: .paths)
         Picker("Filtr lekcji", selection: $filter) {
           ForEach(LessonFilter.allCases) { filter in
             Text(filter.title).tag(filter)
@@ -70,6 +72,11 @@ struct LearningPathDetailView: View {
         )
       }
     }
+    .navigationDestination(item: $selectedLessonID) { lessonID in
+      if let lesson = StarterCurriculum.lessons.first(where: { $0.id == lessonID }) {
+        MissionBriefingView(lesson: lesson, progressStore: progressStore)
+      }
+    }
     .navigationTitle(path.title)
   }
 
@@ -77,8 +84,8 @@ struct LearningPathDetailView: View {
   private func lessonLinks(_ lesson: LearningLesson, access: LessonAccess) -> some View {
     HStack(spacing: 8) {
       if access == .included {
-        NavigationLink {
-          MissionBriefingView(lesson: lesson, progressStore: progressStore)
+        Button {
+          selectedLessonID = lesson.id
         } label: {
           LessonRow(
             lesson: lesson,
@@ -86,10 +93,11 @@ struct LearningPathDetailView: View {
             access: access,
             isCompleted: progressStore.isCompleted(lessonID: lesson.id),
             prerequisiteTitle: prerequisiteTitle(for: lesson),
-            note: progressStore.note(for: lesson.id),
             completedStageCount: progressStore.progress.completedStages[lesson.id, default: []].count
           )
+          .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .buttonStyle(.plain)
       } else {
         LessonRow(
           lesson: lesson,
@@ -97,9 +105,9 @@ struct LearningPathDetailView: View {
           access: access,
           isCompleted: false,
           prerequisiteTitle: prerequisiteTitle(for: lesson),
-          note: progressStore.note(for: lesson.id),
           completedStageCount: 0
         )
+        .frame(maxWidth: .infinity, alignment: .leading)
       }
       NavigationLink {
         LessonNotesView(lesson: lesson, progressStore: progressStore)
@@ -134,7 +142,6 @@ private struct LessonRow: View {
   let access: LessonAccess
   let isCompleted: Bool
   let prerequisiteTitle: String?
-  let note: String
   let completedStageCount: Int
 
   var body: some View {
@@ -142,16 +149,12 @@ private struct LessonRow: View {
       Image(systemName: iconName)
         .foregroundStyle(lesson.availability == .available ? path.tint : .secondary)
       VStack(alignment: .leading, spacing: 4) {
-        DevLocationLabel(location: .missionCard)
         Text("Lekcja \(lesson.order)").font(.caption).foregroundStyle(.secondary)
         Text(lesson.title).font(.headline)
         Text(lesson.summary).font(.caption).foregroundStyle(.secondary)
         HStack(spacing: 8) {
           Label("\(lesson.estimatedMinutes) min", systemImage: "clock")
           Label(lesson.difficulty.rawValue, systemImage: "gauge.with.dots.needle.67percent")
-          if !note.isEmpty {
-            Label("Notatka", systemImage: "note.text")
-          }
         }
         .font(.caption2)
         .foregroundStyle(.secondary)
@@ -190,7 +193,7 @@ private struct LessonRow: View {
   }
 }
 
-private struct LessonNotesView: View {
+struct LessonNotesView: View {
   let lesson: LearningLesson
   @ObservedObject var progressStore: LearningProgressStore
   @State private var note = ""
