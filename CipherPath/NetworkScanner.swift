@@ -45,7 +45,7 @@ final class NetworkScanner: ObservableObject {
       return
     }
     guard context.isPrivateOrLinkLocal else {
-      phase = .failed("Dla bezpieczeństwa CipherPath skanuje tylko prywatne sieci lokalne.")
+      phase = .failed("Dla bezpieczeństwa Northbyte Lab skanuje tylko prywatne sieci lokalne.")
       return
     }
 

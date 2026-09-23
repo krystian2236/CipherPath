@@ -34,7 +34,7 @@ struct PointsHistoryRowModel: Identifiable, Equatable, Sendable {
   }
 
   private static func subtitle(for transaction: PointsTransaction) -> String {
-    guard let lessonID = transaction.lessonID else { return "CipherPath" }
+    guard let lessonID = transaction.lessonID else { return "Northbyte Lab" }
     return StarterCurriculum.lessons.first(where: { $0.id == lessonID })?.title ?? lessonID
   }
 }
@@ -77,7 +77,15 @@ struct PointsView: View {
       }
 
       Section("Historia") {
-        ForEach(PointsHistoryRowModel.rows(for: progressStore.progress.pointsWallet.transactions)) { row in
+        let rows = PointsHistoryRowModel.rows(for: progressStore.progress.pointsWallet.transactions)
+        if rows.isEmpty {
+          ContentUnavailableView(
+            "Brak historii punktów",
+            systemImage: "sparkles",
+            description: Text("Ukończ pierwszą misję, aby zdobyć punkty.")
+          )
+        } else {
+          ForEach(rows) { row in
           HStack {
             VStack(alignment: .leading, spacing: 3) {
               Text(row.title).font(.headline)
@@ -91,6 +99,7 @@ struct PointsView: View {
               .font(.subheadline.bold())
               .foregroundStyle(row.amountText.hasPrefix("+") ? .green : .orange)
           }
+        }
         }
       }
 

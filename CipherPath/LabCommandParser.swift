@@ -2,7 +2,8 @@ import Foundation
 
 enum LabCommand: Equatable, Sendable {
   case help
-  case run
+  case hiddenOrbit
+  case hiddenVault
   case ip
   case clear
   case ping(target: String)
@@ -13,6 +14,7 @@ enum LabCommand: Equatable, Sendable {
   case ssh(destination: String)
   case ls(path: String?)
   case lsAll(path: String?)
+  case lsDirectories(path: String)
   case cd(path: String)
   case cat(path: String)
   case sha256sum(path: String)
@@ -50,16 +52,18 @@ enum LabCommandParser {
 
     let tokens = input.split(whereSeparator: \Character.isWhitespace).map(String.init)
     guard let program = tokens.first else {
-      return .rejected("Wpisz polecenie. Po uruchomieniu użyj krg -help.")
+      return .rejected("Wpisz polecenie.")
     }
 
     let arguments = Array(tokens.dropFirst())
     let result: LabCommandParseResult
     switch program.lowercased() {
-    case "krg" where arguments == ["-help"] || arguments == ["--help"]:
+    case "help" where arguments.isEmpty:
       result = .command(.help)
-    case "run" where arguments.isEmpty:
-      result = .command(.run)
+    case "krg-orbit" where arguments.isEmpty:
+      result = .command(.hiddenOrbit)
+    case "krg-vault" where arguments.isEmpty:
+      result = .command(.hiddenVault)
     case "ip" where arguments.isEmpty:
       result = .command(.ip)
     case "clear" where arguments.isEmpty:
@@ -78,6 +82,8 @@ enum LabCommandParser {
       result = .command(.ssh(destination: arguments[0]))
     case "ls" where arguments.first == "-la" && arguments.count <= 2:
       result = .command(.lsAll(path: arguments.count == 2 ? arguments[1] : nil))
+    case "ls" where arguments == ["-d", "*/"] || arguments == ["-d", "~/"]:
+      result = .command(.lsDirectories(path: arguments[1]))
     case "ls" where arguments.count <= 1:
       result = .command(.ls(path: arguments.first))
     case "cd" where arguments.count == 1:
@@ -102,7 +108,7 @@ enum LabCommandParser {
       return result
     }
 
-    let builtInPrograms: Set<String> = ["help", "run", "ip", "clear", "ls", "cd"]
+    let builtInPrograms: Set<String> = ["help", "ip", "clear", "ls", "cd"]
     guard builtInPrograms.contains(command.program) || allowedPrograms.contains(command.program) else {
       return .programNotAllowed
     }

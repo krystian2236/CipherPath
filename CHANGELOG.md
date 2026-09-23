@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- przebudowano ekran Start: samouczek poprzedza pierwsze zadania, a ostatnie działania zastępują powielone skróty i podsumowanie postępu,
+- rozszerzono ścieżki nauki, zapisywanie postępów i zestaw kontrolowanych laboratoriów offline,
+- usprawniono terminal laboratoryjny, parser poleceń i ich weryfikację testami,
+- zwiększono numer buildu do 13; wersja marketingowa pozostaje 2.2.
+
 ## 2.2
 
 - uproszczono ekran Start do jednego dynamicznego następnego kroku i kompaktowego timeline’u postępu,

@@ -64,9 +64,9 @@ struct StarterLabsTests {
     }
     let definitions = availableLessons.compactMap(StarterLabs.definition(for:))
 
-    #expect(availableLessons.count == 35)
-    #expect(definitions.count == 35)
-    #expect(Set(definitions.map(\.id)).count == 35)
+    #expect(availableLessons.count == 100)
+    #expect(definitions.count == 100)
+    #expect(Set(definitions.map(\.id)).count == 100)
     #expect(Set(definitions.map(\.targetAddress)).count == definitions.count)
     #expect(Set(definitions.map(\.allowedPrograms)).count >= 5)
     #expect(definitions.contains { $0.flags.count == 2 })
@@ -75,7 +75,7 @@ struct StarterLabsTests {
       let pathDefinitions = StarterCurriculum.lessons(in: path)
         .filter { $0.availability == .available }
         .compactMap(StarterLabs.definition(for:))
-      #expect(pathDefinitions.count == 7)
+      #expect(pathDefinitions.count == 10)
     }
   }
 
@@ -179,7 +179,7 @@ struct StarterLabsTests {
     )
     var session = LabSession(definitionID: terminal.id)
 
-    _ = LabEngine.execute("run", definition: terminal, session: &session)
+    LabEngine.start(session: &session)
     let root = LabEngine.execute("ls", definition: terminal, session: &session)
     let change = LabEngine.execute("cd training", definition: terminal, session: &session)
     let training = LabEngine.execute("ls", definition: terminal, session: &session)

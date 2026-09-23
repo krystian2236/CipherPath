@@ -46,14 +46,27 @@ enum StarterLabs {
     secureAPI,
     secureLogging,
     dataFlowPrivacy,
-  ]
+  ] + generatedLabs
+
+  private static let generatedLabs: [LabDefinition] = {
+    StarterCurriculum.lessons
+      .filter { $0.id.contains("-generated-") }
+      .enumerated()
+      .map { index, lesson in generatedLab(for: lesson, index: index) }
+  }()
 
   static func definition(for lesson: LearningLesson) -> LabDefinition? {
     definition(for: lesson.id)
   }
 
   static func definition(for lessonID: String) -> LabDefinition? {
-    switch lessonID {
+    if lessonID.contains("-generated-"),
+       let lesson = StarterCurriculum.lessons.first(where: { $0.id == lessonID }),
+       let index = StarterCurriculum.lessons.filter({ $0.id.contains("-generated-") }).firstIndex(of: lesson) {
+      return generatedLab(for: lesson, index: index)
+    }
+
+    return switch lessonID {
     case "fundamentals-digital-safety": portDetective
     case "fundamentals-read-port-scan": networkScout
     case "fundamentals-network-addresses": privateAddresses
@@ -91,6 +104,39 @@ enum StarterLabs {
     case "mobile-data-flow-privacy": dataFlowPrivacy
     default: nil
     }
+  }
+
+  private static func generatedLab(for lesson: LearningLesson, index: Int) -> LabDefinition {
+    let targetAddress = "192.0.2.\(100 + index)"
+    let objectiveID = "review"
+    let flagValue = "CIPHER{\(lesson.id.replacingOccurrences(of: "-", with: "_").uppercased())}"
+    return LabDefinition(
+      id: "lab-\(lesson.id)",
+      title: lesson.title,
+      targetAddress: targetAddress,
+      allowedPrograms: ["cat"],
+      rules: [
+        LabRule(
+          command: .cat(path: "/lesson/briefing.txt"),
+          output: "topic=\(lesson.summary)\\nanswer=\(flagValue)",
+          discovery: "Przeanalizowano przygotowany materiał",
+          objectiveID: objectiveID
+        )
+      ],
+      objectives: [
+        LabObjective(id: objectiveID, title: "Przeanalizuj materiał lekcji")
+      ],
+      flags: [
+        LabFlag(
+          id: "review",
+          value: flagValue,
+          answer: "Materiał przeanalizowany",
+          requiredObjectiveIDs: [objectiveID]
+        )
+      ],
+      suggestedCommands: ["cat /lesson/briefing.txt"],
+      defenseSummary: "Ćwiczenie działa wyłącznie na fikcyjnych danych offline i kończy się defensywną rekomendacją."
+    )
   }
 
   private static let portDetective = LabDefinition(
@@ -1202,13 +1248,13 @@ enum StarterLabs {
     rules: [
       LabRule(
         command: .find(arguments: ["/release", "-type", "f"]),
-        output: "/release/CipherPath.ipa\n/release/checklist.txt\n/release/expected.sha256",
+        output: "/release/NorthbyteLab.ipa\n/release/checklist.txt\n/release/expected.sha256",
         discovery: "Pakiet, lista kontrolna i zaufana suma są gotowe do przeglądu",
         objectiveID: "inventory"
       ),
       LabRule(
-        command: .sha256sum(path: "/release/CipherPath.ipa"),
-        output: "6f1ed002ab5595859014ebf0951522d9  /release/CipherPath.ipa",
+        command: .sha256sum(path: "/release/NorthbyteLab.ipa"),
+        output: "6f1ed002ab5595859014ebf0951522d9  /release/NorthbyteLab.ipa",
         discovery: "Suma pakietu odpowiada wartości przygotowanej do wydania",
         objectiveID: "integrity"
       ),
@@ -1233,7 +1279,7 @@ enum StarterLabs {
     ],
     suggestedCommands: [
       "find /release -type f",
-      "sha256sum /release/CipherPath.ipa",
+      "sha256sum /release/NorthbyteLab.ipa",
       "cat /release/checklist.txt",
     ],
     defenseSummary: "Przed wydaniem sprawdź prywatność, uprawnienia, sekrety, podpis i integralność paczki. Wynik zapisuj jako powtarzalną listę kontrolną."

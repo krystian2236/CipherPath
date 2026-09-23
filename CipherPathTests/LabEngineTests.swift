@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 
 @testable import CipherPath
@@ -16,10 +17,15 @@ struct LabModeSafetyTests {
 struct LabCommandParserTests {
   @Test("Recognizes the safe starter command set")
   func recognizesSafeCommands() {
-    #expect(LabCommandParser.parse("krg -help") == .command(.help))
-    #expect(LabCommandParser.parse("krg --help") == .command(.help))
-    #expect(LabCommandParser.parse("help").isRejected)
-    #expect(!LabCommandParser.parse("run").isRejected)
+    #expect(LabCommandParser.parse("help") == .command(.help))
+    #expect(LabCommandParser.parse("KRG-ORBIT") == .command(.hiddenOrbit))
+    #expect(LabCommandParser.parse("KRG-VAULT") == .command(.hiddenVault))
+    #expect(
+      LabCommandParser.parse("ls -d */") == .command(.lsDirectories(path: "*/"))
+    )
+    #expect(
+      LabCommandParser.parse("ls -d ~/") == .command(.lsDirectories(path: "~/"))
+    )
     #expect(!LabCommandParser.parse("ip").isRejected)
     #expect(
       LabCommandParser.parse("ping 10.10.0.12")
@@ -101,21 +107,19 @@ struct LabEngineTests {
   func startsFromTerminalAndReportsOfflineAddress() {
     var session = LabSession(definitionID: definition.id)
 
-    let stoppedHelp = LabEngine.execute("krg -help", definition: definition, session: &session)
-    let run = LabEngine.execute("run", definition: definition, session: &session)
-    let help = LabEngine.execute("krg -help", definition: definition, session: &session)
+    let stoppedHelp = LabEngine.execute("help", definition: definition, session: &session)
+    LabEngine.start(session: &session)
+    let help = LabEngine.execute("help", definition: definition, session: &session)
     let ip = LabEngine.execute("ip", definition: definition, session: &session)
 
     #expect(stoppedHelp.status == .machineStopped)
-    #expect(run.status == .success)
     #expect(session.isRunning)
-    #expect(run.output == "Jeśli chcesz uzyskać pomoc, wpisz krg -help.")
     #expect(help.status == .success)
-    #expect(help.output.contains("krg -help"))
+    #expect(help.output.contains("help —"))
     #expect(help.output.contains("ip"))
     #expect(ip.status == .success)
     #expect(ip.output == "lab0: 10.10.0.12\nnetwork: offline simulation")
-    #expect(session.history.map(\.command) == ["krg -help", "ip"])
+    #expect(session.history.map(\.command) == ["help", "ip"])
   }
 
   @Test("Requires the virtual machine to be started")
@@ -182,8 +186,8 @@ struct LabEngineTests {
     let portDetective = try #require(StarterLabs.definition(for: "fundamentals-digital-safety"))
     var session = LabSession(definitionID: portDetective.id)
 
-    #expect(LabEngine.execute("run", definition: portDetective, session: &session).status == .success)
-    #expect(LabEngine.execute("krg --help", definition: portDetective, session: &session).status == .success)
+    LabEngine.start(session: &session)
+    #expect(LabEngine.execute("help", definition: portDetective, session: &session).status == .success)
     #expect(LabEngine.execute("ping 192.0.2.10", definition: portDetective, session: &session).status == .success)
     #expect(LabEngine.execute("nmap -sC -sV 192.0.2.10", definition: portDetective, session: &session).status == .success)
     #expect(LabEngine.execute("curl http://192.0.2.10", definition: portDetective, session: &session).status == .programRejected)
@@ -230,12 +234,12 @@ struct LabEngineTests {
     var session = LabSession(definitionID: definition.id)
     LabEngine.start(session: &session)
 
-    let help = LabEngine.execute("krg -help", definition: definition, session: &session)
+    let help = LabEngine.execute("help", definition: definition, session: &session)
     _ = LabEngine.execute("ping 10.10.0.12", definition: definition, session: &session)
     let clear = LabEngine.execute("clear", definition: definition, session: &session)
 
     #expect(help.status == .success)
-    #expect(help.output.contains("krg -help —"))
+    #expect(help.output.contains("help —"))
     #expect(help.output.contains("ip —"))
     #expect(help.output.contains("ping <IP>"))
     #expect(help.output.contains("nmap -sV <IP>"))
@@ -275,7 +279,7 @@ struct LabEngineTests {
     LabEngine.start(session: &session)
 
     let help = LabEngine.execute(
-      "krg -help", definition: filesystemDefinition, session: &session
+      "help", definition: filesystemDefinition, session: &session
     )
     let root = LabEngine.execute("ls", definition: filesystemDefinition, session: &session)
     let changeDirectory = LabEngine.execute(
@@ -323,6 +327,45 @@ struct LabEngineTests {
 
     #expect(visible.output == "readme.txt")
     #expect(all.output == ".\n..\n.template.txt\nreadme.txt")
+  }
+
+  @Test("Terminal easter egg reveals the same secret through orbit and vault")
+  func revealsTerminalEasterEgg() throws {
+    let terminal = try #require(StarterLabs.definition(for: "fundamentals-terminal-basics"))
+    var helpSession = LabSession(definitionID: terminal.id)
+    LabEngine.start(session: &helpSession)
+
+    let directoryHint = LabEngine.execute("ls -d */", definition: terminal, session: &helpSession)
+    let hiddenHelp = LabEngine.execute("KRG-ORBIT", definition: terminal, session: &helpSession)
+
+    #expect(directoryHint.output == "KRG-ORBIT")
+    #expect(hiddenHelp.output == "RUN\n--- KRG{TERMINAL_BEHIND_THE_SCREEN} ---\nUkryta ścieżka odnaleziona.")
+
+    var runSession = LabSession(definitionID: terminal.id)
+    LabEngine.start(session: &runSession)
+    let vaultHint = LabEngine.execute("ls -d ~/", definition: terminal, session: &runSession)
+    let hiddenRun = LabEngine.execute("KRG-VAULT", definition: terminal, session: &runSession)
+
+    #expect(vaultHint.output == "KRG-VAULT")
+    #expect(hiddenRun.output == hiddenHelp.output)
+  }
+
+  @Test("Stores both terminal unlocks for the next mission")
+  @MainActor
+  func storesTerminalUnlocks() {
+    let defaults = UserDefaults(suiteName: "CipherPathTests.terminalUnlocks")!
+    defaults.removePersistentDomain(forName: "CipherPathTests.terminalUnlocks")
+    let store = LearningProgressStore(
+      defaults: defaults,
+      storageKey: "terminal-unlocks"
+    )
+
+    #expect(!store.hasTerminalUnlock(.run))
+    #expect(!store.hasTerminalUnlock(.krg))
+    store.unlockTerminal(.run)
+    store.unlockTerminal(.krg)
+    #expect(store.hasTerminalUnlock(.run))
+    #expect(store.hasTerminalUnlock(.krg))
   }
 
   @Test("Assistance purchase messages explain charges and missing points")

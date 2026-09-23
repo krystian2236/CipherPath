@@ -40,7 +40,7 @@ struct AppSettingsView: View {
                     Label("Otwórz ustawienia iOS", systemImage: "gear")
                 }
 
-                Text("CipherPath przechowuje postęp lokalnie. Ustawienia sieci i uprawnień kontrolujesz w systemie.")
+                Text("Northbyte Lab przechowuje postęp lokalnie. Ustawienia sieci i uprawnień kontrolujesz w systemie.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }

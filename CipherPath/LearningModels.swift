@@ -23,6 +23,11 @@ enum LearningPath: String, CaseIterable, Codable, Hashable, Sendable {
   case redTeam
   case webSecurity
   case mobileSecurity
+  case terminal
+  case networkAnalysis
+  case cloudSecurity
+  case cryptography
+  case privacyEngineering
 
   var title: String {
     switch self {
@@ -31,6 +36,11 @@ enum LearningPath: String, CaseIterable, Codable, Hashable, Sendable {
     case .redTeam: "Red Team"
     case .webSecurity: "Web Security"
     case .mobileSecurity: "Mobile Security"
+    case .terminal: "Terminal"
+    case .networkAnalysis: "Network Analysis"
+    case .cloudSecurity: "Cloud Security"
+    case .cryptography: "Kryptografia"
+    case .privacyEngineering: "Privacy Engineering"
     }
   }
 }
@@ -113,7 +123,11 @@ enum LessonAccess: Equatable, Sendable {
 }
 
 struct ContentAccessPolicy: Equatable, Sendable {
+  #if CIPHERPATH_DEVELOPER
+  static let current = ContentAccessPolicy(tier: .pro)
+  #else
   static let current = ContentAccessPolicy(tier: .free)
+  #endif
 
   let tier: ContentAccessTier
 
@@ -167,6 +181,21 @@ struct MissionBriefing: Equatable, Sendable {
     case .mobileSecurity:
       story = "Testowa aplikacja mobilna trafia do przeglądu bezpieczeństwa przed wydaniem. Ty wykonujesz kontrolę jej danych i komunikacji."
       objective = "Oceń przygotowany przypadek i wybierz ochronę właściwą dla iPhone’a."
+    case .terminal:
+      story = "Otrzymujesz bezpieczny terminal szkoleniowy z przygotowanymi plikami."
+      objective = "Wykonaj analizę wyłącznie w kontrolowanym środowisku."
+    case .networkAnalysis:
+      story = "Zespół udostępnił raport ruchu i usług fikcyjnego hosta."
+      objective = "Połącz obserwacje sieciowe z właściwą rekomendacją obronną."
+    case .cloudSecurity:
+      story = "Konfiguracja testowego konta chmurowego wymaga przeglądu."
+      objective = "Znajdź nadmiarowy dostęp i zaproponuj najmniejsze uprawnienia."
+    case .cryptography:
+      story = "Laboratorium zawiera bezpieczne przykłady skrótów i kluczy."
+      objective = "Rozpoznaj właściwe zastosowanie mechanizmów kryptograficznych."
+    case .privacyEngineering:
+      story = "Przed wydaniem sprawdzasz przepływ danych w aplikacji demonstracyjnej."
+      objective = "Ogranicz dane do niezbędnego minimum i udokumentuj decyzję."
     }
 
     return MissionBriefing(
@@ -410,7 +439,100 @@ enum StarterCurriculum {
       id: "mobile-data-flow-privacy", path: .mobileSecurity, order: 7,
       title: "Przepływ danych i prywatność",
       summary: "Dobierzesz minimalny zakres danych zgodnie z privacy-by-design."),
-  ]
+  ] + generatedLessons
+
+  private static let generatedLessons: [LearningLesson] = {
+    let additions: [(LearningPath, String, String)] = [
+      (.fundamentals, "DNS i rekordy", "Przeanalizuj rekordy DNS w kontrolowanym środowisku."),
+      (.fundamentals, "Uprawnienia plików", "Oceń zakres dostępu i zasadę najmniejszych uprawnień."),
+      (.fundamentals, "Raport z rozpoznania", "Uporządkuj obserwacje i przygotuj bezpieczny raport."),
+
+      (.blueTeam, "Korelacja zdarzeń", "Połącz kilka fikcyjnych zdarzeń w jeden kontekst."),
+      (.blueTeam, "Kopia dowodowa", "Sprawdź integralność przygotowanego materiału."),
+      (.blueTeam, "Plan odtworzenia", "Wybierz bezpieczną kolejność powrotu do działania."),
+
+      (.redTeam, "Granice testu", "Zweryfikuj zakres i zgodę przed analizą celu."),
+      (.redTeam, "Łańcuch dowodów", "Udokumentuj obserwację bez kopiowania sekretów."),
+      (.redTeam, "Rekomendacja obronna", "Przełóż wynik kontrolowanego testu na naprawę."),
+
+      (.webSecurity, "Bezpieczne nagłówki", "Dobierz nagłówki ograniczające ryzyko aplikacji."),
+      (.webSecurity, "Walidacja danych", "Rozpoznaj brak kontroli po stronie serwera."),
+      (.webSecurity, "Minimalne API", "Ogranicz odpowiedź API do potrzebnego zakresu."),
+
+      (.mobileSecurity, "Sekrety aplikacji", "Wskaż bezpieczne miejsce dla sekretu aplikacji."),
+      (.mobileSecurity, "Logi mobilne", "Usuń dane wrażliwe z przykładowych logów."),
+      (.mobileSecurity, "Przegląd prywatności", "Połącz dane z celem i wymaganym uprawnieniem."),
+
+      (.terminal, "Nawigacja po plikach", "Poznaj bezpieczne polecenia tylko do odczytu."),
+      (.terminal, "Filtrowanie wyników", "Znajdź wskazany artefakt bez modyfikowania danych."),
+      (.terminal, "Sumy kontrolne", "Porównaj plik z wartością referencyjną."),
+      (.terminal, "Uprawnienia powłoki", "Rozpoznaj zbyt szeroki dostęp konta."),
+      (.terminal, "Raport terminala", "Zapisz fakty i rekomendację bez sekretów."),
+      (.terminal, "Automatyzacja odczytu", "Ułóż powtarzalny, bezpieczny proces analizy."),
+      (.terminal, "Pliki ukryte", "Odkryj materiał szkoleniowy bez zmiany systemu."),
+      (.terminal, "Ślady operacji", "Oceń historię przygotowanego środowiska."),
+      (.terminal, "Kontrola wejścia", "Rozpoznaj niebezpieczne dane wejściowe."),
+      (.terminal, "Terminal — podsumowanie", "Połącz podstawowe zasady pracy w terminalu."),
+
+      (.networkAnalysis, "Adresacja", "Rozróżnij adresy prywatne, dokumentacyjne i publiczne."),
+      (.networkAnalysis, "Skan usług", "Odczytaj przygotowaną listę usług."),
+      (.networkAnalysis, "DNS", "Wybierz właściwą odpowiedź dla rekordu DNS."),
+      (.networkAnalysis, "HTTP", "Przeanalizuj bezpieczną odpowiedź HTTP."),
+      (.networkAnalysis, "TLS", "Rozpoznaj brak ochrony transportu."),
+      (.networkAnalysis, "Profil ruchu", "Porównaj ruch z ustaloną bazą."),
+      (.networkAnalysis, "Anomalia", "Znajdź odstępstwo wymagające weryfikacji."),
+      (.networkAnalysis, "Usługi zbędne", "Wskaż usługę, którą należy wyłączyć."),
+      (.networkAnalysis, "Raport sieciowy", "Przygotuj krótką rekomendację obronną."),
+      (.networkAnalysis, "Analiza sieci — podsumowanie", "Połącz obserwacje w bezpieczny wniosek."),
+
+      (.cloudSecurity, "Tożsamości", "Rozpoznaj konto o nadmiarowych uprawnieniach."),
+      (.cloudSecurity, "Role", "Dobierz minimalną rolę do zadania."),
+      (.cloudSecurity, "Magazyn danych", "Oceń dostęp do fikcyjnego magazynu."),
+      (.cloudSecurity, "Logi chmurowe", "Znajdź podejrzane zdarzenie w logu."),
+      (.cloudSecurity, "Klucze API", "Wskaż bezpieczny sposób przechowywania klucza."),
+      (.cloudSecurity, "Segmentacja", "Ogranicz komunikację między usługami."),
+      (.cloudSecurity, "Kopie zapasowe", "Sprawdź ochronę kopii danych."),
+      (.cloudSecurity, "Alerty", "Ustal priorytet dla alertu bezpieczeństwa."),
+      (.cloudSecurity, "Konfiguracja", "Wykryj niebezpieczne ustawienie domyślne."),
+      (.cloudSecurity, "Cloud — podsumowanie", "Zbuduj defensywną checklistę chmury."),
+
+      (.cryptography, "Skróty", "Rozpoznaj zastosowanie funkcji skrótu."),
+      (.cryptography, "Sól", "Wyjaśnij rolę soli przy ochronie haseł."),
+      (.cryptography, "Szyfrowanie", "Dobierz szyfrowanie do poufnych danych."),
+      (.cryptography, "Klucze", "Odróżnij klucz publiczny od prywatnego."),
+      (.cryptography, "Podpis", "Zweryfikuj integralność podpisanego materiału."),
+      (.cryptography, "Rotacja", "Wybierz właściwy moment rotacji klucza."),
+      (.cryptography, "Transport", "Rozpoznaj bezpieczny kanał wymiany."),
+      (.cryptography, "Sekrety", "Usuń sekret z przykładowego repozytorium."),
+      (.cryptography, "Kopie kluczy", "Zaplanuj bezpieczny backup klucza."),
+      (.cryptography, "Krypto — podsumowanie", "Połącz podstawowe zasady kryptografii."),
+
+      (.privacyEngineering, "Minimalizacja", "Ogranicz zbierane dane do niezbędnego minimum."),
+      (.privacyEngineering, "Cel przetwarzania", "Dopasuj dane do jasno opisanego celu."),
+      (.privacyEngineering, "Zgody", "Rozpoznaj zgodę wymaganą przez funkcję."),
+      (.privacyEngineering, "Retencja", "Ustal bezpieczny czas przechowywania."),
+      (.privacyEngineering, "Anonimizacja", "Wybierz właściwą formę redukcji danych."),
+      (.privacyEngineering, "Uprawnienia", "Usuń zbędne uprawnienie aplikacji."),
+      (.privacyEngineering, "Dostęp", "Ogranicz dostęp do danych użytkownika."),
+      (.privacyEngineering, "Incydent prywatności", "Wskaż pierwszą reakcję na wyciek danych."),
+      (.privacyEngineering, "Dokumentacja", "Zapisz decyzję privacy-by-design."),
+      (.privacyEngineering, "Privacy — podsumowanie", "Przejdź kompletną checklistę prywatności.")
+    ]
+
+    var orderByPath: [LearningPath: Int] = [:]
+    return additions.enumerated().map { index, item in
+      let (path, title, summary) = item
+      let order = (orderByPath[path] ?? (path == .terminal || path == .networkAnalysis || path == .cloudSecurity || path == .cryptography || path == .privacyEngineering ? 0 : 7)) + 1
+      orderByPath[path] = order
+      return lesson(
+        id: "\(path.rawValue)-generated-\(order)-\(index)",
+        path: path,
+        order: order,
+        title: title,
+        summary: summary
+      )
+    }
+  }()
 
   static func lessons(in path: LearningPath) -> [LearningLesson] {
     lessons.filter { $0.path == path }.sorted { $0.order < $1.order }
@@ -424,35 +546,7 @@ enum StarterCurriculum {
     summary: String,
     environment: LearningEnvironment = .offlineSimulation
   ) -> LearningLesson {
-    let proLessonIDs = [
-      "fundamentals-network-addresses",
-      "fundamentals-terminal-basics",
-      "fundamentals-security-evidence",
-      "fundamentals-dns-resolution",
-      "fundamentals-least-privilege",
-      "blue-team-file-integrity",
-      "blue-team-network-baseline",
-      "blue-team-incident-notes",
-      "blue-team-suspicious-message",
-      "blue-team-alert-prioritization",
-      "red-team-owned-lab-recon",
-      "red-team-risk-chain",
-      "red-team-defensive-report",
-      "red-team-threat-modeling",
-      "red-team-controlled-report",
-      "web-session-basics",
-      "web-access-control",
-      "web-security-headers",
-      "web-secure-cookies",
-      "web-secure-api",
-      "mobile-transport-security",
-      "mobile-app-privacy",
-      "mobile-release-review",
-      "mobile-secure-logging",
-      "mobile-data-flow-privacy",
-    ]
-    let availability: LessonAvailability =
-      order <= 2 || proLessonIDs.contains(id) ? .available : .comingSoon
+    let availability: LessonAvailability = .available
     return LearningLesson(
       id: id,
       path: path,

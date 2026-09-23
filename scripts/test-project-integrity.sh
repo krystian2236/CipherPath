@@ -22,6 +22,7 @@ build_bundle() {
     -sdk iphoneos \
     -destination 'generic/platform=iOS' \
     -derivedDataPath "$derived_data" \
+    CONFIGURATION_BUILD_DIR="$derived_data/Build/Products/Release-iphoneos" \
     CODE_SIGNING_ALLOWED=NO \
     CODE_SIGNING_REQUIRED=NO \
     "$@" \

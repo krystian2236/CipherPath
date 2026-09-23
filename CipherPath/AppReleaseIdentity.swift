@@ -14,7 +14,7 @@ struct AppReleaseIdentity: Equatable, Sendable {
   static var current: Self { Self(bundle: .main) }
 
   init(bundle: Bundle) {
-    displayName = bundle.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ?? "CipherPath"
+    displayName = bundle.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ?? "Northbyte Lab"
     version = bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
     build = bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "—"
     bundleIdentifier = bundle.bundleIdentifier ?? "—"

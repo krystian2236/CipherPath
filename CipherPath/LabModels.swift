@@ -190,6 +190,49 @@ struct LabSession: Equatable, Sendable {
   var capturedFlagIDs: [String] = []
 }
 
+enum LessonDisplayState: Equatable, Sendable {
+  case start
+  case active
+  case hints(revealed: Int)
+  case incorrect
+  case stepComplete
+  case completed
+
+  enum Event: Equatable, Sendable {
+    case begin
+    case requestHint
+    case revealNextHint
+    case incorrectAnswer
+    case correctAnswer
+    case finishLesson
+    case returnToTask
+  }
+
+  static func transition(from state: Self, on event: Event) -> Self {
+    switch (state, event) {
+    case (.start, .begin): .active
+    case (.active, .requestHint), (.incorrect, .requestHint): .hints(revealed: 1)
+    case (.hints(let revealed), .revealNextHint) where revealed < 2:
+      .hints(revealed: revealed + 1)
+    case (.active, .incorrectAnswer), (.hints, .incorrectAnswer): .incorrect
+    case (.active, .correctAnswer), (.hints, .correctAnswer), (.incorrect, .correctAnswer): .stepComplete
+    case (.stepComplete, .finishLesson): .completed
+    case (.hints, .returnToTask), (.incorrect, .returnToTask): .active
+    default: state
+    }
+  }
+
+  var revealsSolution: Bool {
+    if case .hints(let revealed) = self { return revealed >= 3 }
+    return false
+  }
+}
+
+enum TerminalUnlock: String, Codable, CaseIterable, Sendable {
+  case run
+  case krg
+}
+
 enum LabExecutionStatus: Equatable, Sendable {
   case success
   case machineStopped
@@ -222,7 +265,8 @@ extension LabCommand {
   var program: String {
     switch self {
     case .help: "help"
-    case .run: "run"
+    case .hiddenOrbit: "krg-orbit"
+    case .hiddenVault: "krg-vault"
     case .ip: "ip"
     case .clear: "clear"
     case .ping: "ping"
@@ -233,6 +277,7 @@ extension LabCommand {
     case .ssh: "ssh"
     case .ls: "ls"
     case .lsAll: "ls"
+    case .lsDirectories: "ls"
     case .cd: "cd"
     case .cat: "cat"
     case .sha256sum: "sha256sum"
@@ -256,7 +301,7 @@ extension LabCommand {
     case .smbclient(let arguments):
       guard let share = arguments.first(where: { $0.hasPrefix("//") }) else { return nil }
       return share.dropFirst(2).split(separator: "/").first.map(String.init)
-    case .help, .run, .ip, .clear, .ls, .lsAll, .cd, .cat, .sha256sum, .find, .id, .whoami, .sudoList:
+    case .help, .hiddenOrbit, .hiddenVault, .ip, .clear, .ls, .lsAll, .lsDirectories, .cd, .cat, .sha256sum, .find, .id, .whoami, .sudoList:
       return nil
     }
   }

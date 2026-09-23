@@ -10,25 +10,26 @@ private func isolatedDefaults() -> UserDefaults {
 
 @Suite("Starter curriculum")
 struct StarterCurriculumTests {
-  @Test("Catalog contains five learning paths and thirty-five visible lessons")
+  @Test("Catalog contains ten learning paths and one hundred visible lessons")
   func containsCompleteVisibleCatalog() {
     #expect(StarterCurriculum.paths == LearningPath.allCases)
-    #expect(StarterCurriculum.lessons.count == 35)
+    #expect(StarterCurriculum.lessons.count == 100)
     #expect(
-      LearningPath.allCases.allSatisfy {
-        StarterCurriculum.lessons(in: $0).count == 7
-      }
+      LearningPath.allCases.count == 10
+        && LearningPath.allCases.allSatisfy {
+          StarterCurriculum.lessons(in: $0).count == 10
+        }
     )
   }
 
-  @Test("Pro exposes the complete thirty-five-mission catalog")
+  @Test("The catalog exposes ten available missions per path")
   func keepsReleaseAvailabilityPerPath() {
     for path in LearningPath.allCases {
       let lessons = StarterCurriculum.lessons(in: path)
-      let releasedCount = 7
+      let releasedCount = 10
       #expect(lessons.filter { $0.availability == .available }.count == releasedCount)
-      #expect(lessons.filter { $0.availability == .comingSoon }.count == 7 - releasedCount)
-      #expect(lessons.map(\.order) == [1, 2, 3, 4, 5, 6, 7])
+      #expect(lessons.filter { $0.availability == .comingSoon }.isEmpty)
+      #expect(lessons.map(\.order) == Array(1...10))
     }
   }
 
@@ -38,7 +39,7 @@ struct StarterCurriculumTests {
       $0.availability == .available
     }
 
-    #expect(availableLessons.count == 35)
+    #expect(availableLessons.count == 100)
     #expect(
       availableLessons.allSatisfy {
         $0.stages == [.learn, .check, .findFlag, .explanation]
@@ -93,16 +94,15 @@ struct ContentAccessTests {
     let pro = ContentAccessPolicy(tier: .pro)
     let demo = ContentAccessPolicy(tier: .testFlightDemo)
 
-    #expect(PathCardSummary.make(for: .blueTeam, policy: pro).includedCount == 7)
+    #expect(PathCardSummary.make(for: .blueTeam, policy: pro).includedCount == 10)
     #expect(PathCardSummary.make(for: .blueTeam, policy: pro).remainingCount == 0)
-    #expect(PathCardSummary.make(for: .webSecurity, policy: pro).includedCount == 7)
-    #expect(PathCardSummary.make(for: .fundamentals, policy: pro).includedCount == 7)
-    #expect(PathCardSummary.make(for: .redTeam, policy: pro).includedCount == 7)
-    #expect(PathCardSummary.make(for: .mobileSecurity, policy: pro).includedCount == 7)
+    for path in LearningPath.allCases {
+      #expect(PathCardSummary.make(for: path, policy: pro).includedCount == 10)
+    }
 
     for path in LearningPath.allCases {
       #expect(PathCardSummary.make(for: path, policy: demo).includedCount == 2)
-      #expect(PathCardSummary.make(for: path, policy: demo).remainingCount == 5)
+      #expect(PathCardSummary.make(for: path, policy: demo).remainingCount == 8)
     }
   }
 
@@ -142,19 +142,21 @@ struct ContentAccessTests {
 
   @Test("Content access is explicit and independent from build distribution")
   func contentAccessUsesExplicitTier() {
-    #expect(ContentAccessPolicy.current.tier == .free)
+    let expectedCurrentTier: ContentAccessTier =
+      AppDistributionMode.currentBuild == .developer ? .pro : .free
+    #expect(ContentAccessPolicy.current.tier == expectedCurrentTier)
     #expect(ContentAccessPolicy(tier: .free).tier == .free)
     #expect(ContentAccessPolicy(tier: .testFlightDemo).tier == .testFlightDemo)
     #expect(ContentAccessPolicy(tier: .pro).tier == .pro)
     #expect(ContentAccessPolicy(tier: .subscription).tier == .subscription)
   }
 
-  @Test("TestFlight demo keeps ten missions while new lessons require Pro")
+  @Test("TestFlight demo opens the first two missions in every path")
   func testFlightDemoOpensCurrentCatalog() {
     let policy = ContentAccessPolicy(tier: .testFlightDemo)
     let included = StarterCurriculum.lessons.filter { policy.access(for: $0) == .included }
 
-    #expect(included.count == 10)
+    #expect(included.count == 20)
     #expect(policy.access(for: StarterCurriculum.lessons(in: .blueTeam)[2]) == .requiresPro)
     #expect(policy.access(for: StarterCurriculum.lessons(in: .webSecurity)[2]) == .requiresPro)
   }
@@ -330,6 +332,43 @@ struct LearningProgressTests {
 
     #expect(restoredStore.progress.completedStages.isEmpty)
     #expect(restoredStore.currentStage(for: lesson) == .learn)
+  }
+}
+
+@Suite("Lesson display states")
+struct LessonDisplayStateTests {
+  @Test("A new lesson starts before the active task and does not reveal a solution")
+  func startsWithoutSolution() {
+    let active = LessonDisplayState.transition(from: .start, on: .begin)
+
+    #expect(active == .active)
+    #expect(!active.revealsSolution)
+  }
+
+  @Test("Hints are revealed progressively before a solution can be shown")
+  func revealsHintsProgressively() {
+    let firstHint = LessonDisplayState.transition(from: .active, on: .requestHint)
+    let secondHint = LessonDisplayState.transition(from: firstHint, on: .revealNextHint)
+
+    #expect(firstHint == .hints(revealed: 1))
+    #expect(secondHint == .hints(revealed: 2))
+    #expect(!secondHint.revealsSolution)
+  }
+
+  @Test("An incorrect answer keeps the lesson active and a correct answer shows the result")
+  func answerStatesKeepFlowInLesson() {
+    let incorrect = LessonDisplayState.transition(from: .active, on: .incorrectAnswer)
+    let result = LessonDisplayState.transition(from: incorrect, on: .correctAnswer)
+
+    #expect(incorrect == .incorrect)
+    #expect(result == .stepComplete)
+  }
+
+  @Test("Finishing the result produces a separate completed lesson state")
+  func finishesLessonSeparately() {
+    #expect(
+      LessonDisplayState.transition(from: .stepComplete, on: .finishLesson) == .completed
+    )
   }
 }
 

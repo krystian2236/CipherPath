@@ -26,7 +26,7 @@ struct ToolboxView: View {
         LazyVStack(spacing: 12) {
           InfoBanner(
             icon: "arrow.up.circle.fill",
-            title: "CipherPath Toolbox",
+            title: "Northbyte Lab Toolbox",
             message: "Discover → Inspect → Verify. Każdy krok używa wyłącznie danych z bieżącej sieci i wybranego urządzenia."
           )
 
@@ -40,7 +40,7 @@ struct ToolboxView: View {
           InfoBanner(
             icon: "hand.raised.fill",
             title: "Tryb defensywny",
-            message: "Uruchamiaj narzędzia tylko we własnej sieci lub za zgodą właściciela. CipherPath nie udostępnia modułów eksploatacji ani łamania haseł."
+            message: "Uruchamiaj narzędzia tylko we własnej sieci lub za zgodą właściciela. Northbyte Lab nie udostępnia modułów eksploatacji ani łamania haseł."
           )
         }
         .padding(12)
@@ -102,7 +102,7 @@ struct ToolboxView: View {
       subtitle: "Dalsze narzędzia korzystają tylko z tego urządzenia"
     ) {
       if scanner.devices.isEmpty {
-        Label("Najpierw uruchom Skan CipherPath.", systemImage: "lock.fill")
+        Label("Najpierw uruchom Skan Northbyte Lab.", systemImage: "lock.fill")
           .font(.caption)
           .foregroundStyle(.secondary)
           .frame(maxWidth: .infinity, alignment: .leading)
