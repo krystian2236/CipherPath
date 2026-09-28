@@ -1,99 +1,53 @@
 # CipherPath
 
 <p align="center">
-  <img src="CipherPath/Assets.xcassets/AppIcon.appiconset/CipherPathIcon.png" width="160" alt="Ikona CipherPath">
+  <img src="CipherPath/Assets.xcassets/AppIcon.appiconset/CipherPathIcon.png" width="150" alt="CipherPath app icon">
 </p>
 
-CipherPath to natywna aplikacja SwiftUI na iOS 17+ do legalnej nauki
-cyberbezpieczeństwa na iPhonie. Łączy krótkie lekcje offline z defensywnymi
-narzędziami odziedziczonymi z NetScope. Ćwiczenia dotyczą wyłącznie symulacji,
-własnych urządzeń i środowisk, na których testowanie uzyskano zgodę.
+**Apple-native cybersecurity learning app for iPhone.**
 
-## Kurs MVP
+CipherPath is a SwiftUI project focused on legal, hands-on cybersecurity learning. It combines short offline lessons, guided practice, simulated labs, progress tracking, and defensive network tooling.
 
-- pięć ścieżek: Podstawy, Blue Team, Red Team, Web Security i Mobile Security;
-- 25 widocznych lekcji: po dwie dostępne i trzy zapowiedziane w każdej ścieżce;
-- każda dostępna lekcja prowadzi przez: Poznaj, Sprawdź, Znajdź flagę i Wyjaśnienie;
-- bezpieczne symulacje offline oraz przygotowanie do własnego, kontrolowanego labu;
-- zachowany Toolbox, diagnostyka prywatnej sieci, iSH i skróty SSH;
-- brak automatycznego uruchamiania poleceń i brak publicznych celów labów.
+## Highlights
 
-Szczegółowy zakres znajduje się w
-`docs/superpowers/specs/2026-09-12-cipherpath-course-design.md`, a realizacja jest
-prowadzona etapami po 25% według
-`docs/superpowers/plans/2026-09-12-cipherpath-course-mvp.md`.
+- structured learning paths covering security fundamentals, blue team, red team, web and mobile security
+- guided lessons with knowledge checks, flags and explanations
+- offline simulated labs with no public targets required
+- progress, achievements, points and practice history
+- local-network diagnostics and defensive tooling
+- iSH and SSH-oriented workflows for controlled environments
+- separate Developer and App Store distribution modes
 
-## Odziedziczone funkcje sieciowe
+## Distribution model
 
-- pięć czytelnych zakładek: **Start**, **Sieć**, **Porty**, **Ping** i **Bonjour**,
-- kompaktowy pulpit z liczbą urządzeń, usług i wyników wymagających uwagi,
-- trzy profile skanu prywatnej podsieci IPv4 `/24`: szybki, standardowy
-  i rozszerzony,
-- wykrywanie typowych usług TCP bez logowania i wysyłania poleceń,
-- odwrotne DNS oraz szacowanie rodzaju urządzenia na podstawie usług,
-- szczegóły portów: kategoria, opis i informacja o typowym szyfrowaniu,
-- lokalna historia ośmiu ostatnich skanów,
-- szczegółowe statystyki przebiegu: liczba prób, hostów, odpowiedzi,
-  przekroczeń czasu i odmów dostępu,
-- telemetria każdego urządzenia: liczba sprawdzonych portów, czas wykrywania
-  i opóźnienie otwartych usług,
-- odkrywanie usług Bonjour, między innymi AirPlay, drukarek, SSH, HTTP,
-  Google Cast, HomeKit, Matter i MQTT,
-- filtrowanie urządzeń, rozszerzony widok szczegółów i bogatszy eksport CSV,
-- **My IP** z lokalnym IPv4 i opcjonalnym publicznym IPv4/IPv6,
-- diagnostyka domen: DNS, TCP ping i test wskazanego portu,
-- skaner portów w stylu Nmap z profilami WWW, IoT, zdalnego dostępu,
-  serwerów i baz danych oraz zakresem własnym do 512 portów,
-- wyniki skanowania pozostają na urządzeniu.
+CipherPath keeps development-only functionality isolated from the App Store build.
 
-## Integracja z iSH
+- `CipherPath Dev` — development/testing scheme
+- `CipherPath App Store` — production-oriented scheme
+- separate bundle identifiers
+- developer-only UI guarded at build time
 
-Ekran **Start → Narzędzia dla iSH** przygotowuje:
+This lets the public repository remain useful for development while the release configuration can later be submitted to App Store Connect.
 
-- polecenie instalacji Nmap w Alpine,
-- polecenie jednorazowego skanu dla podsieci albo wybranego urządzenia,
-- skrypt `cipherpath-ish.sh`, który można zapisać w aplikacji Pliki,
-  przenieść do lokalizacji iSH i uruchomić,
-- trzy tryby: inwentaryzacja, rozszerzony TCP i lekka identyfikacja usług.
+## Stack
 
-CipherPath używa w poleceniach iSH trybu `--unprivileged -sT`, czyli zwykłych
-połączeń TCP zamiast surowych pakietów. Cel jest ograniczony do prywatnego IPv4.
-Samodzielny skrypt `CipherPath-iSH-Toolkit.sh` jest również dołączony obok paczki
-projektu.
+`Swift` · `SwiftUI` · `StoreKit 2` · `XCTest` · `iOS 17+` · `Network.framework`
 
-Przykładowe uruchomienie w iSH:
+## Run locally
 
-```sh
-apk update && apk add nmap
-chmod +x CipherPath-iSH-Toolkit.sh
-./CipherPath-iSH-Toolkit.sh 192.168.1.0/24
-```
+1. Open `CipherPath.xcodeproj` in Xcode.
+2. Select your own Apple Development Team.
+3. Choose the Developer scheme for local development.
+4. Run on a simulator or physical iPhone depending on the feature being tested.
 
-## Uruchomienie
+## Security scope
 
-1. Otwórz `CipherPath.xcodeproj` w Xcode.
-2. W ustawieniach targetu `CipherPath` wybierz swój Apple Development Team.
-3. Podłącz iPhone’a, wybierz go jako urządzenie docelowe i uruchom aplikację.
-4. Naciśnij **Skanuj moją sieć** i zaakceptuj dostęp do sieci lokalnej.
+CipherPath is intended for education, defensive testing, simulations, and systems you own or have explicit permission to test. The project does not require attacking public targets and does not include credential attacks or automatic exploit execution.
 
-Publiczny adres IP jest odczytywany z `api64.ipify.org` dopiero po wybraniu
-przycisku **Pobierz publiczny IP**.
+## Project status
 
-Skanowanie sieci lokalnej należy testować na prawdziwym iPhonie. Symulator nie
-odwzorowuje uprawnienia Local Network i może widzieć inną sieć niż telefon.
+Active development. App Store release is planned separately from the public source repository.
 
-## Zakres bezpieczeństwa
+## License
 
-Aplikacja skanuje wyłącznie prywatny lub link-localny adres IPv4 urządzenia
-i ogranicza zakres do lokalnego `/24`. Nie obsługuje publicznych celów,
-uwierzytelniania, exploitów ani wykonywania poleceń na wykrytych urządzeniach.
-
-Narzędzie Port Scan pozwala sprawdzić domenę lub adres wskazany przez
-użytkownika, ale ogranicza pojedynczy własny zakres do 512 portów. Należy go
-używać wyłącznie wobec własnych systemów lub po uzyskaniu zgody właściciela.
-„TCP Ping” mierzy czas zestawienia połączenia TCP, ponieważ iOS nie udostępnia
-zwykłym aplikacjom surowego ICMP w taki sposób jak narzędzia desktopowe.
-
-Ocena rodzaju urządzenia i poziomu ekspozycji jest wskazówką opartą na
-widocznych portach. Nie zastępuje audytu bezpieczeństwa ani nie potwierdza
-podatności.
+Copyright © 2026 Krystian. All rights reserved. See [LICENSE](LICENSE).
