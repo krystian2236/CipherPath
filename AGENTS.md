@@ -30,15 +30,9 @@ Te instrukcje obowiązują Codex, ChatGPT oraz GitHub Copilot podczas pracy w ty
 
 ## Simulator iOS
 
-### CipherPath / CipherPath Dev
-
-- Przypisany Simulator: `SEC`
-- UDID: `402CAB22-504F-4049-AF02-BD6288EFB25E`
-- Dotyczy zarówno `CipherPath`, jak i `CipherPath Dev`.
-- Wszystkie polecenia `xcodebuild`, `simctl`, install, launch oraz screenshoty dla CipherPath wykonuj na tym UDID.
-- Nie wybieraj automatycznie innego Simulatora.
-- Jeśli ten UDID nie jest dostępny, zatrzymaj się i pokaż dostępne urządzenia zamiast wybierać inne.
-- Dev i Production mogą być zainstalowane jednocześnie na `SEC`, jeśli mają różne bundle ID.
+- Nie commituj lokalnych nazw Simulatorów, UDID ani identyfikatorów fizycznych urządzeń.
+- Do testów wybieraj urządzenie jawnie w bieżącym środowisku.
+- Jeśli oczekiwane urządzenie nie jest dostępne, pokaż dostępne cele zamiast wybierać losowy.
 - Po zmianach restartuj tylko aplikację. Nie resetuj ani nie wymazuj całego Simulatora bez osobnego polecenia użytkownika.
 
 ## App Store
